@@ -45,37 +45,26 @@ const MARKDOWN_DIR = join(CORPUS, 'markdown');
 const MATH_DIR = join(CORPUS, 'math');
 const STRESS_DIR = join(CORPUS, 'stress');
 
-/** Mirrors `DiagnosticCode` in `src/core/markdown/types.ts`. Keep the two in sync. */
-const DIAGNOSTIC_CODES = new Set([
-  'unclosed-fence',
-  'unclosed-math',
-  'unclosed-html-comment',
-  'tab-indent-in-list',
-  'inconsistent-list-marker',
-  'dangling-reference-link',
-  'duplicate-footnote',
-  'duplicate-heading-anchor',
-  'setext-heading-ambiguity',
-  'math-render-error',
-  'math-unknown-macro',
-  'math-unbalanced-braces',
-  'math-unbalanced-environment',
-  'math-unsupported-environment',
-  'math-display-in-inline',
-  'math-suspicious-delimiter',
-  'image-missing',
-  'image-path-escapes-root',
-  'image-remote',
-  'link-remote',
-  'html-sanitized',
-  'script-removed',
-  'mermaid-parse-error',
-  'bom-detected',
-  'crlf-detected',
-  'mixed-line-endings',
-  'invalid-utf8',
-  'non-utf8-encoding',
-]);
+/**
+ * The set of diagnostic codes, read from the type that defines them.
+ *
+ * Deriving this from `src/core/markdown/types.ts` rather than repeating the union here means
+ * the two cannot drift: adding a code to the type immediately makes it valid in the manifest,
+ * and removing one makes an existing manifest entry fail loudly instead of silently passing.
+ */
+const DIAGNOSTIC_CODES = (() => {
+  const typesPath = join(ROOT, 'src', 'core', 'markdown', 'types.ts');
+  const source = readFileSync(typesPath, 'utf8');
+  const union = /export type DiagnosticCode =([\s\S]*?);/.exec(source);
+  if (!union) {
+    throw new Error(`Could not locate the DiagnosticCode union in ${typesPath}`);
+  }
+  const codes = new Set([...union[1].matchAll(/'([a-z0-9-]+)'/g)].map((match) => match[1]));
+  if (codes.size === 0) {
+    throw new Error(`The DiagnosticCode union in ${typesPath} yielded no members`);
+  }
+  return codes;
+})();
 
 const DELIMITERS = new Set(['dollar', 'dollar-block', 'paren-inline', 'paren-block', 'latex-env', 'math-fence']);
 const LANGUAGES = new Set(['zh', 'en', 'mixed']);

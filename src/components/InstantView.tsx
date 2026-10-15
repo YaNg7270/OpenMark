@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { SourceBlock } from '@/core/markdown/types';
 import { useStore, type DocumentState } from '@/app/store';
 import { useReadingProgress, useTypesetting } from './useTypesetting';
+import { MathTools } from './MathTools';
 
 /**
  * Instant-rendering view — the Typora-style mode.
@@ -100,6 +101,7 @@ export function InstantView({ doc, onNavigate }: InstantViewProps) {
           ))}
         </article>
       </div>
+      <MathTools rootRef={hostRef} render={doc.render} documentKey={signature} />
     </>
   );
 }
@@ -145,9 +147,12 @@ function Block({ block, active, readOnly, onActivate, onCommit, onExit, onNaviga
             return;
           }
           if (readOnly) return;
-          // Clicks that land on an interactive control inside the block (a task-list
-          // checkbox, a code copy button) must not be swallowed by the edit affordance.
-          if ((event.target as HTMLElement).closest('button, input, summary, mjx-container')) return;
+          /*
+           * Interactive controls inside a block own their own clicks: a task-list checkbox,
+           * a code copy button, and a rendered formula (which opens the formula tools) must
+           * not also put the whole block into edit mode.
+           */
+          if ((event.target as HTMLElement).closest('button, input, summary, [data-om-math]')) return;
           onActivate();
         }}
         /* Safe: produced by our renderer and passed through DOMPurify. */

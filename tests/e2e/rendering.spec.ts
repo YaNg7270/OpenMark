@@ -552,3 +552,74 @@ test.describe('session state', () => {
     await expect(page.locator('[data-om-testid="recent-list"]')).toHaveCount(0);
   });
 });
+
+test.describe('formula tools', () => {
+  const DOC = ['# 公式', '', '行内公式 $E = mc^2$ 与一个块公式：', '', '$$', '\\frac{a}{b} = c', '$$', ''].join('\n');
+
+  test('copies the LaTeX source of a clicked formula', async ({ page, context }) => {
+    await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+    await openFixture(page, 'math-tools.md', DOC);
+
+    await page.locator('.om-math[data-om-state="ok"]').first().click();
+    await expect(page.getByTestId('math-tools')).toBeVisible();
+    await page.getByTestId('math-copy').click();
+
+    const clipboard = await page.evaluate(() => navigator.clipboard.readText());
+    expect(clipboard).toBe('E = mc^2');
+  });
+
+  test('edits a formula through the dialog and splices only that formula', async ({ page }) => {
+    await openFixture(page, 'math-edit.md', DOC);
+
+    // The display formula is the second one in document order.
+    await page.locator('.om-math--display').click();
+    await page.getByTestId('math-edit').click();
+
+    const dialog = page.getByTestId('math-dialog');
+    await expect(dialog).toBeVisible();
+    await expect(page.getByTestId('math-dialog-source')).toHaveValue('\\frac{a}{b} = c');
+
+    // The live preview must actually typeset before the edit is committed.
+    await expect(page.getByTestId('math-dialog-preview').locator('mjx-container')).toBeVisible();
+
+    await page.getByTestId('math-dialog-source').fill('\\int_0^1 x\\,dx = \\frac{1}{2}');
+    await expect(page.getByTestId('math-dialog-preview').locator('mjx-container')).toBeVisible();
+    await page.getByTestId('math-dialog-save').click();
+    await expect(dialog).toHaveCount(0);
+
+    const source = await page.evaluate(() => window.__openmark__!.getSource());
+    // Delimiters and layout survive; only the body changed.
+    expect(source).toBe(
+      ['# 公式', '', '行内公式 $E = mc^2$ 与一个块公式：', '', '$$', '\\int_0^1 x\\,dx = \\frac{1}{2}', '$$', ''].join('\n'),
+    );
+  });
+
+  test('reports a broken formula inside the dialog without losing the source', async ({ page }) => {
+    await openFixture(page, 'math-error.md', DOC);
+
+    await page.locator('.om-math--display').click();
+    await page.getByTestId('math-edit').click();
+    await page.getByTestId('math-dialog-source').fill('\\frac{a}{b');
+
+    await expect(page.getByTestId('math-dialog-error')).toBeVisible();
+    // The author's text must still be there to fix.
+    await expect(page.getByTestId('math-dialog-source')).toHaveValue('\\frac{a}{b');
+
+    await page.getByTestId('math-dialog-save').click();
+    const source = await page.evaluate(() => window.__openmark__!.getSource());
+    expect(source).toContain('\\frac{a}{b');
+  });
+
+  test('keeps a formula fence intact when its body is edited', async ({ page }) => {
+    const fenced = '# 围栏公式\n\n```math\na = b\n```\n';
+    await openFixture(page, 'math-fence-edit.md', fenced);
+
+    await page.locator('.om-math--display').click();
+    await page.getByTestId('math-edit').click();
+    await page.getByTestId('math-dialog-source').fill('c = d');
+    await page.getByTestId('math-dialog-save').click();
+
+    const source = await page.evaluate(() => window.__openmark__!.getSource());
+    expect(source).toBe('# 围栏公式\n\n```math\nc = d\n```\n');
+  });
+});

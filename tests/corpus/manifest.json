@@ -204,10 +204,9 @@
         "taskLists": 0
       },
       "diagnostics": [
-        "html-sanitized",
         "script-removed"
       ],
-      "notes": "A block script element must never execute."
+      "notes": "A block-level script element. Reported as `script-removed`, which is the more specific code; nothing else in the file needs sanitising."
     },
     {
       "file": "markdown/101-security-script-inline.md",
@@ -446,7 +445,7 @@
       ],
       "language": "en",
       "expect": {
-        "headings": 2,
+        "headings": 1,
         "tables": 0,
         "codeBlocks": 1,
         "math": 0,
@@ -457,7 +456,7 @@
       "diagnostics": [
         "unclosed-fence"
       ],
-      "notes": "A fence that is never closed, so the rest of the file is treated as code."
+      "notes": "Genuinely unclosed fence: the heading and paragraphs after it are swallowed as code. An earlier revision accidentally included a closing fence, contradicting both the prose and this entry."
     },
     {
       "file": "markdown/113-health-unclosed-math.md",
@@ -2996,9 +2995,9 @@
         "taskLists": 0
       },
       "diagnostics": [
-        "math-unbalanced-braces"
+        "invalid-frontmatter"
       ],
-      "notes": "Broken YAML frontmatter; engine.ts currently reports the YAML failure under the math-unbalanced-braces code, which this fixture pins."
+      "notes": "Broken YAML frontmatter. The parser reports this as `invalid-frontmatter`; an earlier revision of engine.ts reused a maths code for it, which this entry originally pinned."
     },
     {
       "file": "markdown/93-inline-html.md",
@@ -3017,10 +3016,8 @@
         "footnotes": 0,
         "taskLists": 0
       },
-      "diagnostics": [
-        "html-sanitized"
-      ],
-      "notes": "br, kbd, sub, sup and a details block sanitised by DOMPurify."
+      "diagnostics": [],
+      "notes": "br, kbd, sub, sup and a details block must all SURVIVE sanitisation. Nothing is removed, so no diagnostic is expected."
     },
     {
       "file": "markdown/94-emoji-shortcodes.md",

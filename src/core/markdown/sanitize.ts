@@ -36,15 +36,36 @@ const ALLOWED_TAGS = [
 
 const ALLOWED_ATTR = [
   'align', 'alt', 'aria-hidden', 'aria-label', 'checked', 'class', 'colspan', 'data-*', 'dir',
-  'disabled', 'height', 'href', 'id', 'lang', 'loading', 'open', 'rel', 'role', 'rowspan',
+  'disabled',
+  // `for` binds a task-list label to its checkbox. Without it the label is inert and the
+  // checkbox has no accessible name — a real accessibility regression, not a cosmetic one.
+  'for',
+  'height', 'href', 'id', 'lang', 'loading', 'open', 'rel', 'role', 'rowspan',
   'scope', 'src', 'start', 'style', 'title', 'type', 'value', 'width',
 ];
 
 export interface SanitizeResult {
   html: string;
-  /** Lower-cased tag names that were removed, deduplicated. */
-  removed: string[];
+  /**
+   * What was neutralised, as lower-cased category names.
+   *
+   * Categories rather than raw tag names, because the useful distinction for a reader is not
+   * "which element disappeared" but "what kind of thing was dangerous": a removed `script` is
+   * a different conversation from an event-handler attribute or a `javascript:` URL.
+   */
+  removed: SanitizeFinding[];
 }
+
+export type SanitizeFinding =
+  | 'script'
+  | 'style'
+  | 'frame'
+  | 'object'
+  | 'form'
+  | 'meta'
+  | 'svg'
+  | 'event-handler'
+  | 'unsafe-url';
 
 /**
  * URL schemes permitted in attributes.
@@ -76,7 +97,7 @@ const ALLOWED_URI_REGEXP = /^(?:(?:(?:f|ht)tps?|mailto|tel|asset):|[^a-z]|[a-z+.
  * forbids-contents list, so their bodies are discarded regardless.
  */
 export function sanitizeHtml(html: string): SanitizeResult {
-  const removed = new Set<string>();
+  const removed = new Set<SanitizeFinding>();
   const clean = DOMPurify.sanitize(html, {
     ALLOWED_TAGS,
     ALLOWED_ATTR,
@@ -94,13 +115,25 @@ export function sanitizeHtml(html: string): SanitizeResult {
     ALLOW_ARIA_ATTR: true,
   });
 
-  // Diff the input against the output to name what was stripped. DOMPurify's own
-  // `removed` callbacks cover elements, not attributes, so we scan the source for the
-  // tags we explicitly forbid — cheap and precise enough for a user-facing message.
-  for (const tag of ['script', 'iframe', 'object', 'embed', 'form', 'style', 'link', 'meta', 'base']) {
-    if (new RegExp(`<\\s*${tag}[\\s>]`, 'i').test(html)) removed.add(tag);
-  }
+  /*
+   * Name what was neutralised by scanning the *input*.
+   *
+   * DOMPurify reports removed elements only in its DOM-returning modes, and says nothing at
+   * all about attributes it stripped, so the input is inspected for the specific constructs we
+   * forbid. That is also the more useful answer for a reader: "this file contained an inline
+   * script" is actionable, whereas "some element was removed" is not.
+   */
+  if (/<\s*script[\s>]/i.test(html)) removed.add('script');
+  if (/<\s*style[\s>]/i.test(html)) removed.add('style');
+  if (/<\s*(?:iframe|frame|frameset|embed)[\s>]/i.test(html)) removed.add('frame');
+  if (/<\s*object[\s>]/i.test(html)) removed.add('object');
+  if (/<\s*form[\s>]/i.test(html)) removed.add('form');
+  if (/<\s*(?:meta|base|link)[\s>]/i.test(html)) removed.add('meta');
+  if (/<\s*svg[\s>]/i.test(html)) removed.add('svg');
   if (/\son[a-z]+\s*=/i.test(html)) removed.add('event-handler');
+  if (/\b(?:href|src|xlink:href)\s*=\s*["']?\s*(?:javascript|vbscript|file|data:text\/html)/i.test(html)) {
+    removed.add('unsafe-url');
+  }
 
   return { html: String(clean), removed: [...removed] };
 }

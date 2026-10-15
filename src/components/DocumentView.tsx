@@ -2,6 +2,7 @@ import { useRef } from 'react';
 import { useStore, type DocumentState } from '@/app/store';
 import { useReadingProgress, useTypesetting } from './useTypesetting';
 import { RecentPanel } from './RecentPanel';
+import { MathTools } from './MathTools';
 
 /**
  * The reading surface.
@@ -92,6 +93,7 @@ export function DocumentView({ doc, onNavigate }: DocumentViewProps) {
           }}
         />
       </div>
+      <MathTools rootRef={hostRef} render={doc.render} documentKey={signature} />
     </>
   );
 }

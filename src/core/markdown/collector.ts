@@ -1,4 +1,12 @@
-import type { Diagnostic, MathExpression, MermaidDiagram, CodeBlock, PreservedBlock, DocRange } from './types';
+import type {
+  CodeBlock,
+  Diagnostic,
+  DocRange,
+  ImageReference,
+  MathExpression,
+  MermaidDiagram,
+  PreservedBlock,
+} from './types';
 import type { LineIndex } from './line-index';
 
 /**
@@ -13,6 +21,7 @@ export class RenderCollector {
   readonly mermaid: MermaidDiagram[] = [];
   readonly code: CodeBlock[] = [];
   readonly preserved: PreservedBlock[] = [];
+  readonly images: ImageReference[] = [];
   readonly diagnostics: Diagnostic[] = [];
 
   private mathSeq = 0;
@@ -44,6 +53,10 @@ export class RenderCollector {
     const block: PreservedBlock = { ...input, id: `env-${this.preservedSeq++}` };
     this.preserved.push(block);
     return block;
+  }
+
+  addImage(reference: ImageReference): void {
+    this.images.push(reference);
   }
 
   addDiagnostic(diagnostic: Diagnostic): void {

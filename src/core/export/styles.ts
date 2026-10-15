@@ -211,11 +211,19 @@ body {
 /* Shiki's per-theme backgrounds were resolved away; the block chrome supplies the colour. */
 .om-doc .om-code__pre .shiki { background: none; }
 
-/* ---- math ---- */
+/* ---- math ----
+   MathJax 4's SVG output is self-contained: every glyph is an inlined <defs><path> and the
+   per-container sizing is an inline style on the <svg>, so the exported equation needs no
+   MathJax stylesheet. What it does need — and what these rules provide — is the container
+   layout the reading view supplies: block for display math, inline for the rest. MathJax's own
+   stylesheets style only interactive UI (context menu, tooltips, hover regions, speech
+   highlights), none of which can exist in a file with no scripts in it. */
 .om-doc .om-math { display: inline-block; max-width: 100%; vertical-align: baseline; }
 .om-doc .om-math--display { display: block; text-align: center; margin: 1em 0; overflow-x: auto; overflow-y: hidden; }
-.om-doc .om-math mjx-container { display: inline-block; outline: none; }
-.om-doc .om-math--display mjx-container { display: block; }
+.om-doc .om-math mjx-container[jax="SVG"] { display: inline-block; direction: ltr; vertical-align: middle; }
+.om-doc .om-math--display mjx-container[jax="SVG"] { display: block; }
+.om-doc .om-math--display mjx-container[jax="SVG"] > svg { max-width: 100%; }
+.om-doc .om-math mjx-container[jax="SVG"] > svg { overflow: visible; vertical-align: middle; }
 .om-doc .om-math--error {
   display: block;
   padding: 6px 10px;
@@ -262,41 +270,4 @@ body {
   @page { size: A4; margin: 16mm 14mm; }
 }
 `;
-}
-
-/**
- * Minimal `mjx-container` layout rules, used only when MathJax's own stylesheet cannot be
- * found in the live page. MathJax's rules are richer (they carry `overflow`, `min-width`
- * and the assistive-MathML switches), so the capture path is the one that matters.
- */
-const MATHJAX_FALLBACK_CSS = `mjx-container[jax="SVG"] { direction: ltr; }
-mjx-container[jax="SVG"] > svg { overflow: visible; vertical-align: middle; }
-mjx-container[jax="SVG"][display="true"] { display: block; text-align: center; margin: 1em 0; }
-mjx-container[jax="SVG"][display="true"] > svg { max-width: 100%; }
-mjx-container[jax="SVG"] mjx-assistive-mml { display: none; }
-`;
-
-export interface MathJaxStylesheet {
-  css: string;
-  /** Where the rules came from — `fallback` means the live page had none to copy. */
-  source: 'mathjax' | 'fallback';
-}
-
-/**
- * Returns MathJax's own stylesheet.
- *
- * MathJax injects a `<style>` element into the page when it boots, and the SVG output is
- * laid out by those rules — without them a display equation is not centred and an inline
- * one sits on the wrong baseline. Copying the element is the only way to export exactly what
- * the reader shows, so it is captured rather than re-approximated.
- */
-export function mathJaxStylesheet(): MathJaxStylesheet {
-  if (typeof document === 'undefined') return { css: MATHJAX_FALLBACK_CSS, source: 'fallback' };
-  const captured = Array.from(document.querySelectorAll('style'))
-    .map((element) => element.textContent ?? '')
-    .filter((css) => css.includes('mjx-container'))
-    .join('\n')
-    .trim();
-  if (captured === '') return { css: MATHJAX_FALLBACK_CSS, source: 'fallback' };
-  return { css: captured, source: 'mathjax' };
 }

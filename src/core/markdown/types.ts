@@ -168,6 +168,19 @@ export interface PreservedBlock {
 }
 
 /**
+ * An image reference found in the document.
+ *
+ * Recorded rather than checked: whether the target exists depends on where the file lives,
+ * and the parser has no filesystem. See `core/diagnostics/assets.ts`.
+ */
+export interface ImageReference {
+  /** The reference exactly as authored: relative, absolute, or a URL. */
+  path: string;
+  alt: string;
+  range: DocRange;
+}
+
+/**
  * One top-level block of the source, with everything needed to edit it in place.
  *
  * This is what makes Typora-style instant rendering possible without a second
@@ -232,6 +245,8 @@ export interface RenderResult {
   html: string;
   /** Top-level blocks, each with its own source range and HTML, for in-place editing. */
   blocks: SourceBlock[];
+  /** Image references, for the document health check. */
+  images: ImageReference[];
   math: MathExpression[];
   mermaid: MermaidDiagram[];
   code: CodeBlock[];

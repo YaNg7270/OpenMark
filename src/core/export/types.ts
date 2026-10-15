@@ -41,14 +41,21 @@ export interface ExportSourceCounts {
 export interface SelfContainedCheck {
   /** Must be 0: a self-contained document has no behaviour to run. */
   scriptTags: number;
-  /** Every external URL that remains, i.e. every possible network request. */
+  /** Every `http(s)://` / protocol-relative URL left in the file, links included. */
   externalUrls: string[];
+  /**
+   * The subset a browser would actually *fetch* while rendering: `src`, `srcset`, `poster`,
+   * `<link href>` and CSS `url()` / `@import`. Hyperlinks navigate, so they are not requests.
+   */
+  externalRequests: string[];
+  /** Requests that are not a remote image the source itself referenced. Must be empty. */
+  unexpectedRequests: string[];
   /**
    * `xmlns="http://www.w3.org/2000/svg"`-style declarations. They look like `http://` to a
    * naive grep but are namespace identifiers, not requests.
    */
   namespaceDeclarations: number;
-  /** No scripts, and every remaining URL is a remote image the source itself referenced. */
+  /** No scripts, and no request beyond the remote images the source itself referenced. */
   selfContained: boolean;
 }
 
@@ -110,7 +117,7 @@ export type ExportErrorCode =
 export class ExportError extends Error {
   readonly code: ExportErrorCode;
   /** Underlying failure, when there was one. */
-  readonly cause?: unknown;
+  override readonly cause?: unknown;
 
   constructor(code: ExportErrorCode, message: string, cause?: unknown) {
     super(message);

@@ -2,6 +2,9 @@ import { create } from 'zustand';
 import type { MarkdownIt } from 'markdown-it';
 import type { Diagnostic, OutlineEntry, ParsedDocument } from '@/core/markdown/types';
 import { createEngine, parseDocument } from '@/core/markdown/engine';
+import { rebuildMathSource } from '@/core/markdown/math-source';
+import { assetDiagnostics, type AssetStatus } from '@/core/diagnostics/assets';
+import type { ImageReference } from '@/core/markdown/types';
 import { sanitizeHtml } from '@/core/markdown/sanitize';
 import * as files from '@/core/fs/fileService';
 import { applyEol, contentHash, normalizeEol, type EolStyle } from '@/core/fs/encoding';
@@ -57,6 +60,24 @@ export function parse(source: string): ParsedDocument {
   return parseDocument(source, engine, { sanitizeHtml });
 }
 
+/**
+ * Runs the document health check over a parse result.
+ *
+ * Separate from `parse` because it needs the filesystem, and `parse` is synchronous and runs
+ * on every keystroke. Results are merged into the diagnostics list rather than being part of
+ * the parse result, so a slow or unavailable filesystem degrades to "no asset diagnostics"
+ * instead of blocking the first paint.
+ */
+async function checkAssets(images: readonly ImageReference[], documentPath: string | null): Promise<Diagnostic[]> {
+  if (!documentPath || images.length === 0) return [];
+
+  const statuses = new Map<string, AssetStatus>();
+  for (const path of new Set(images.map((image) => image.path))) {
+    statuses.set(path, await files.resolveAssetStatus(documentPath, path));
+  }
+  return assetDiagnostics(images, (path) => statuses.get(path) ?? 'unknown');
+}
+
 const EMPTY_DOC: DocumentState = {
   path: null,
   name: 'untitled.md',
@@ -106,6 +127,14 @@ interface AppStore {
    * paragraph in two, for instance). Returns `null` when the edit was refused.
    */
   applyBlockEdit: (blockIndex: number, text: string, caretOffset: number) => number | null;
+  /**
+   * Replaces the body of one formula, keeping its delimiters and formatting.
+   *
+   * The edit is spliced into the authoritative source at the expression's own range, so
+   * nothing outside the formula can change. Returns `false` when the source could not be
+   * rebuilt safely, in which case nothing is written.
+   */
+  applyMathEdit: (mathId: string, newTex: string) => boolean;
   save: () => Promise<void>;
   saveAs: () => Promise<void>;
   checkExternalChange: () => Promise<void>;
@@ -229,6 +258,11 @@ export const useStore = create<AppStore>((set, get) => ({
         diagnostics: parsed.diagnostics,
         ui: { ...s.ui, notice: null, activeHeadingId: null, progress: 0 },
       }));
+
+      void checkAssets(parsed.images, file.path).then((assetIssues) => {
+        // Ignore the result if another document has been opened in the meantime.
+        if (get().doc.path === file.path) get().addRuntimeDiagnostics(assetIssues);
+      });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       set((s) => ({ doc: { ...s.doc, loading: false, error: message } }));
@@ -289,6 +323,30 @@ export const useStore = create<AppStore>((set, get) => ({
   setSourceFromEditor: (normalizedSource) => {
     const { doc } = get();
     get().setSource(applyEol(normalizedSource, doc.encoding.eol));
+  },
+
+  applyMathEdit: (mathId, newTex) => {
+    const { doc } = get();
+    if (doc.readOnly) {
+      get().notify('warning', '当前文档处于安全只读模式，编辑已禁用。');
+      return false;
+    }
+    const expr = doc.render?.math.find((candidate) => candidate.id === mathId);
+    if (!expr) return false;
+    if (newTex === expr.tex) return true;
+
+    const normalized = normalizeEol(doc.source);
+    const start = expr.range.start.offset;
+    const end = expr.range.end.offset;
+    const replacement = rebuildMathSource(expr, newTex, normalized.slice(start, end));
+    if (replacement === null) {
+      get().notify('error', '无法安全地改写该公式的源码，已取消编辑。');
+      return false;
+    }
+
+    const spliced = normalized.slice(0, start) + replacement + normalized.slice(end);
+    get().setSource(applyEol(spliced, doc.encoding.eol));
+    return true;
   },
 
   save: async () => {

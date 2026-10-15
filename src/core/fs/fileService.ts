@@ -2,6 +2,7 @@ import { convertFileSrc } from '@tauri-apps/api/core';
 import { open as openDialog, save as saveDialog } from '@tauri-apps/plugin-dialog';
 import { openUrl } from '@tauri-apps/plugin-opener';
 import { decodeText, encodeText, contentHash, type EolStyle } from './encoding';
+import { classifyRelativePath, type AssetStatus } from '@/core/diagnostics/assets';
 
 /**
  * File access, with a desktop backend and a browser fallback.
@@ -216,6 +217,34 @@ export async function resolveAssetUrl(documentPath: string, relative: string): P
     relativePath: relative,
   });
   return convertFileSrc(absolute);
+}
+
+/**
+ * Determines whether a document's image reference can actually be loaded.
+ *
+ * Classification happens before resolution so a traversal attempt is refused without ever
+ * touching the filesystem — a health check should not go looking at `../../../../etc/passwd`
+ * merely to report that it is absent.
+ *
+ * Returns `unknown` in the browser backend, where there is no filesystem. That is deliberate:
+ * reporting every image as missing would fill the panel with noise about a limitation rather
+ * than about the document.
+ */
+export async function resolveAssetStatus(documentPath: string, relative: string): Promise<AssetStatus> {
+  if (/^https?:/i.test(relative)) return 'remote';
+  if (/^[a-z][a-z0-9+.-]*:/i.test(relative)) return 'external';
+  if (classifyRelativePath(relative) === 'escapes') return 'escapes';
+
+  const invoke = tauriInvoke();
+  if (!invoke) return 'unknown';
+
+  try {
+    const absolute = await invoke<string>('resolve_asset_url', { documentPath, relativePath: relative });
+    return (await invoke<boolean>('path_exists', { path: absolute })) ? 'ok' : 'missing';
+  } catch {
+    // A path the OS refuses to canonicalise is, for the reader's purposes, missing.
+    return 'missing';
+  }
 }
 
 /** Opens an external URL in the system browser rather than inside the app webview. */

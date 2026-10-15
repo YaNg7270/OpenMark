@@ -13,6 +13,8 @@ import { normalizeEol } from '@/core/fs/encoding';
 import { mathPlugin, MATH_ENVIRONMENTS, MATH_META_KEY, type MathTokenMeta } from './math-plugin';
 import { frontmatterPlugin, FRONTMATTER_META, type FrontmatterInfo } from './rules';
 import { codePlaceholder, mathPlaceholder, mermaidPlaceholder, preservedPlaceholder } from './placeholders';
+import type { SanitizeFinding } from './sanitize';
+import { assetDiagnostics, type AssetStatus } from '@/core/diagnostics/assets';
 import type {
   Diagnostic,
   DocRange,
@@ -214,6 +216,7 @@ function collectPass(state: { tokens: Token[]; src: string; env: OpenmarkEnv }):
       }
 
       case 'html_block': {
+        collectRawImages(token.content, token, om, index);
         if (isComment(token.content)) {
           const range = locateBlock(token.map) ?? emptyRange();
           const preserved = om.addPreserved({ kind: 'html-comment', raw: token.content, range });
@@ -243,6 +246,17 @@ function collectPass(state: { tokens: Token[]; src: string; env: OpenmarkEnv }):
             });
             meta.omId = expr.id;
             checkMathSource(om, expr.id, src.tex, range);
+          } else if (child.type === 'image') {
+            const raw = child.attrGet('src');
+            const alt = child.attrGet('alt');
+            const hit = locator.locate(String(raw ?? ''), bounds);
+            if (hit) {
+              om.addImage({
+                path: String(raw ?? ''),
+                alt: alt === null ? '' : String(alt),
+                range: hit.range,
+              });
+            }
           } else if (child.type === 'html_inline' && isComment(child.content)) {
             const hit = locator.locate(child.content, bounds);
             const range = hit?.range ?? emptyRange();
@@ -482,6 +496,244 @@ function structuralDiagnostics(source: string, om: RenderCollector, index: LineI
 }
 
 /**
+ * Turns the sanitiser's findings into reader-facing diagnostics.
+ *
+ * A removed `<script>` is reported separately from other sanitisation because it is a
+ * different kind of statement: not "this markup was dropped" but "this file tried to execute
+ * code". A reader opening an untrusted document deserves to know which happened.
+ *
+ * The diagnostic's position is the first occurrence in the source, so the panel can jump to
+ * it rather than pointing at the top of the file.
+ */
+function reportSanitizerFindings(
+  om: RenderCollector,
+  findings: readonly SanitizeFinding[],
+  index: LineIndex,
+  source: string,
+): void {
+  const PATTERNS: Record<SanitizeFinding, RegExp> = {
+    script: /<\s*script[\s>]/i,
+    style: /<\s*style[\s>]/i,
+    frame: /<\s*(?:iframe|frame|frameset|embed)[\s>]/i,
+    object: /<\s*object[\s>]/i,
+    form: /<\s*form[\s>]/i,
+    meta: /<\s*(?:meta|base|link)[\s>]/i,
+    svg: /<\s*svg[\s>]/i,
+    'event-handler': /\son[a-z]+\s*=/i,
+    'unsafe-url': /\b(?:href|src|xlink:href)\s*=\s*["']?\s*(?:javascript|vbscript|file|data:text\/html)/i,
+  };
+  const LABELS: Record<SanitizeFinding, string> = {
+    script: '内联脚本',
+    style: '内联样式表',
+    frame: '内嵌框架',
+    object: '内嵌对象',
+    form: '表单',
+    meta: '文档级元信息',
+    svg: '内嵌 SVG',
+    'event-handler': '事件处理属性',
+    'unsafe-url': '不安全的链接地址',
+  };
+
+  for (const finding of findings) {
+    const match = PATTERNS[finding].exec(source);
+    const offset = match ? match.index : 0;
+    const line = index.lineAt(offset);
+    const range = index.range(offset, Math.min(offset + (match?.[0].length ?? 1), source.length));
+    om.report(
+      finding === 'script' ? 'script-removed' : 'html-sanitized',
+      finding === 'script' ? 'error' : 'warning',
+      `已移除${LABELS[finding]}（第 ${line} 行）`,
+      range,
+      {
+        source: 'markdown',
+        excerpt: excerpt(source.slice(offset, offset + 80)),
+        detail:
+          finding === 'script'
+            ? '源文件中的该脚本不会被执行，也不会被渲染。原始内容仍完整保留在文件中。'
+            : '该内容不会显示，但原始文本仍完整保留在文件中，保存时不会被修改。',
+      },
+    );
+  }
+}
+
+/**
+ * Reports reference-style links whose label is never defined.
+ *
+ * Only the unambiguous forms are checked — `[text][label]` and `[text][]` — because a
+ * shortcut reference `[label]` is indistinguishable from ordinary brackets in prose. Without
+ * a definition, markdown-it renders the markup as literal text, which is rarely what the
+ * author intended and is exactly the silent failure this diagnostic exists to surface.
+ */
+function referenceLinkDiagnostics(
+  source: string,
+  references: Record<string, unknown> | undefined,
+  om: RenderCollector,
+  index: LineIndex,
+): void {
+  const defined = new Set(Object.keys(references ?? {}).map((key) => key.toLowerCase()));
+  const pattern = /\]\[([^\]\n]*)\]/g;
+  const reported = new Set<string>();
+
+  let match = pattern.exec(source);
+  while (match) {
+    const label = match[1]!;
+    const offset = match.index;
+    match = pattern.exec(source);
+
+    // `[text][]` collapses to `[text]`, so an empty label is not a dangling reference.
+    if (label === '') continue;
+    if (defined.has(label.toLowerCase())) continue;
+    if (reported.has(label)) continue;
+    reported.add(label);
+
+    om.report(
+      'dangling-reference-link',
+      'warning',
+      `Reference link \`${label}\` is never defined`,
+      index.range(offset, offset + label.length + 4),
+      {
+        source: 'markdown',
+        excerpt: excerpt(source.slice(offset, offset + 60)),
+        detail: '该引用式链接没有对应的定义（`[label]: url`），因此会按普通文本显示。',
+      },
+    );
+  }
+}
+
+/**
+ * Blanks out fenced code blocks, preserving line numbering.
+ *
+ * Structural checks must not fire on examples of malformed markup that appear inside a code
+ * block — a document *about* unclosed formulas should not itself be reported as containing
+ * one. Replacing the bodies with spaces rather than deleting the lines keeps every offset and
+ * line number valid for the diagnostics that use the result.
+ */
+function blankFencedCode(source: string): string {
+  const lines = source.split('\n');
+  let fence: string | null = null;
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i]!;
+    const match = /^\s{0,3}(`{3,}|~{3,})/.exec(line);
+    if (match) {
+      const marker = match[1]!;
+      if (fence === null) fence = marker[0]!;
+      else if (marker[0] === fence) fence = null;
+      lines[i] = ' '.repeat(line.length);
+      continue;
+    }
+    if (fence !== null) lines[i] = ' '.repeat(line.length);
+  }
+  return lines.join('\n');
+}
+
+/**
+ * Reports list items inside one list that use different bullet characters.
+ *
+ * All three markers are individually valid, so this is a style diagnostic rather than an
+ * error: the rendered list is correct either way. It is worth reporting because the
+ * inconsistency is invisible in the rendered output and therefore survives review — and
+ * because a formatter that silently rewrote the markers would be making a choice the author
+ * never expressed.
+ */
+function inconsistentListMarkerDiagnostics(source: string, om: RenderCollector, index: LineIndex): void {
+  const lines = blankFencedCode(source).split('\n');
+  let previousIndent = -1;
+  let previousMarker = '';
+  let offset = 0;
+  let reported = 0;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i]!;
+    const lineStart = offset;
+    offset += line.length + 1;
+
+    const match = /^(\s*)([-*+])[ \t]+\S/.exec(line);
+    if (!match) {
+      // A non-item line ends the sibling run; nested levels restart it.
+      if (line.trim() !== '') {
+        previousMarker = '';
+        previousIndent = -1;
+      }
+      continue;
+    }
+    const indent = match[1]!.length;
+    const marker = match[2]!;
+
+    if (previousMarker !== '' && indent === previousIndent && marker !== previousMarker && reported < 3) {
+      reported++;
+      om.report('inconsistent-list-marker', 'info', 'Adjacent list items use different markers', index.range(lineStart, lineStart + line.length), {
+        source: 'markdown',
+        excerpt: excerpt(line.trim(), 80),
+        detail: `同一层级的列表项混用了 \`${previousMarker}\` 与 \`${marker}\`。渲染结果不受影响，但建议统一。`,
+      });
+    }
+    previousIndent = indent;
+    previousMarker = marker;
+  }
+}
+
+/**
+ * Reports a `\(` or `\[` whose partner never appears.
+ *
+ * The tokenizer already falls back to literal text for an unmatched opener — which is the
+ * right rendering — but the author usually *meant* a formula, so the situation is surfaced
+ * rather than passed over in silence.
+ */
+function unmatchedParenDelimiterDiagnostics(source: string, om: RenderCollector, index: LineIndex): void {
+  const text = blankFencedCode(source);
+  const pairs: { open: string; close: string; label: string }[] = [
+    { open: '\\(', close: '\\)', label: '\\( … \\)' },
+    { open: '\\[', close: '\\]', label: '\\[ … \\]' },
+  ];
+
+  for (const pair of pairs) {
+    const opens: number[] = [];
+    for (let i = 0; i < text.length; i++) {
+      if (text[i] !== '\\') continue;
+      // An escaped backslash (`\\\\(`) is not a delimiter opener.
+      let backslashes = 0;
+      for (let j = i - 1; j >= 0 && text[j] === '\\'; j--) backslashes++;
+      if (backslashes % 2 === 1) continue;
+      const next = text[i + 1];
+      if (next === pair.open[1]) opens.push(i);
+      else if (next === pair.close[1] && opens.length > 0) opens.pop();
+      i++;
+    }
+    if (opens.length === 0) continue;
+    const at = opens[0]!;
+    om.report('math-suspicious-delimiter', 'warning', `Unmatched \`${pair.label.split(' ')[0]}\` delimiter`, index.range(at, at + 2), {
+      source: 'math',
+      excerpt: excerpt(source.slice(at, at + 60)),
+      detail: `开括号缺少与之配对的闭括号，因此该处按普通文本渲染。若本意是公式，请补上 \`${pair.close.replace('\\\\', '\\')}\`。`,
+    });
+  }
+}
+
+/**
+ * Reports a `$` that looks like the start of a formula but never closes.
+ *
+ * Deliberately narrow: the line must contain a TeX command (`\command`) after the opening
+ * `$` and no closing `$`. Requiring a backslash excludes ordinary prose about prices, which
+ * is the false positive that would make this diagnostic noise.
+ */
+function suspiciousDollarDiagnostics(source: string, om: RenderCollector, index: LineIndex): void {
+  const lines = source.split('\n');
+  let offset = 0;
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i]!;
+    const found = /(?<![\\$])\$[^$\n]*\\[a-zA-Z]+[^$\n]*$/.exec(line);
+    if (found) {
+      om.report('math-suspicious-delimiter', 'warning', 'Possible unclosed inline formula', index.range(offset + found.index, offset + line.length), {
+        source: 'math',
+        excerpt: excerpt(line.trim(), 80),
+        detail: '该行以 `$` 开头且包含 LaTeX 命令，但没有闭合的 `$`，可能无法按公式渲染。',
+      });
+    }
+    offset += line.length + 1;
+  }
+}
+
+/**
  * Reports resources that would require the network.
  *
  * OpenMark is offline-first: a document referencing a remote image will show a hole where
@@ -639,7 +891,73 @@ export interface ParseOptions extends EngineOptions {
 
 export interface ParseHooks {
   /** Injected so the sanitiser can live in the browser layer and stay testable. */
-  sanitizeHtml?: (html: string) => { html: string; removed: string[] };
+  sanitizeHtml?: (html: string) => { html: string; removed: SanitizeFinding[] };
+  /**
+   * Resolves an image reference to its availability.
+   *
+   * Optional because the real answer requires filesystem access and the parse is synchronous.
+   * The application parses first for a fast first paint and runs the asset check afterwards
+   * (see `parseDocument`'s caller); the corpus suite supplies a resolver so the checks are
+   * exercised in the same code path.
+   */
+  resolveAsset?: (path: string) => AssetStatus;
+}
+
+/** Recognises an image reference in a raw HTML fragment. */
+const RAW_IMAGE_PATTERN = /<img\b[^>]*?\bsrc\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/gi;
+
+/**
+ * Records `<img>` elements written as raw HTML.
+ *
+ * Authors mix markdown images and raw HTML freely, and a health check that only saw the
+ * markdown form would report a clean document full of broken pictures.
+ */
+function collectRawImages(content: string, token: Token, om: RenderCollector, index: LineIndex): void {
+  if (!content.includes('<img')) return;
+  const blockRange = token.map ? index.spanForLines(token.map[0], token.map[1] - 1) : null;
+  RAW_IMAGE_PATTERN.lastIndex = 0;
+  let match = RAW_IMAGE_PATTERN.exec(content);
+  while (match) {
+    const path = match[1] ?? match[2] ?? match[3] ?? '';
+    if (path !== '') {
+      // Offset precision inside a raw HTML block is not worth a second scan; the block's own
+      // range is exact and points the reader at the right place.
+      om.addImage({
+        path,
+        alt: '',
+        range: blockRange ? index.range(blockRange.from, blockRange.to) : emptyRange(),
+      });
+    }
+    match = RAW_IMAGE_PATTERN.exec(content);
+  }
+}
+
+/**
+ * Renumbers task-list element ids deterministically, in document order.
+ *
+ * `markdown-it-task-lists` generates its ids with `Math.random()`, which makes the rendered
+ * HTML differ between two parses of the same document. That breaks screenshot comparison,
+ * reproducible HTML export, and any content-addressed caching — and the plugin's formula can
+ * even produce negative ids. The ids are only used to associate a `<label>` with its
+ * checkbox, so replacing them with a running counter preserves the behaviour exactly while
+ * making the output stable.
+ *
+ * `startAt` lets the per-block renders share one numbering sequence with the whole-document
+ * render: both walk the document in order, so both produce the same ids.
+ */
+function renumberTaskItemIds(html: string, startAt: number): { html: string; next: number } {
+  const mapping = new Map<string, string>();
+  let next = startAt;
+  return {
+    html: html.replace(/task-item--?\d+/g, (match) => {
+      const existing = mapping.get(match);
+      if (existing) return existing;
+      const assigned = `task-item-${next++}`;
+      mapping.set(match, assigned);
+      return assigned;
+    }),
+    next,
+  };
 }
 
 /**
@@ -766,20 +1084,28 @@ export function parseDocument(source: string, engine: MarkdownItInstance, hooks:
   };
 
   structuralDiagnostics(normalized, collector, index);
+  inconsistentListMarkerDiagnostics(normalized, collector, index);
+  unmatchedParenDelimiterDiagnostics(normalized, collector, index);
+  suspiciousDollarDiagnostics(normalized, collector, index);
 
   const tokens = engine.parse(normalized, env);
+  referenceLinkDiagnostics(normalized, env.references as Record<string, unknown> | undefined, collector, index);
   let html = engine.renderer.render(tokens, engine.options, env);
   const blocks = buildBlocks(tokens, engine, env, index);
+
+  // Stable ids before anything can observe the HTML.
+  ({ html } = renumberTaskItemIds(html, 1));
+  let taskItemCounter = 1;
+  for (const block of blocks) {
+    const result = renumberTaskItemIds(block.html, taskItemCounter);
+    block.html = result.html;
+    taskItemCounter = result.next;
+  }
 
   if (hooks.sanitizeHtml) {
     const result = hooks.sanitizeHtml(html);
     html = result.html;
-    for (const removed of result.removed) {
-      collector.report('html-sanitized', 'warning', `Removed unsafe HTML: <${removed}>`, emptyRange(), {
-        source: 'markdown',
-        detail: 'The element is preserved in the source file but is not rendered.',
-      });
-    }
+    reportSanitizerFindings(collector, result.removed, index, normalized);
     // Each block's HTML is sanitised too, so instant rendering cannot inject anything the
     // reading view would have removed.
     for (const block of blocks) {
@@ -802,9 +1128,16 @@ export function parseDocument(source: string, engine: MarkdownItInstance, hooks:
     readingMinutes: Math.max(1, Math.round(cjk / 400 + latin / 220)),
   };
 
+  if (hooks.resolveAsset) {
+    for (const diagnostic of assetDiagnostics(collector.images, hooks.resolveAsset)) {
+      collector.addDiagnostic(diagnostic);
+    }
+  }
+
   return {
     html,
     blocks,
+    images: collector.images,
     math: collector.math,
     mermaid: collector.mermaid,
     code: collector.code,

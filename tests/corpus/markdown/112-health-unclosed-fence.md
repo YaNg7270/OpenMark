@@ -15,7 +15,6 @@ function greet(name) {
 
 const message = greet("world");
 console.log(message);
-```
 
 The fence above was never closed, so every line that follows is swallowed as
 code. That includes this sentence, the heading that a careless author might

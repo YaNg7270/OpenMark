@@ -49,9 +49,22 @@ describe('sanitizeHtml: hostile input', () => {
   });
 
   it('reports what it removed so the diagnostics panel can explain it', () => {
+    // Categories, not tag names: the useful distinction for a reader is what KIND of thing was
+    // dangerous. A removed script is a different statement from a removed frame.
     const { removed } = render('<script>x</script><iframe src="y"></iframe>');
     expect(removed).toContain('script');
-    expect(removed).toContain('iframe');
+    expect(removed).toContain('frame');
+  });
+
+  it('reports attribute-level removals that leave the element in place', () => {
+    /*
+     * DOMPurify keeps the anchor and strips only its `href`. Without this check the sanitiser
+     * would report nothing at all, and the reader would be told the document was fine while a
+     * link silently stopped working.
+     */
+    expect(render('<a href="javascript:alert(1)">x</a>').removed).toContain('unsafe-url');
+    expect(render('<img src=x onerror="alert(1)">').removed).toContain('event-handler');
+    expect(render('<svg><rect/></svg>').removed).toContain('svg');
   });
 });
 

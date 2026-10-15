@@ -26,6 +26,9 @@
  *     export RUSTUP_HOME="<repo>/.tools/rustup"
  *     export CARGO_HOME="<repo>/.tools/cargo"
  *     export PATH="<repo>/.tools/cargo/bin;$APPDATA/npm;$PATH"
+ *     # see `tauriDriverPath` below — the service cannot spawn a driver from a spaced path
+ *     export OPENMARK_TAURI_DRIVER="C:/omkth/cargo/bin/tauri-driver.exe"
+ *     pnpm test:desktop
  */
 
 import { dirname, resolve } from 'node:path';
@@ -36,6 +39,19 @@ const repositoryRoot = resolve(here, '..', '..');
 
 const appBinary =
   process.env['OPENMARK_BINARY'] ?? resolve(repositoryRoot, 'src-tauri', 'target', 'debug', 'openmark.exe');
+
+/**
+ * `@wdio/native-core@1.3.0` starts tauri-driver with `shell: true` and concatenates the
+ * command without quoting, so on Windows cmd.exe truncates any executable path containing a
+ * space: this repository lives under "D:/OMP WorkSpace/REA typora", the spawn fails with
+ * `'D:/OMP' is not recognized as an internal or external command`, and tauri-driver exits 1
+ * before it can log anything. A driver resolved through PATH is used verbatim, so the
+ * workaround is to hand the service an executable outside every spaced directory — on this
+ * machine the pre-existing `C:\omkth` junction to `<repo>\.tools` (see SESSION_HANDOFF.md).
+ * Set OPENMARK_TAURI_DRIVER to that space-free copy; otherwise the service's own
+ * `where tauri-driver` lookup is used.
+ */
+const tauriDriverPath = process.env['OPENMARK_TAURI_DRIVER'];
 
 /**
  * The fixture is handed to the app as a command-line argument, which is the same path the
@@ -66,6 +82,7 @@ export const config = {
       '@wdio/tauri-service',
       {
         driverProvider: 'external',
+        ...(tauriDriverPath ? { tauriDriverPath } : {}),
         // tauri-driver is a Rust binary; `autoInstallTauriDriver` runs `cargo install`
         // when it is not already on PATH. msedgedriver is fetched from Microsoft to match
         // the installed WebView2 runtime (149.x on this machine).

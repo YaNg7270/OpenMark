@@ -29,7 +29,7 @@ import { renderDiagram } from '../render/mermaid';
 import { writeFile } from '../fs/fileService';
 import { desktopAssetReader, inlineImages } from './assets';
 import { resolveCodeTheme } from './code';
-import { exportStylesheet, mathJaxStylesheet } from './styles';
+import { exportStylesheet } from './styles';
 import {
   ExportError,
   asExportError,
@@ -43,10 +43,15 @@ import {
 } from './types';
 
 /**
- * The reading column in pixels (46rem at 16px), handed to MathJax so a long display equation
- * breaks at the width it will actually occupy instead of overflowing one line.
+ * The reading column in pixels, handed to MathJax so a long display equation breaks at the
+ * width it will actually occupy instead of overflowing one line.
+ *
+ * Derived from the exported stylesheet rather than guessed: `max-width: 46rem` (736px at 16px,
+ * the reading column) minus the 3rem of horizontal padding each side = 640px of content.
+ * Getting this wrong is not fatal — an equation would break a little earlier or later than it
+ * does in the reader — but an export should look like the document, not like an approximation.
  */
-const CONTENT_WIDTH_PX = 46 * 16;
+const CONTENT_WIDTH_PX = 46 * 16 - 2 * 3 * 16;
 
 /** Diagram font, resolved from the app variable mermaid embeds in its SVG. */
 const DIAGRAM_FONT_STACK =
@@ -105,32 +110,29 @@ async function buildStandaloneHtml(options: StandaloneHtmlOptions): Promise<Html
   const title = resolveTitle(options, result);
   const report = createReport(title, theme);
 
-  const root = document.createElement('div');
-  root.innerHTML = result.html;
+  // Parsed into an *inert* document rather than a detached `<div>`: Chromium starts fetching
+  // an `<img>` the moment its `src` is set, even when the element is not connected, and an
+  // export must not fetch a remote image on the author's behalf just to look at it. Images in
+  // a document with no browsing context are never loaded.
+  const root = new DOMParser().parseFromString(result.html, 'text/html').body;
 
   adoptLiveContent(root, options.liveRoot ?? null, report);
   await fillPlaceholders(root, result, theme, report);
   resolveCodeTheme(root, theme);
   normalizeDiagrams(root);
   removeBlockToolbars(root);
+  removeMathJaxCounters(root);
   await inlineImages(root, {
     documentPath: options.sourcePath,
     readAsset: options.readAsset ?? desktopAssetReader,
     report,
   });
 
-  const title = resolveTitle(options, result);
-  const mathJax = mathJaxStylesheet();
-  if (mathJax.source === 'fallback') {
-    report.warnings.push('MathJax stylesheet not found in the page; used built-in fallback rules');
-  }
-
   const wrapped = wrapDocument({
     title,
     lang: options.lang ?? 'zh-CN',
     theme,
     body: root.innerHTML,
-    mathJaxCss: mathJax.css,
     result,
   });
 
@@ -167,9 +169,11 @@ function adoptLiveContent(
     const live = findLive(liveRoot, 'data-om-math', placeholder.dataset['omMath']);
     if (!live || live.innerHTML.trim() === '') continue;
     placeholder.innerHTML = live.innerHTML;
+    // `markFilled` before `copyState`, so the attribute order matches the headless path and
+    // both entry points produce a byte-identical file for the same document.
+    markFilled(placeholder);
     copyState(placeholder, live);
     report.reusedFromLiveDom.math++;
-    markFilled(placeholder);
   }
 
   for (const placeholder of root.querySelectorAll<HTMLElement>('[data-om-mermaid]')) {
@@ -178,9 +182,9 @@ function adoptLiveContent(
     const liveCanvas = live?.querySelector<HTMLElement>('.om-mermaid__canvas');
     if (!canvas || !liveCanvas || liveCanvas.innerHTML.trim() === '') continue;
     canvas.innerHTML = liveCanvas.innerHTML;
+    markFilled(placeholder);
     copyState(placeholder, live!);
     report.reusedFromLiveDom.mermaid++;
-    markFilled(placeholder);
   }
 
   for (const placeholder of root.querySelectorAll<HTMLElement>('[data-om-code]')) {
@@ -198,8 +202,8 @@ function adoptLiveContent(
       ?.getAttribute('data-om-lang-label');
     const target = placeholder.querySelector<HTMLElement>('.om-code__pre');
     if (label && target) target.setAttribute('data-om-lang-label', label);
-    report.reusedFromLiveDom.code++;
     markFilled(placeholder);
+    report.reusedFromLiveDom.code++;
   }
 }
 
@@ -394,6 +398,20 @@ function removeBlockToolbars(root: HTMLElement): void {
   }
 }
 
+/**
+ * Removes MathJax's `ctxtmenu_counter` from every container.
+ *
+ * It is MathJax's own bookkeeping for the right-click menu (which expression was attached
+ * first, page-wide), so it is meaningless without MathJax's scripts — and worse than
+ * meaningless: it makes the export depend on how many formulas the page had already typeset,
+ * so exporting the same document twice would not produce the same file.
+ */
+function removeMathJaxCounters(root: HTMLElement): void {
+  for (const container of Array.from(root.querySelectorAll('mjx-container[ctxtmenu_counter]'))) {
+    container.removeAttribute('ctxtmenu_counter');
+  }
+}
+
 /** Frontmatter title, else the first heading, else the file name. */
 function resolveTitle(options: StandaloneHtmlOptions, result: RenderResult): string {
   const explicit = options.title?.trim();
@@ -426,8 +444,6 @@ interface DocumentParts {
   lang: string;
   theme: ExportTheme;
   body: string;
-  mathJaxCss: string;
-  report: ExportReport;
   result: RenderResult;
 }
 
@@ -449,10 +465,6 @@ function wrapDocument(parts: DocumentParts): string {
 ${meta}
 <style>
 ${exportStylesheet(parts.theme)}
-</style>
-<style>
-/* MathJax's own layout rules, captured from the page that typeset this document. */
-${parts.mathJaxCss}
 </style>
 </head>
 <body>
