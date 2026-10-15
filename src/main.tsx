@@ -24,6 +24,11 @@ if (!container) throw new Error('#root is missing from index.html');
 if (globalThis.window?.__OPENMARK_TEST_FILES__) {
   window.__openmark__ = {
     openPath: (path) => useStore.getState().openPath(path),
+    getSource: () => useStore.getState().doc.source,
+    getEncoding: () => {
+      const { bom, eol } = useStore.getState().doc.encoding;
+      return { bom, eol };
+    },
   };
 }
 

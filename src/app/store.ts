@@ -1,10 +1,10 @@
 import { create } from 'zustand';
 import type { MarkdownIt } from 'markdown-it';
-import type { Diagnostic, OutlineEntry } from '@/core/markdown/types';
-import { createEngine, parseDocument, type ParsedDocument } from '@/core/markdown/engine';
+import type { Diagnostic, OutlineEntry, ParsedDocument } from '@/core/markdown/types';
+import { createEngine, parseDocument } from '@/core/markdown/engine';
 import { sanitizeHtml } from '@/core/markdown/sanitize';
 import * as files from '@/core/fs/fileService';
-import { contentHash, type EolStyle } from '@/core/fs/encoding';
+import { applyEol, contentHash, normalizeEol, type EolStyle } from '@/core/fs/encoding';
 import { applySettingsToDocument, loadSettings, saveSettings, resolveTheme, type AppSettings } from './settings';
 
 /** The four view modes the product promises. */
@@ -77,6 +77,25 @@ interface AppStore {
   openPath: (path: string) => Promise<void>;
   newDocument: () => void;
   setSource: (source: string) => void;
+  /**
+   * Sets the source from an editor whose value lives in LF-normalised space.
+   *
+   * A `<textarea>` cannot hold CRLF: the HTML specification normalises line breaks in its
+   * `value` IDL attribute, so reading `element.value` after writing `"a\r\nb"` yields
+   * `"a\nb"`. Committing that directly would rewrite every line ending in a Windows file on
+   * the next save. The editor therefore displays normalised text and calls this, which
+   * restores the document's own line-ending style before storing.
+   */
+  setSourceFromEditor: (normalizedSource: string) => void;
+  /**
+   * Applies an edit to one top-level block by splicing the replacement into the
+   * authoritative source at the range the parser reported.
+   *
+   * Returns the block that now contains `caretOffset`, so a live editor can keep focus and
+   * scroll position when the edit changes how the document is split into blocks (splitting a
+   * paragraph in two, for instance). Returns `null` when the edit was refused.
+   */
+  applyBlockEdit: (blockIndex: number, text: string, caretOffset: number) => number | null;
   save: () => Promise<void>;
   saveAs: () => Promise<void>;
   checkExternalChange: () => Promise<void>;
@@ -213,6 +232,40 @@ export const useStore = create<AppStore>((set, get) => ({
       doc: { ...doc, source, hash: contentHash(source), render: parsed },
       diagnostics: parsed.diagnostics,
     });
+  },
+
+  applyBlockEdit: (blockIndex, text, caretOffset) => {
+    const { doc } = get();
+    if (doc.readOnly) {
+      get().notify('warning', '当前文档处于安全只读模式，编辑已禁用。');
+      return null;
+    }
+    const block = doc.render?.blocks[blockIndex];
+    if (!block) return null;
+
+    /*
+     * Block ranges are expressed against the LF-normalised source, because that is what the
+     * parser sees. Splicing must therefore happen in the same space, and the file's own
+     * line-ending style is restored afterwards — otherwise editing one paragraph of a CRLF
+     * file would quietly convert every other line ending to LF.
+     */
+    const normalized = normalizeEol(doc.source);
+    const start = block.range.start.offset;
+    const end = block.range.end.offset;
+    if (text === normalized.slice(start, end)) return blockIndex;
+
+    const spliced = normalized.slice(0, start) + text + normalized.slice(end);
+    get().setSource(applyEol(spliced, doc.encoding.eol));
+
+    // Re-locate the caret: the edit may have added or removed blocks above it.
+    const blocks = get().doc.render?.blocks ?? [];
+    const target = blocks.find((candidate) => caretOffset >= candidate.range.start.offset && caretOffset <= candidate.range.end.offset);
+    return target?.index ?? null;
+  },
+
+  setSourceFromEditor: (normalizedSource) => {
+    const { doc } = get();
+    get().setSource(applyEol(normalizedSource, doc.encoding.eol));
   },
 
   save: async () => {

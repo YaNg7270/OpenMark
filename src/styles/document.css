@@ -600,3 +600,69 @@ html[data-om-theme='dark'] .om-doc .shiki span {
     margin: 18mm 16mm;
   }
 }
+
+
+/* ============================================================================
+   Instant rendering (Typora-style in-place editing).
+
+   Each top-level block is a section. In edit mode the rendered HTML stays mounted and is
+   only hidden, so the MathJax and Mermaid output inside it survives and reappears instantly
+   instead of flashing through a re-typeset.
+   ========================================================================== */
+
+.om-block {
+  position: relative;
+  border-radius: var(--om-radius-sm);
+  transition: box-shadow var(--om-transition);
+}
+
+/* A hairline gutter marks the block being edited without shifting the reading column. */
+.om-block[data-editing='true'] {
+  box-shadow: -3px 0 0 0 var(--om-accent);
+  padding-inline-start: 10px;
+  margin-inline-start: -13px;
+}
+
+.om-block[data-editing='true'] .om-block__rendered {
+  display: none;
+}
+
+.om-block__rendered {
+  /* The editing affordance is a text cursor, matching what the mode promises. */
+  cursor: text;
+}
+
+.om-block__rendered:hover {
+  background: color-mix(in srgb, var(--om-accent) 5%, transparent);
+}
+
+.om-block__editor {
+  display: block;
+  width: 100%;
+  resize: vertical;
+  border: 1px solid var(--om-accent);
+  border-radius: var(--om-radius-sm);
+  outline: none;
+  padding: 8px 10px;
+  margin: 0;
+  background: var(--om-bg-elevated);
+  color: var(--om-text);
+  font-family: var(--om-font-mono);
+  /* Slightly smaller than prose so the mono metrics match the rendered line box. */
+  font-size: 0.92em;
+  line-height: 1.6;
+  tab-size: 4;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  user-select: text;
+}
+
+@media print {
+  .om-block__editor {
+    display: none;
+  }
+  .om-block[data-editing='true'] .om-block__rendered {
+    display: block;
+    box-shadow: none;
+  }
+}

@@ -167,6 +167,47 @@ export interface PreservedBlock {
   range: DocRange;
 }
 
+/**
+ * One top-level block of the source, with everything needed to edit it in place.
+ *
+ * This is what makes Typora-style instant rendering possible without a second
+ * representation of the document: a block carries its **exact source text**, the offset
+ * range that text occupies, and the HTML that text renders to. Editing a block means
+ * splicing `source` into the authoritative document at `range`, so fidelity is guaranteed
+ * by construction — there is no serialiser that could normalise anything.
+ *
+ * `range` is expressed against the LF-normalised source; the editor converts back to the
+ * file's own line-ending style when it splices.
+ */
+export interface SourceBlock {
+  /** Stable within one render: `block-<index>`. */
+  id: string;
+  /** 0-based position in the document. */
+  index: number;
+  range: DocRange;
+  /** Exact source text of the block, byte-for-byte as authored. */
+  source: string;
+  /** Coarse classification, used for editor affordances and diagnostics. */
+  kind: SourceBlockKind;
+  /** HTML for this block alone, with the same placeholder ids as the full document. */
+  html: string;
+}
+
+export type SourceBlockKind =
+  | 'frontmatter'
+  | 'heading'
+  | 'paragraph'
+  | 'list'
+  | 'blockquote'
+  | 'table'
+  | 'code'
+  | 'diagram'
+  | 'math'
+  | 'rule'
+  | 'html'
+  | 'footnotes'
+  | 'other';
+
 export interface RenderStats {
   sourceBytes: number;
   sourceLines: number;
@@ -189,6 +230,8 @@ export interface RenderStats {
  */
 export interface RenderResult {
   html: string;
+  /** Top-level blocks, each with its own source range and HTML, for in-place editing. */
+  blocks: SourceBlock[];
   math: MathExpression[];
   mermaid: MermaidDiagram[];
   code: CodeBlock[];
@@ -198,6 +241,18 @@ export interface RenderResult {
   stats: RenderStats;
   /** YAML frontmatter parsed into a plain object, when present and valid. */
   frontmatter: Record<string, unknown> | null;
+}
+
+/**
+ * A parsed document: the render result plus the normalised source its offsets refer to.
+ *
+ * Lives here rather than beside the parser because three other modules — the reading view,
+ * the instant editor and the export layer — all consume it, and none of them should have to
+ * reach into the parser's internals.
+ */
+export interface ParsedDocument extends RenderResult {
+  /** LF-normalised source. Every offset in this result is an offset into this string. */
+  normalizedSource: string;
 }
 
 export function emptyStats(): RenderStats {

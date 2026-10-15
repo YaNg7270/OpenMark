@@ -8,11 +8,20 @@ import sup from 'markdown-it-sup';
 import mark from 'markdown-it-mark';
 import { parse as parseYaml } from 'yaml';
 import { RenderCollector, excerpt } from './collector';
-import { LineIndex, SourceLocator, normalizeEol } from './line-index';
+import { LineIndex, SourceLocator } from './line-index';
+import { normalizeEol } from '@/core/fs/encoding';
 import { mathPlugin, MATH_ENVIRONMENTS, MATH_META_KEY, type MathTokenMeta } from './math-plugin';
 import { frontmatterPlugin, FRONTMATTER_META, type FrontmatterInfo } from './rules';
 import { codePlaceholder, mathPlaceholder, mermaidPlaceholder, preservedPlaceholder } from './placeholders';
-import type { Diagnostic, DocRange, OutlineEntry, RenderResult, RenderStats } from './types';
+import type {
+  Diagnostic,
+  DocRange,
+  OutlineEntry,
+  ParsedDocument,
+  RenderStats,
+  SourceBlock,
+  SourceBlockKind,
+} from './types';
 import { emptyStats } from './types';
 
 /** Fence info strings that mean "diagram" rather than "code". */
@@ -628,19 +637,120 @@ export interface ParseOptions extends EngineOptions {
   sourcePath?: string;
 }
 
-export interface ParsedDocument extends RenderResult {
-  /** Normalised source (LF) that the parse tree's offsets refer to. */
-  normalizedSource: string;
-}
-
 export interface ParseHooks {
   /** Injected so the sanitiser can live in the browser layer and stay testable. */
   sanitizeHtml?: (html: string) => { html: string; removed: string[] };
 }
 
 /**
+ * Splits the flat token stream into top-level blocks.
+ *
+ * A block is a maximal run of tokens that begins and ends at nesting depth zero — an
+ * `*_open`/`*_close` pair, or a single self-contained token such as a fence or a rule.
+ * Rendering each slice on its own is what allows instant rendering to replace one block
+ * without touching the rest of the document.
+ *
+ * Every block's source range is derived from the token `map` values rather than from any
+ * re-serialisation, which is why the editor can splice text back in without risk.
+ */
+function buildBlocks(
+  tokens: Token[],
+  engine: MarkdownItInstance,
+  env: OpenmarkEnv,
+  index: LineIndex,
+): SourceBlock[] {
+  const groups: { start: number; end: number }[] = [];
+  let depth = 0;
+  let groupStart = 0;
+
+  for (let i = 0; i < tokens.length; i++) {
+    const token = tokens[i]!;
+    if (token.nesting === 1) {
+      if (depth === 0) groupStart = i;
+      depth++;
+    } else if (token.nesting === -1) {
+      depth--;
+      if (depth === 0) groups.push({ start: groupStart, end: i });
+    } else if (depth === 0) {
+      groups.push({ start: i, end: i });
+    }
+  }
+  // An unbalanced tail (should not happen, but a plugin could produce one) is still a block.
+  if (depth > 0) groups.push({ start: groupStart, end: tokens.length - 1 });
+
+  const blocks: SourceBlock[] = [];
+  for (const group of groups) {
+    const slice = tokens.slice(group.start, group.end + 1);
+    let startLine = Number.POSITIVE_INFINITY;
+    let endLine = -1;
+    for (const token of slice) {
+      if (!token.map) continue;
+      startLine = Math.min(startLine, token.map[0]);
+      endLine = Math.max(endLine, token.map[1]);
+    }
+    if (endLine < 0) continue; // No position information: cannot be edited in place.
+
+    const from = index.lineStart(startLine);
+    const to = index.lineEnd(endLine - 1);
+    blocks.push({
+      id: `block-${blocks.length}`,
+      index: blocks.length,
+      range: index.range(from, to),
+      source: index.text.slice(from, to),
+      kind: classifyBlock(slice),
+      html: engine.renderer.render(slice, engine.options, env),
+    });
+  }
+  return blocks;
+}
+
+/** Maps a token slice to the coarse kind used for editor affordances. */
+function classifyBlock(slice: Token[]): SourceBlockKind {
+  for (const token of slice) {
+    switch (token.type) {
+      case 'om_frontmatter':
+        return 'frontmatter';
+      case 'heading_open':
+        return 'heading';
+      case 'paragraph_open':
+        return 'paragraph';
+      case 'bullet_list_open':
+      case 'ordered_list_open':
+        return 'list';
+      case 'blockquote_open':
+        return 'blockquote';
+      case 'table_open':
+        return 'table';
+      case 'footnote_block_open':
+        return 'footnotes';
+      case 'hr':
+        return 'rule';
+      case 'html_block':
+        return 'html';
+      case 'math_block':
+        return 'math';
+      case 'code_block':
+        return 'code';
+      case 'fence': {
+        const fence = (token.meta as { omFence?: string } | null)?.omFence;
+        if (fence === 'mermaid') return 'diagram';
+        if (fence === 'math') return 'math';
+        return 'code';
+      }
+      default:
+        break;
+    }
+  }
+  return 'other';
+}
+
+/**
  * Parses a document to HTML plus the registries needed to finish rendering it.
  * Pure and synchronous: everything expensive (MathJax, Mermaid, Shiki) happens later.
+ *
+ * The source is parsed **once**, then rendered twice — once whole for the reading view and
+ * once per block for instant rendering. Re-parsing for the second view would double the
+ * cost of every edit.
  */
 export function parseDocument(source: string, engine: MarkdownItInstance, hooks: ParseHooks = {}): ParsedDocument {
   const startedAt = performance.now();
@@ -657,7 +767,10 @@ export function parseDocument(source: string, engine: MarkdownItInstance, hooks:
 
   structuralDiagnostics(normalized, collector, index);
 
-  let html = engine.render(normalized, env);
+  const tokens = engine.parse(normalized, env);
+  let html = engine.renderer.render(tokens, engine.options, env);
+  const blocks = buildBlocks(tokens, engine, env, index);
+
   if (hooks.sanitizeHtml) {
     const result = hooks.sanitizeHtml(html);
     html = result.html;
@@ -666,6 +779,11 @@ export function parseDocument(source: string, engine: MarkdownItInstance, hooks:
         source: 'markdown',
         detail: 'The element is preserved in the source file but is not rendered.',
       });
+    }
+    // Each block's HTML is sanitised too, so instant rendering cannot inject anything the
+    // reading view would have removed.
+    for (const block of blocks) {
+      block.html = hooks.sanitizeHtml(block.html).html;
     }
   }
 
@@ -686,6 +804,7 @@ export function parseDocument(source: string, engine: MarkdownItInstance, hooks:
 
   return {
     html,
+    blocks,
     math: collector.math,
     mermaid: collector.mermaid,
     code: collector.code,

@@ -1,22 +1,6 @@
 import type { DocPosition, DocRange } from './types';
 
 /**
- * Normalises line endings to `\n`.
- *
- * Markdown-it does exactly this in its own `normalize` core rule, which means every
- * offset the parser hands back is an offset into the *normalised* string. We build
- * our index over the same string so offsets agree. Line **counts and ordering are
- * preserved** by this transform, so line/column diagnostics remain valid for the
- * on-disk file — and the original bytes are never touched (the file service owns
- * round-trip fidelity, not the reader).
- */
-export function normalizeEol(src: string): string {
-  // Fast path: nothing to rewrite, which is the common case for authored markdown.
-  if (!src.includes('\r')) return src;
-  return src.replace(/\r\n?/g, '\n');
-}
-
-/**
  * Offset ⇄ line/column conversion for a source string.
  *
  * Backed by a sorted array of line-start offsets plus binary search, so a document

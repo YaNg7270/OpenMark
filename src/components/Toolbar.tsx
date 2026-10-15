@@ -23,10 +23,15 @@ const PANELS: { id: Exclude<SidebarPanel, null>; key: string; glyph: string }[] 
   { id: 'settings', key: 'toolbar.settings', glyph: '⚙' },
 ];
 
-/** Modes that are implemented. The others are hidden rather than shown broken. */
+/**
+ * Which view modes are implemented.
+ *
+ * Unavailable modes are hidden rather than shown broken, so the control never offers
+ * something that does not work.
+ */
 export const AVAILABLE_MODES: Record<ViewMode, boolean> = {
   read: true,
-  instant: false,
+  instant: true,
   source: true,
   split: true,
 };

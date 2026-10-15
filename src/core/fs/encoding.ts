@@ -13,6 +13,24 @@
 
 export type EolStyle = 'lf' | 'crlf' | 'cr';
 
+/**
+ * Normalises line endings to `\n`.
+ *
+ * Markdown-it does exactly this in its own `normalize` core rule, which means every offset
+ * the parser reports is an offset into the *normalised* string. Callers that splice text by
+ * parser-reported offsets must do it in this space and then restore the file's own style with
+ * `applyEol` — otherwise editing one paragraph of a CRLF file silently rewrites every other
+ * line ending.
+ *
+ * Line counts and ordering are preserved, so line/column diagnostics remain valid for the
+ * on-disk file.
+ */
+export function normalizeEol(src: string): string {
+  // Fast path: nothing to rewrite, which is the common case for authored markdown.
+  if (!src.includes('\r')) return src;
+  return src.replace(/\r\n?/g, '\n');
+}
+
 export interface DecodedText {
   /** Text with the BOM removed, line endings untouched. */
   text: string;
@@ -103,7 +121,7 @@ export function decodeText(bytes: Uint8Array): DecodedText {
 
 /** Applies a line-ending style to text, normalising first so the result is consistent. */
 export function applyEol(text: string, eol: EolStyle): string {
-  const normalized = text.replace(/\r\n?/g, '\n');
+  const normalized = normalizeEol(text);
   if (eol === 'lf') return normalized;
   const replacement = eol === 'crlf' ? '\r\n' : '\r';
   return normalized.replace(/\n/g, replacement);

@@ -46,7 +46,11 @@ test.describe('critical path', () => {
     const external = trackExternalRequests(page);
     await page.goto('/');
     await expect(page.locator('.om-toolbar')).toBeVisible();
-    await expect(page.locator('.om-segmented__item')).toHaveCount(3);
+    // All four view modes must be offered: read, instant, source, split.
+    await expect(page.locator('.om-segmented__item')).toHaveCount(4);
+    for (const mode of ['read', 'instant', 'source', 'split']) {
+      await expect(page.getByTestId(`mode-${mode}`)).toBeVisible();
+    }
     expect(external, `unexpected external requests: ${external.join(', ')}`).toEqual([]);
   });
 
@@ -282,5 +286,131 @@ test.describe('critical path', () => {
     const initial = await html.getAttribute('data-om-theme');
     await page.getByTestId('theme-toggle').click();
     await expect(html).not.toHaveAttribute('data-om-theme', initial ?? 'light');
+  });
+});
+
+test.describe('instant rendering', () => {
+  const DOC = ['# 标题', '', '第一段原文。', '', '第二段原文。', '', '- 列表项', ''].join('\n');
+
+  test('decomposes the document into blocks and edits one without touching the others', async ({ page }) => {
+    await openFixture(page, 'instant.md', DOC);
+    await page.getByTestId('mode-instant').click();
+
+    const blocks = page.locator('.om-block');
+    await expect(blocks).toHaveCount(4);
+    await expect(page.locator('.om-block[data-om-kind="heading"]')).toHaveCount(1);
+    await expect(page.locator('.om-block[data-om-kind="list"]')).toHaveCount(1);
+
+    // Clicking a paragraph turns exactly that block into an editor.
+    const paragraph = page.locator('.om-block[data-om-kind="paragraph"]').first();
+    await paragraph.locator('.om-block__rendered').click();
+    const editor = paragraph.locator('.om-block__editor');
+    await expect(editor).toBeVisible();
+    await expect(editor).toHaveValue('第一段原文。');
+
+    // Only one block may be editable at a time.
+    await expect(page.locator('.om-block__editor')).toHaveCount(1);
+
+    await editor.fill('第一段已经改写。');
+    // The commit is debounced; leaving the field flushes immediately.
+    await editor.blur();
+
+    // The rendered block must show the new text, and the others must be untouched.
+    await expect(page.locator('.om-block[data-om-kind="paragraph"]').first()).toContainText('第一段已经改写。');
+    await expect(page.locator('.om-block[data-om-kind="paragraph"]').nth(1)).toContainText('第二段原文。');
+
+    /*
+     * The real assertion: the authoritative source must contain the edit and nothing else.
+     * It is read through the `getSource` seam rather than the source textarea, because a
+     * textarea normalises line endings and would hide exactly the corruption these tests
+     * exist to catch.
+     */
+    const source = await page.evaluate(() => window.__openmark__!.getSource());
+    expect(source).toBe(['# 标题', '', '第一段已经改写。', '', '第二段原文。', '', '- 列表项', ''].join('\n'));
+  });
+
+  test('an LF file stays LF after an edit', async ({ page }) => {
+    const lf = '# 标题\n\n第一段原文。\n';
+    await openFixture(page, 'instant-lf.md', lf);
+    expect(await page.evaluate(() => window.__openmark__!.getEncoding())).toEqual({ bom: false, eol: 'lf' });
+
+    await page.getByTestId('mode-instant').click();
+    const paragraph = page.locator('.om-block[data-om-kind="paragraph"]').first();
+    await paragraph.locator('.om-block__rendered').click();
+    await paragraph.locator('.om-block__editor').fill('已替换。');
+    await paragraph.locator('.om-block__editor').blur();
+
+    expect(await page.evaluate(() => window.__openmark__!.getSource())).toBe('# 标题\n\n已替换。\n');
+  });
+
+  test('a CRLF file stays CRLF after an instant edit', async ({ page }) => {
+    const crlf = '# 标题\r\n\r\n第一段原文。\r\n\r\n第二段原文。\r\n';
+    await openFixture(page, 'instant-crlf.md', crlf);
+    expect(await page.evaluate(() => window.__openmark__!.getEncoding())).toEqual({ bom: false, eol: 'crlf' });
+
+    await page.getByTestId('mode-instant').click();
+    const paragraph = page.locator('.om-block[data-om-kind="paragraph"]').first();
+    await paragraph.locator('.om-block__rendered').click();
+    await paragraph.locator('.om-block__editor').fill('已替换。');
+    await paragraph.locator('.om-block__editor').blur();
+
+    const source = await page.evaluate(() => window.__openmark__!.getSource());
+    expect(source).toBe('# 标题\r\n\r\n已替换。\r\n\r\n第二段原文。\r\n');
+    expect(/[^\r]\n/.test(source), 'a bare LF leaked into a CRLF file').toBe(false);
+  });
+
+  test('a CRLF file stays CRLF after editing in source mode', async ({ page }) => {
+    /*
+     * Regression test for a data-loss defect.
+     *
+     * A textarea cannot hold CRLF — the HTML specification normalises line breaks in its
+     * `value` IDL attribute — so an editor that committed `element.value` directly rewrote
+     * every line ending in the file. The visible symptom was a whole-file diff after
+     * changing one character.
+     */
+    await openFixture(page, 'source-crlf.md', '# 标题\r\n\r\n正文。\r\n');
+    await page.getByTestId('mode-source').click();
+
+    const area = page.locator('.om-source__area');
+    await expect(area).toBeVisible();
+    // Focus places the caret at offset 0, so `End` lands at the end of the first line.
+    await area.focus();
+    await area.press('End');
+    await area.pressSequentially('追加');
+
+    const source = await page.evaluate(() => window.__openmark__!.getSource());
+    expect(source).toContain('追加');
+    expect(JSON.stringify(source), 'editing in source mode rewrote the line endings').toBe(
+      JSON.stringify('# 标题追加\r\n\r\n正文。\r\n'),
+    );
+    expect(/[^\r]\n/.test(source), 'a bare LF leaked into a CRLF file').toBe(false);
+  });
+
+  test('Escape leaves the editor and keeps the committed text', async ({ page }) => {
+    await openFixture(page, 'instant-escape.md', DOC);
+    await page.getByTestId('mode-instant').click();
+
+    const paragraph = page.locator('.om-block[data-om-kind="paragraph"]').first();
+    await paragraph.locator('.om-block__rendered').click();
+    await paragraph.locator('.om-block__editor').fill('通过 Escape 提交。');
+    await paragraph.locator('.om-block__editor').press('Escape');
+
+    await expect(page.locator('.om-block__editor')).toHaveCount(0);
+    await expect(page.locator('.om-block[data-om-kind="paragraph"]').first()).toContainText('通过 Escape 提交。');
+  });
+
+  test('a read-only document refuses to enter edit mode', async ({ page }) => {
+    await page.addInitScript(() => {
+      localStorage.setItem(
+        'openmark.settings.v1',
+        JSON.stringify({ version: 1, safety: { safeReadOnlyForComplexFiles: true, largeFileThresholdBytes: 100 } }),
+      );
+    });
+    // A document larger than the 100-byte threshold opens read-only.
+    await openFixture(page, 'instant-readonly.md', `${'正文内容，超过阈值。\n\n'.repeat(20)}\n`);
+    await page.getByTestId('mode-instant').click();
+
+    await page.locator('.om-block__rendered').first().click();
+    await expect(page.locator('.om-block__editor')).toHaveCount(0);
   });
 });

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { DocumentState } from '@/app/store';
+import { normalizeEol } from '@/core/fs/encoding';
 
 /**
  * Source editor.
@@ -15,7 +16,11 @@ import type { DocumentState } from '@/app/store';
 
 interface SourceEditorProps {
   doc: DocumentState;
-  onChange: (source: string) => void;
+  /**
+   * Receives LF-normalised text. The store restores the document's line-ending style, so a
+   * CRLF file survives an edit here — see `setSourceFromEditor`.
+   */
+  onChange: (normalizedSource: string) => void;
   /** Reported so the status bar can show a caret position. */
   onCursorChange?: (line: number, column: number) => void;
   readOnly: boolean;
@@ -50,7 +55,9 @@ export function SourceEditor({ doc, onChange, onCursorChange, readOnly }: Source
       <textarea
         ref={ref}
         className="om-source__area"
-        value={doc.source}
+        // Normalised for display: a textarea cannot represent CRLF, so lying about it in the
+        // controlled value would cause React to fight the DOM on every render.
+        value={normalizeEol(doc.source)}
         readOnly={readOnly}
         spellCheck={false}
         autoComplete="off"

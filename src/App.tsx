@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { DocumentView } from './components/DocumentView';
+import { InstantView } from './components/InstantView';
 import { Sidebar } from './components/Sidebar';
 import { SourceEditor } from './components/SourceEditor';
 import { StatusBar } from './components/StatusBar';
@@ -29,7 +30,7 @@ export function App() {
   const openViaDialog = useStore((s) => s.openViaDialog);
   const openPath = useStore((s) => s.openPath);
   const save = useStore((s) => s.save);
-  const setSource = useStore((s) => s.setSource);
+  const setSource = useStore((s) => s.setSourceFromEditor);
   const setMode = useStore((s) => s.setMode);
   const setSidebar = useStore((s) => s.setSidebar);
   const setActiveHeading = useStore((s) => s.setActiveHeading);
@@ -226,6 +227,7 @@ export function App() {
   );
 
   const showReader = ui.mode === 'read' || ui.mode === 'split';
+  const showInstant = ui.mode === 'instant';
   const showSource = ui.mode === 'source' || ui.mode === 'split';
 
   const body = useMemo(
@@ -248,10 +250,27 @@ export function App() {
               <DocumentView doc={doc} onNavigate={handleLink} />
             </div>
           )}
+          {showInstant && (
+            <div className="om-main__pane om-main__pane--instant">
+              <InstantView doc={doc} onNavigate={handleLink} />
+            </div>
+          )}
         </main>
       </div>
     ),
-    [doc, getDocumentRoot, handleLink, jumpToDiagnostic, jumpToHeading, setSource, showReader, showSource, ui.mode, updateSettings],
+    [
+      doc,
+      getDocumentRoot,
+      handleLink,
+      jumpToDiagnostic,
+      jumpToHeading,
+      setSource,
+      showInstant,
+      showReader,
+      showSource,
+      ui.mode,
+      updateSettings,
+    ],
   );
 
   return (

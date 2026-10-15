@@ -7,15 +7,17 @@ Living ledger for the OpenMark build. Updated at the end of every work session.
 - **Stack as built:** Tauri 2.12 (Rust 1.99) + React 19 + TypeScript 7 + Vite 8,
   `markdown-it@15` + GFM plugins, MathJax 4.1.3 (SVG output, mhchem), Mermaid 12, Shiki 4,
   DOMPurify 3.4.
-- **Last updated:** 2026-10-16 (session 1)
+- **Last updated:** 2026-10-16 (session 1, continued)
 
 ---
 
 ## 1. Where the project stands
 
-Phase 0 is complete and Phase 1 is largely complete. The application builds, runs as a real
-Windows desktop binary, reads Markdown correctly, renders LaTeX and chemistry offline, and
-is covered by a passing browser E2E suite and a 500-fixture regression corpus.
+Phase 0 is complete. Phase 1 is complete and Phase 2 is under way: all four view modes are
+implemented, including Typora-style instant rendering with in-place block editing. The
+application builds, runs as a real Windows desktop binary, reads Markdown correctly, renders
+LaTeX and chemistry offline, and is covered by passing browser E2E and unit suites plus a
+500-fixture regression corpus.
 
 ### Verified in this session (current evidence, not carried-over claims)
 
@@ -26,10 +28,20 @@ is covered by a passing browser E2E suite and a 500-fixture regression corpus.
 | Frontend build | `vite build` | exit 0 |
 | Windows binary | `tauri build --no-bundle` | `src-tauri/target/release/openmark.exe`, 13,833,728 bytes, boots |
 | Rust check | `cargo check` | zero warnings |
-| Browser E2E | `playwright test` | **10 passed** |
-| DOM/security unit | `vitest run --project dom` | **22 passed** |
+| Browser E2E | `playwright test` | **16 passed** |
+| Unit + DOM tests | `vitest run` | **55 passed** |
 | Corpus validation | `node scripts/verify-corpus.mjs` | OK — manifest matches disk |
 | Corpus size | — | 148 markdown docs, 355 formula cases (40 expected-error), 5 stress fixtures |
+
+### Milestone: all four view modes implemented
+
+Read, instant, source and split all work. Instant rendering is the significant one: the
+parser now exposes every top-level block with its exact source range and its own HTML, and
+clicking a block turns just that block into a source editor. An edit is committed by splicing
+text into the authoritative source at the block's range, so a block the user did not touch
+cannot change — not its list markers, not its fence info string, not its line endings. This
+is the mechanism that makes the no-data-loss guarantee compatible with a WYSIWYG experience,
+and it is the foundation the CodeMirror 6 editor will plug into.
 
 ### Milestone: offline MathJax proven
 
@@ -69,6 +81,12 @@ Each of these was found by a test, not by inspection. All have regression covera
    the readiness probe polled the IPv4 literal. Fixed with `--host 127.0.0.1`.
 7. **A wrong diagnostic code:** invalid YAML frontmatter was reported as
    `math-unbalanced-braces`. Now `invalid-frontmatter`.
+8. **The source editor rewrote every line ending in a CRLF file.** A `<textarea>` cannot hold
+   CRLF — the HTML specification normalises line breaks in its `value` IDL attribute — so
+   committing `element.value` directly converted the whole file to LF on the next save. The
+   symptom is a whole-file diff after editing one character. Editors now work in normalised
+   space and the store restores the document's own style. Pinned by an E2E test that appends
+   to a CRLF file and asserts no bare LF survives.
 
 ---
 
@@ -104,16 +122,14 @@ Each of these was found by a test, not by inspection. All have regression covera
 
 ### P1
 
-1. **Instant-rendering mode is not implemented.** Three of the four view modes work (read,
-   source, split); `instant` is deliberately absent from the toolbar rather than shipped
-   broken, because `AVAILABLE_MODES` gates it. This is the largest remaining feature.
-2. **Editing is minimal.** Source mode is a byte-exact textarea. CodeMirror 6, find/replace,
-   table editing, image paste and smart lists are all still to build.
-3. **Export is not started.** HTML and PDF export are unimplemented.
-4. **Packaging is half done.** A release binary and a validated portable configuration exist;
-   the NSIS installer has not yet been produced in this session, and unsigned installers will
-   trigger SmartScreen.
-5. **Only 13 of the 28 declared diagnostic codes are emitted.** The corpus authors fixtures
+1. **Editing is minimal beyond instant mode.** Source mode is a byte-exact textarea and
+   instant mode edits whole blocks; both work, but CodeMirror 6 (syntax highlighting,
+   multi-cursor, bracket matching), find/replace, table editing and image paste are still to
+   build.
+2. **Export is in progress.** HTML and PDF export are being built.
+3. **Packaging is in progress.** A release binary and a validated portable configuration
+   exist; the NSIS installer and a portable archive are being produced and verified.
+4. **Only 15 of the 28 declared diagnostic codes are emitted.** The corpus authors fixtures
    for the rest as targets; `tests/corpus/README.md` states this explicitly so nobody writes
    a passing assertion against behaviour that does not exist.
 
@@ -133,21 +149,17 @@ Each of these was found by a test, not by inspection. All have regression covera
 
 ## 5. Next actions, in priority order
 
-1. Build the **instant-rendering mode**: expose top-level block source ranges from the
-   parser, then implement block-wise inline editing that patches the authoritative source by
-   offset. This is also the foundation CodeMirror 6 will plug into.
-2. Add the **CodeMirror 6 source editor** with Markdown syntax highlighting, replacing the
-   textarea behind the existing value-in/`onChange`-out contract.
-3. **Find and replace** across both source and reading views.
-4. **HTML and PDF export** (self-contained HTML; PDF via WebView2 `PrintToPdf`), with
-   preflight checks for missing and remote assets.
-5. **Round-trip property tests** using `fast-check` over the corpus, asserting that
-   open → save → reopen is byte-identical.
-6. **Corpus-driven parse tests**: run all 148 documents through the parser and assert each
+1. **CodeMirror 6 source editor** with Markdown syntax highlighting, replacing the textarea
+   behind the existing value-in/`onChange`-out contract.
+2. **Find and replace** across both source and reading views.
+3. **Round-trip property tests** using `fast-check` over the corpus, asserting that
+   open → save → reopen is byte-identical for every fixture.
+4. **Corpus-driven parse tests**: run all 148 documents through the parser and assert each
    manifest expectation (`expect.headings`, `expect.math`, declared diagnostics).
-7. Produce the **NSIS installer** and record the SmartScreen experience honestly.
-8. **WebdriverIO desktop E2E** against the real binary, using `@wdio/tauri-service` with the
-   `tauri-plugin-wdio` hook already registered under `debug_assertions`.
+5. **Table and image editing** in instant mode, plus image paste and asset management.
+6. **Tabs, recent files and last reading position.**
+7. Emit the remaining **diagnostic codes** that the corpus already has fixtures for.
+8. Fill the remaining `DiagnosticCode` union members or remove the ones with no implementation plan.
 
 ---
 
@@ -161,6 +173,7 @@ pnpm install
 pnpm build                 # also vendors MathJax into public/
 pnpm test                  # Vitest, unit + dom projects
 pnpm test:e2e              # Playwright against the production build, Edge channel
+pnpm test:desktop          # WebdriverIO against the real Windows binary
 pnpm corpus:verify         # corpus manifest ⇄ disk
 pnpm typecheck && pnpm lint
 
