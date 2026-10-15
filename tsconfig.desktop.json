@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    // WebdriverIO's service and the Node globals Mocha injects are not part of the app's
+    // type environment, so the desktop suite is checked separately rather than widening
+    // `types` for the whole repository.
+    "types": ["node", "@wdio/globals/types", "vite/client"]
+  },
+  "include": ["tests/desktop"],
+  "exclude": ["node_modules", "dist", "src-tauri", ".tools"]
+}

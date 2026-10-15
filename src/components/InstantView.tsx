@@ -46,7 +46,7 @@ export function InstantView({ doc, onNavigate }: InstantViewProps) {
   const signature = `${doc.path ?? ''}:${doc.hash}`;
 
   useTypesetting(hostRef, scrollRef, doc.render, signature, revision);
-  useReadingProgress(scrollRef, signature);
+  useReadingProgress(scrollRef, hostRef, { path: doc.path, hash: doc.hash }, signature);
 
   // Leaving edit mode restores placeholders that were inside the edited block, so the
   // typesetter has to run again for them.

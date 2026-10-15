@@ -676,3 +676,117 @@ html[data-om-focus='on'] .om-sidebar,
 html[data-om-focus='on'] .om-statusbar {
   display: none;
 }
+
+
+/* ---- recent files -------------------------------------------------------- */
+
+.om-recent {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.om-recent__item {
+  display: flex;
+  align-items: stretch;
+  gap: 2px;
+}
+
+.om-recent__open {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas:
+    'name progress'
+    'path progress';
+  gap: 0 8px;
+  padding: 5px 8px;
+  border: none;
+  border-radius: var(--om-radius-sm);
+  background: transparent;
+  color: var(--om-text-muted);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.om-recent__open:hover {
+  background: var(--om-bg-hover);
+  color: var(--om-text);
+}
+
+.om-recent__open[data-active='true'] {
+  background: var(--om-accent-soft);
+  color: var(--om-accent);
+}
+
+.om-recent__name {
+  grid-area: name;
+  font-size: 12.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.om-recent__path {
+  grid-area: path;
+  font-size: 10.5px;
+  color: var(--om-text-faint);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  direction: rtl;
+  text-align: left;
+}
+
+.om-recent__progress {
+  grid-area: progress;
+  align-self: center;
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--om-text-faint);
+}
+
+.om-recent__forget {
+  width: 20px;
+  border: none;
+  border-radius: var(--om-radius-sm);
+  background: transparent;
+  color: var(--om-text-faint);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity var(--om-transition);
+}
+
+.om-recent__item:hover .om-recent__forget,
+.om-recent__forget:focus-visible {
+  opacity: 1;
+}
+
+.om-recent__forget:hover {
+  color: var(--om-error);
+  background: var(--om-bg-hover);
+}
+
+/* Recent files inside the empty state: centred and deliberately narrow. */
+.om-doc__recent {
+  width: min(420px, 100%);
+  margin-top: 2.5rem;
+  text-align: left;
+}
+
+.om-doc__recent h3 {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--om-text-faint);
+  border: none;
+}

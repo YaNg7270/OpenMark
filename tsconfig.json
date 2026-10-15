@@ -29,6 +29,13 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src", "tests", "scripts", "e2e", "*.config.ts"],
-  "exclude": ["node_modules", "dist", "src-tauri", ".tools"]
+  "include": ["src", "tests", "scripts", "*.config.ts"],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "src-tauri",
+    ".tools",
+    "tests/corpus",
+    "tests/desktop"
+  ]
 }

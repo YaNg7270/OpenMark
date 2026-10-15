@@ -18,6 +18,7 @@ const MODES: { id: ViewMode; key: string }[] = [
 
 const PANELS: { id: Exclude<SidebarPanel, null>; key: string; glyph: string }[] = [
   { id: 'outline', key: 'toolbar.outline', glyph: '☰' },
+  { id: 'recent', key: 'toolbar.recent', glyph: '↺' },
   { id: 'search', key: 'toolbar.search', glyph: '⌕' },
   { id: 'diagnostics', key: 'toolbar.diagnostics', glyph: '⚠' },
   { id: 'settings', key: 'toolbar.settings', glyph: '⚙' },

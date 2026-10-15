@@ -6,11 +6,19 @@ import { sanitizeHtml } from '@/core/markdown/sanitize';
 import * as files from '@/core/fs/fileService';
 import { applyEol, contentHash, normalizeEol, type EolStyle } from '@/core/fs/encoding';
 import { applySettingsToDocument, loadSettings, saveSettings, resolveTheme, type AppSettings } from './settings';
+import {
+  forgetFile,
+  loadSession,
+  saveSession,
+  withReadingPosition,
+  withRecentFile,
+  type SessionState,
+} from './session';
 
 /** The four view modes the product promises. */
 export type ViewMode = 'read' | 'instant' | 'source' | 'split';
 
-export type SidebarPanel = 'outline' | 'search' | 'diagnostics' | 'settings' | null;
+export type SidebarPanel = 'outline' | 'search' | 'diagnostics' | 'settings' | 'recent' | null;
 
 export interface DocumentState {
   path: string | null;
@@ -70,6 +78,8 @@ interface AppStore {
   settings: AppSettings;
   doc: DocumentState;
   ui: UiState;
+  /** Recently opened files and where the reader had got to in each. Persisted. */
+  session: SessionState;
   /** Diagnostics from the last render, surfaced to the panel and the status bar. */
   diagnostics: Diagnostic[];
 
@@ -99,6 +109,13 @@ interface AppStore {
   save: () => Promise<void>;
   saveAs: () => Promise<void>;
   checkExternalChange: () => Promise<void>;
+  /**
+   * Records how far the reader has got in the current document. Called on a debounce while
+   * scrolling, so it must stay cheap.
+   */
+  rememberPosition: (position: { scrollTop: number; progress: number; headingId: string | null }) => void;
+  /** Removes a file from the recent list, along with its saved position. */
+  forgetRecent: (path: string) => void;
 
   setMode: (mode: ViewMode) => void;
   setSidebar: (panel: SidebarPanel) => void;
@@ -162,6 +179,7 @@ function evaluateReadOnly(
 
 const initialSettings = loadSettings();
 applySettingsToDocument(initialSettings);
+const initialSession = loadSession();
 
 export const useStore = create<AppStore>((set, get) => ({
   settings: initialSettings,
@@ -175,6 +193,7 @@ export const useStore = create<AppStore>((set, get) => ({
     notice: null,
   },
   diagnostics: [],
+  session: initialSession,
 
   openViaDialog: async () => {
     const path = await files.pickOpenPath();
@@ -188,7 +207,11 @@ export const useStore = create<AppStore>((set, get) => ({
       const file = await files.readFile(path);
       const parsed = parse(file.text);
       const gate = evaluateReadOnly(file.text, file.size, parsed.diagnostics, get().settings);
+      const nextSession = withRecentFile(get().session, { path: file.path, name: file.name });
+      saveSession(nextSession);
+
       set((s) => ({
+        session: nextSession,
         doc: {
           ...EMPTY_DOC,
           path: file.path,
@@ -329,6 +352,24 @@ export const useStore = create<AppStore>((set, get) => ({
     const stat = await files.statFile(doc.path);
     if (!stat?.exists || stat.mtimeMs === doc.mtimeMs) return;
     set((s) => ({ doc: { ...s.doc, externalChange: { mtimeMs: stat.mtimeMs } } }));
+  },
+
+  rememberPosition: (position) => {
+    const { doc, session } = get();
+    if (!doc.path) return;
+    const next = withReadingPosition(session, doc.path, {
+      ...position,
+      hash: doc.hash,
+      updatedAt: Date.now(),
+    });
+    saveSession(next);
+    set({ session: next });
+  },
+
+  forgetRecent: (path) => {
+    const next = forgetFile(get().session, path);
+    saveSession(next);
+    set({ session: next });
   },
 
   setMode: (mode) => set((s) => ({ ui: { ...s.ui, mode } })),

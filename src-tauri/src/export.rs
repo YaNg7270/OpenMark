@@ -399,7 +399,7 @@ fn start_print(
 
     use webview2_com::Microsoft::Web::WebView2::Win32::{ICoreWebView2Environment6, ICoreWebView2_7};
     use webview2_com::PrintToPdfCompletedHandler;
-    use windows::core::{Interface, PCWSTR, BOOL};
+    use windows::core::{Interface, PCWSTR};
 
     let wide: Vec<u16> = path
         .as_os_str()
@@ -426,10 +426,10 @@ fn start_print(
         // Without backgrounds, code blocks, table headers and diagram canvases print as
         // blank paper.
         settings
-            .SetShouldPrintBackgrounds(BOOL::from(true))
+            .SetShouldPrintBackgrounds(true)
             .map_err(|err| format!("cannot enable printed backgrounds: {err}"))?;
         settings
-            .SetShouldPrintHeaderAndFooter(BOOL::from(false))
+            .SetShouldPrintHeaderAndFooter(false)
             .map_err(|err| format!("cannot disable the print header: {err}"))?;
 
         let handler = PrintToPdfCompletedHandler::create(Box::new(move |error, succeeded| {

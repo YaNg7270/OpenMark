@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 import { useStore, type DocumentState } from '@/app/store';
 import { useReadingProgress, useTypesetting } from './useTypesetting';
+import { RecentPanel } from './RecentPanel';
 
 /**
  * The reading surface.
@@ -27,6 +28,7 @@ export function DocumentView({ doc, onNavigate }: DocumentViewProps) {
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
   const showProgress = useStore((s) => s.settings.reading.showReadingProgress);
+  const hasRecent = useStore((s) => s.session.recent.length > 0);
   const mode = useStore((s) => s.ui.mode);
   const progress = useStore((s) => s.ui.progress);
 
@@ -35,7 +37,7 @@ export function DocumentView({ doc, onNavigate }: DocumentViewProps) {
   const signature = `${doc.path ?? ''}:${doc.hash}`;
 
   useTypesetting(hostRef, scrollRef, doc.render, signature, 0);
-  useReadingProgress(scrollRef, signature);
+  useReadingProgress(scrollRef, hostRef, { path: doc.path, hash: doc.hash }, signature);
 
   if (doc.error) {
     return (
@@ -54,6 +56,12 @@ export function DocumentView({ doc, onNavigate }: DocumentViewProps) {
         <p className="om-doc__hint">
           支持 <code>.md</code> 与 <code>.markdown</code>；公式、表格、流程图与代码高亮均可离线渲染。
         </p>
+        {hasRecent && (
+          <section className="om-doc__recent">
+            <h3>最近打开</h3>
+            <RecentPanel compact />
+          </section>
+        )}
       </div>
     );
   }

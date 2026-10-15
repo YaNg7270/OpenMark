@@ -1,0 +1,147 @@
+/**
+ * OpenMark desktop E2E against the real Tauri binary.
+ *
+ * Everything asserted here is produced by the shipped code paths: `src/components/Toolbar.tsx`
+ * for the shell, `src/components/SourceEditor.tsx` for source mode, and
+ * `src/core/render/typesetter.ts` + MathJax 4 for the formulas. Nothing is mocked, and the
+ * document is opened through the same "file handed to the process" path Windows uses for
+ * "Open with" (see `markdown_paths` in `src-tauri/src/lib.rs`).
+ */
+
+import { $, browser, expect } from '@wdio/globals';
+
+// Mocha injects these as globals. The repository's tsconfig pins `types` to
+// ["vite/client", "node"], and @types/mocha is only a transitive dependency, so the two
+// signatures this file uses are declared here rather than by widening the shared tsconfig.
+declare function describe(title: string, fn: () => void): void;
+declare function it(title: string, fn: () => void | Promise<void>): void;
+
+const TOOLBAR = '.om-toolbar';
+const DOCUMENT_NAME = '[data-om-testid="document-name"]';
+const OPEN_BUTTON = '[data-om-testid="open-button"]';
+const SAVE_BUTTON = '[data-om-testid="save-button"]';
+const MODE_READ = '[data-om-testid="mode-read"]';
+const MODE_SOURCE = '[data-om-testid="mode-source"]';
+// Source mode hosts CodeMirror 6: the container is tagged `data-om-editor="source"` and the
+// editable surface is the contenteditable `.cm-content` inside it.
+const SOURCE_EDITOR = '[data-om-editor="source"]';
+const SOURCE_CONTENT = '[data-om-editor="source"] .cm-content';
+const DOC_ROOT = '.om-doc';
+const FIXTURE_HEADING = '# OpenMark desktop fixture';
+
+const LAUNCH_TIMEOUT_MS = 60_000;
+const MOUNT_TIMEOUT_MS = 20_000;
+const TYPESET_TIMEOUT_MS = 30_000;
+
+/** Wait for a selector, with a failure message that names the selector. */
+async function waitFor(selector: string, timeoutMsg: string, timeout = MOUNT_TIMEOUT_MS): Promise<void> {
+  await browser.waitUntil(async () => (await $(selector)).isExisting(), {
+    timeout,
+    interval: 200,
+    timeoutMsg: `${timeoutMsg} (${selector})`,
+  });
+}
+
+/**
+ * Typesetting is lazy — a placeholder is only filled when it approaches the viewport — so a
+ * formula must be scrolled into view before it can be asserted on.
+ */
+async function scrollTo(selector: string): Promise<void> {
+  await browser.execute((sel: string) => {
+    document.querySelector(sel)?.scrollIntoView({ block: 'center' });
+  }, selector);
+}
+
+describe('OpenMark desktop shell', () => {
+  it('launches the real binary and renders the application shell', async () => {
+    await waitFor(TOOLBAR, 'the OpenMark shell never mounted', LAUNCH_TIMEOUT_MS);
+
+    const url = await browser.getUrl();
+    console.log(`[desktop-e2e] url=${url} title=${await browser.getTitle()}`);
+
+    // The window must be the embedded frontend, not an unbuilt dev-server URL.
+    expect(url).toMatch(/tauri\.localhost|^tauri:\/\//);
+    expect(await browser.getTitle()).toContain('OpenMark');
+  });
+
+  it('renders the toolbar and the document name of the opened fixture', async () => {
+    await waitFor(DOCUMENT_NAME, 'the document name element is missing');
+
+    await expect($(OPEN_BUTTON)).toExist();
+    await expect($(SAVE_BUTTON)).toExist();
+
+    // The fixture arrived through the process command line; the toolbar must name it.
+    await browser.waitUntil(async () => (await $(DOCUMENT_NAME).getText()).includes('math-render'), {
+      timeout: MOUNT_TIMEOUT_MS,
+      timeoutMsg: 'the fixture passed on the command line was never opened',
+    });
+
+    console.log(`[desktop-e2e] document-name=${await $(DOCUMENT_NAME).getText()}`);
+  });
+
+  it('switches to source mode and shows the raw markdown', async () => {
+    await $(MODE_SOURCE).click();
+
+    await waitFor(SOURCE_EDITOR, 'the source editor never mounted');
+    await waitFor(SOURCE_CONTENT, 'the CodeMirror content surface never appeared');
+    await browser.waitUntil(async () => (await $(SOURCE_CONTENT)).isDisplayed(), {
+      timeout: MOUNT_TIMEOUT_MS,
+      timeoutMsg: 'the source editor stayed hidden',
+    });
+
+    expect(await $(SOURCE_CONTENT).getText()).toContain(FIXTURE_HEADING);
+    expect(await $(MODE_SOURCE).getAttribute('data-active')).toBe('true');
+
+    // Back to reading, so the math assertions run against the reading surface.
+    await $(MODE_READ).click();
+    await waitFor(DOC_ROOT, 'the reading surface did not come back');
+  });
+
+  it('typesets a display formula into real MathJax glyphs', async () => {
+    const formula = `${DOC_ROOT} .om-math--display`;
+    await waitFor(formula, 'the display formula placeholder never rendered');
+    await scrollTo(formula);
+
+    const glyphSelector = `${formula} mjx-container svg use, ${formula} mjx-container svg path`;
+
+    await browser.waitUntil(
+      async () => browser.execute((sel: string) => document.querySelectorAll(sel).length, glyphSelector),
+      {
+        timeout: TYPESET_TIMEOUT_MS,
+        interval: 250,
+        timeoutMsg: 'MathJax never filled the display formula',
+      },
+    );
+
+    // A container with no glyphs "renders" but is blank, so count real glyph references.
+    const glyphs = await browser.execute(
+      (sel: string) => document.querySelectorAll(sel).length,
+      glyphSelector,
+    );
+    expect(glyphs).toBeGreaterThan(3);
+  });
+
+  it('flags a broken formula as an error without losing its source', async () => {
+    const errors = `${DOC_ROOT} .om-math[data-om-state="error"]`;
+    await waitFor(errors, 'the broken formula was never reported as an error', TYPESET_TIMEOUT_MS);
+    await scrollTo(errors);
+
+    const errorNodes = await browser.execute(
+      (sel: string) => document.querySelectorAll(sel).length,
+      errors,
+    );
+    expect(errorNodes).toBeGreaterThan(0);
+
+    // The failure must keep the offending TeX visible rather than blanking the node.
+    const rendered = await browser.execute(
+      (sel: string) =>
+        Array.from(document.querySelectorAll(sel))
+          .map((node) => (node as HTMLElement).innerText)
+          .join('\n'),
+      errors,
+    );
+    expect(rendered).toContain('thisMacroDoesNotExist');
+
+    console.log(`[desktop-e2e] error nodes=${errorNodes}`);
+  });
+});

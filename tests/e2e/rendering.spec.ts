@@ -479,3 +479,76 @@ test.describe('source editor', () => {
     await expect(page.locator('.om-source__host .cm-lineNumbers')).toBeVisible();
   });
 });
+
+test.describe('session state', () => {
+  test('remembers recently opened files, most recent first', async ({ page }) => {
+    await page.addInitScript(() => {
+      window.__OPENMARK_TEST_FILES__ = {
+        'alpha.md': '# Alpha\n\n甲的内容。\n',
+        'beta.md': '# Beta\n\n乙的内容。\n',
+      };
+    });
+    await page.goto('/');
+    await page.waitForFunction(() => Boolean(window.__openmark__));
+
+    await page.evaluate(() => window.__openmark__!.openPath('alpha.md'));
+    await expect(page.getByTestId('document-name')).toHaveText('alpha.md');
+    await page.evaluate(() => window.__openmark__!.openPath('beta.md'));
+    await expect(page.getByTestId('document-name')).toHaveText('beta.md');
+
+    await page.getByTestId('panel-recent').click();
+    const entries = page.locator('[data-om-testid="recent-list"] .om-recent__name');
+    await expect(entries).toHaveCount(2);
+    // The most recently opened file must be first.
+    await expect(entries.first()).toHaveText('beta.md');
+    await expect(entries.nth(1)).toHaveText('alpha.md');
+  });
+
+  test('restores the reading position when the same file is reopened', async ({ page }) => {
+    // A document long enough to scroll well past the first screen.
+    const long = Array.from({ length: 220 }, (_, i) => `## 第 ${i + 1} 节\n\n${'正文内容。'.repeat(12)}\n`).join('\n');
+    await page.addInitScript(
+      (content) => {
+        window.__OPENMARK_TEST_FILES__ = { 'long.md': content, 'other.md': '# 其他\n\n内容。\n' };
+      },
+      long,
+    );
+    await page.goto('/');
+    await page.waitForFunction(() => Boolean(window.__openmark__));
+    await page.evaluate(() => window.__openmark__!.openPath('long.md'));
+    await expect(page.locator('.om-doc-scroll')).toBeVisible();
+
+    // Scroll to roughly the middle, then let the debounced save settle.
+    await page.locator('.om-doc-scroll').evaluate((el) => {
+      el.scrollTop = (el.scrollHeight - el.clientHeight) * 0.5;
+    });
+    await page.waitForTimeout(900);
+    const saved = await page.locator('.om-doc-scroll').evaluate((el) => el.scrollTop);
+    expect(saved, 'the document did not scroll').toBeGreaterThan(200);
+
+    // Open something else, then come back.
+    await page.evaluate(() => window.__openmark__!.openPath('other.md'));
+    await expect(page.getByTestId('document-name')).toHaveText('other.md');
+    await page.evaluate(() => window.__openmark__!.openPath('long.md'));
+    await expect(page.getByTestId('document-name')).toHaveText('long.md');
+
+    // Restoring is applied on mount; give layout and image-free fonts a moment to settle.
+    await expect
+      .poll(async () => page.locator('.om-doc-scroll').evaluate((el) => el.scrollTop), { timeout: 5_000 })
+      .toBeGreaterThan(200);
+  });
+
+  test('a file can be removed from the recent list', async ({ page }) => {
+    await page.addInitScript(() => {
+      window.__OPENMARK_TEST_FILES__ = { 'gone.md': '# 待移除\n\n内容。\n' };
+    });
+    await page.goto('/');
+    await page.waitForFunction(() => Boolean(window.__openmark__));
+    await page.evaluate(() => window.__openmark__!.openPath('gone.md'));
+
+    await page.getByTestId('panel-recent').click();
+    await expect(page.locator('[data-om-testid="recent-list"] .om-recent__name')).toHaveCount(1);
+    await page.locator('.om-recent__forget').first().click();
+    await expect(page.locator('[data-om-testid="recent-list"]')).toHaveCount(0);
+  });
+});

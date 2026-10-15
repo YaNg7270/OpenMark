@@ -3,6 +3,7 @@ import { OutlinePanel } from './OutlinePanel';
 import { SearchPanel } from './SearchPanel';
 import { DiagnosticsPanel } from './DiagnosticsPanel';
 import { SettingsPanel } from './SettingsPanel';
+import { RecentPanel } from './RecentPanel';
 import { t } from '@/i18n';
 import type { AppSettings } from '@/app/settings';
 import type { Diagnostic, OutlineEntry } from '@/core/markdown/types';
@@ -51,6 +52,7 @@ export function Sidebar({ getDocumentRoot, onOutlineSelect, onDiagnosticSelect, 
         {sidebar === 'search' && <SearchPanel getRoot={getDocumentRoot} />}
         {sidebar === 'diagnostics' && <DiagnosticsPanel diagnostics={diagnostics} onSelect={onDiagnosticSelect} />}
         {sidebar === 'settings' && <SettingsPanel onChange={onSettingsChange} />}
+        {sidebar === 'recent' && <RecentPanel />}
       </div>
     </aside>
   );
