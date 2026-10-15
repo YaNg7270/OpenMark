@@ -87,12 +87,18 @@ export const config = {
         autoDownloadEdgeDriver: true,
         tauriDriverPort: 4444,
         logLevel: 'info',
+        // tauri-driver's (and therefore msedgedriver's) stderr is the only place a driver
+        // failure explains itself; without this the run just reports ECONNREFUSED.
+        captureBackendLogs: true,
       },
     ],
   ],
 
   framework: 'mocha',
   reporters: ['spec'],
+  // Matches the `tests/desktop/.wdio-logs/` entry in .gitignore; the service writes its
+  // captured driver logs here.
+  outputDir: resolve(here, '.wdio-logs'),
   mochaOpts: {
     ui: 'bdd',
     // The first launch of a debug binary plus a WebView2 cold start is slow.

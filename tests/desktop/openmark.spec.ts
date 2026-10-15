@@ -16,6 +16,7 @@ import { $, browser, expect } from '@wdio/globals';
 // signatures this file uses are declared here rather than by widening the shared tsconfig.
 declare function describe(title: string, fn: () => void): void;
 declare function it(title: string, fn: () => void | Promise<void>): void;
+declare function before(fn: () => void | Promise<void>): void;
 
 /** `withGlobalTauri: true` in tauri.conf.json exposes the Tauri API on `window`. */
 interface TauriGlobal {
@@ -85,6 +86,15 @@ async function scrollTo(selector: string): Promise<void> {
 }
 
 describe('OpenMark desktop shell', () => {
+  before(async () => {
+    // `$`, `getTitle` and `click` each make the service re-resolve the active window, which
+    // needs `@wdio/tauri-plugin` in the frontend; without it every command spends ~7 s on a
+    // failed probe. An explicit switch to the app's only window suppresses that probe for the
+    // rest of the session (`userSwitchedWindowCache` in @wdio/tauri-service).
+    const [handle] = await browser.getWindowHandles();
+    if (handle) await browser.switchToWindow(handle);
+  });
+
   it('launches the real binary and renders the application shell', async () => {
     await waitFor(TOOLBAR, 'the OpenMark shell never mounted', LAUNCH_TIMEOUT_MS);
 

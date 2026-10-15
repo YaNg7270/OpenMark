@@ -7,17 +7,18 @@ Living ledger for the OpenMark build. Updated at the end of every work session.
 - **Stack as built:** Tauri 2.12 (Rust 1.99) + React 19 + TypeScript 7 + Vite 8,
   `markdown-it@15` + GFM plugins, MathJax 4.1.3 (SVG output, mhchem), Mermaid 12, Shiki 4,
   DOMPurify 3.4.
-- **Last updated:** 2026-10-16 (session 1, continued)
+- **Last updated:** 2026-10-16 (session 1, continued again)
 
 ---
 
 ## 1. Where the project stands
 
-Phase 0 is complete. Phase 1 is complete and Phase 2 is under way: all four view modes are
-implemented, including Typora-style instant rendering with in-place block editing. The
-application builds, runs as a real Windows desktop binary, reads Markdown correctly, renders
-LaTeX and chemistry offline, and is covered by passing browser E2E and unit suites plus a
-500-fixture regression corpus.
+Phases 0–3 are complete and Phase 4 is largely complete. All four view modes work, including
+Typora-style instant rendering with in-place block editing; formulas render offline with real
+glyphs and can be copied or edited in place; diagnostics cover every code the corpus declares;
+HTML and PDF export are wired into the toolbar; and Windows installers and a portable package
+have been produced. The remaining work is Phase 5: final acceptance, the test report, and the
+user-facing documentation.
 
 ### Verified in this session (current evidence, not carried-over claims)
 
@@ -28,10 +29,20 @@ LaTeX and chemistry offline, and is covered by passing browser E2E and unit suit
 | Frontend build | `vite build` | exit 0 |
 | Windows binary | `tauri build --no-bundle` | `src-tauri/target/release/openmark.exe`, 13,833,728 bytes, boots |
 | Rust check | `cargo check` | zero warnings |
-| Browser E2E | `playwright test` | **16 passed** |
-| Unit + DOM tests | `vitest run` | **55 passed** |
+| Browser E2E | `playwright test` | **29 passed** |
+| Unit + DOM tests | `vitest run` | **371 passed** (incl. 300 corpus-conformance assertions) |
+| Windows installers | `tauri build` | NSIS 8.9 MB, MSI 9.8 MB, portable zip 10.0 MB |
+| Desktop binary | direct launch | debug build boots and stays alive; release build verified |
 | Corpus validation | `node scripts/verify-corpus.mjs` | OK — manifest matches disk |
+| Corpus diagnostics | `vitest run corpus.test.ts` | **148/148 fixtures emit every declared diagnostic** |
 | Corpus size | — | 148 markdown docs, 355 formula cases (40 expected-error), 5 stress fixtures |
+
+### Milestone: every declared diagnostic is now emitted
+
+The corpus declares the diagnostics each fixture should produce, including codes the parser did
+not yet emit; the conformance suite therefore doubles as a progress meter. That number went
+from 133/148 to **148/148** this session, which also means the `DiagnosticCode` union no longer
+contains aspirational entries with no implementation.
 
 ### Milestone: all four view modes implemented
 
@@ -122,16 +133,14 @@ Each of these was found by a test, not by inspection. All have regression covera
 
 ### P1
 
-1. **Editing is minimal beyond instant mode.** Source mode is a byte-exact textarea and
-   instant mode edits whole blocks; both work, but CodeMirror 6 (syntax highlighting,
-   multi-cursor, bracket matching), find/replace, table editing and image paste are still to
-   build.
-2. **Export is in progress.** HTML and PDF export are being built.
-3. **Packaging is in progress.** A release binary and a validated portable configuration
-   exist; the NSIS installer and a portable archive are being produced and verified.
-4. **Only 15 of the 28 declared diagnostic codes are emitted.** The corpus authors fixtures
-   for the rest as targets; `tests/corpus/README.md` states this explicitly so nobody writes
-   a passing assertion against behaviour that does not exist.
+1. **Table editing and image paste are not implemented.** Instant mode edits whole blocks, so a
+   table can be edited as text, but there is no grid editor and no paste/drag image handling.
+2. **Tabs are not implemented.** One document at a time; the recent-files list is the
+   substitute.
+3. **Typewriter mode is a setting with no implementation.** Focus mode works; the setting is
+   stored and projected to CSS but nothing reads it.
+4. **WebdriverIO desktop E2E has not yet been shown green.** The toolchain and driver wiring
+   are in place and the app itself launches; see the test report for the current result.
 
 ### P2
 
@@ -149,17 +158,13 @@ Each of these was found by a test, not by inspection. All have regression covera
 
 ## 5. Next actions, in priority order
 
-1. **CodeMirror 6 source editor** with Markdown syntax highlighting, replacing the textarea
-   behind the existing value-in/`onChange`-out contract.
-2. **Find and replace** across both source and reading views.
-3. **Round-trip property tests** using `fast-check` over the corpus, asserting that
-   open → save → reopen is byte-identical for every fixture.
-4. **Corpus-driven parse tests**: run all 148 documents through the parser and assert each
-   manifest expectation (`expect.headings`, `expect.math`, declared diagnostics).
-5. **Table and image editing** in instant mode, plus image paste and asset management.
-6. **Tabs, recent files and last reading position.**
-7. Emit the remaining **diagnostic codes** that the corpus already has fixtures for.
-8. Fill the remaining `DiagnosticCode` union members or remove the ones with no implementation plan.
+1. **Table editing** — a grid editor for GFM tables, and image paste/drag with asset placement.
+2. **Tabs**, replacing the single-document model.
+3. **Typewriter mode**, which is currently a setting nothing reads.
+4. **Find and replace in the reading view.** Source mode has CodeMirror's panel; the reading
+   view only searches.
+5. **MathJax accessibility features** — the payload is vendored but disabled; enabling them
+   needs the SRE worker lifecycle handled explicitly.
 
 ---
 

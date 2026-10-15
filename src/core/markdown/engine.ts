@@ -945,14 +945,14 @@ function collectRawImages(content: string, token: Token, om: RenderCollector, in
  * `startAt` lets the per-block renders share one numbering sequence with the whole-document
  * render: both walk the document in order, so both produce the same ids.
  */
-function renumberTaskItemIds(html: string, startAt: number): { html: string; next: number } {
+function renumberTaskItemIds(html: string, startAt: number, prefix = 'task-item-'): { html: string; next: number } {
   const mapping = new Map<string, string>();
   let next = startAt;
   return {
     html: html.replace(/task-item--?\d+/g, (match) => {
       const existing = mapping.get(match);
       if (existing) return existing;
-      const assigned = `task-item-${next++}`;
+      const assigned = `${prefix}${next++}`;
       mapping.set(match, assigned);
       return assigned;
     }),
@@ -976,6 +976,7 @@ function buildBlocks(
   engine: MarkdownItInstance,
   env: OpenmarkEnv,
   index: LineIndex,
+  sanitize: ((html: string) => { html: string; removed: SanitizeFinding[] }) | undefined,
 ): SourceBlock[] {
   const groups: { start: number; end: number }[] = [];
   let depth = 0;
@@ -1010,14 +1011,46 @@ function buildBlocks(
 
     const from = index.lineStart(startLine);
     const to = index.lineEnd(endLine - 1);
-    blocks.push({
-      id: `block-${blocks.length}`,
-      index: blocks.length,
+    const blockIndex = blocks.length;
+    let cached: string | null = null;
+
+    const block: SourceBlock = {
+      id: `block-${blockIndex}`,
+      index: blockIndex,
       range: index.range(from, to),
       source: index.text.slice(from, to),
       kind: classifyBlock(slice),
-      html: engine.renderer.render(slice, engine.options, env),
+      html: '',
+    };
+
+    /*
+     * Block HTML is rendered on first access, not up front.
+     *
+     * Rendering every block eagerly doubles the cost of opening a document, and the reading
+     * view never touches block HTML at all — only instant mode does. On the widest stress
+     * fixture that difference is hundreds of milliseconds on the critical path to first paint.
+     * A plain property with a getter keeps the public shape (`html` is still a string) while
+     * making the work happen only when something asks for it.
+     */
+    Object.defineProperty(block, 'html', {
+      enumerable: true,
+      configurable: true,
+      get(): string {
+        if (cached === null) {
+          // Task-list ids are namespaced per block so they stay unique across the page
+          // without needing a global counter, which is what allows this to be lazy.
+          const rendered = engine.renderer.render(slice, engine.options, env);
+          cached = renumberTaskItemIds(rendered, 1, `task-item-b${blockIndex}-`).html;
+          if (sanitize) cached = sanitize(cached).html;
+        }
+        return cached;
+      },
+      set(value: string) {
+        cached = value;
+      },
     });
+
+    blocks.push(block);
   }
   return blocks;
 }
@@ -1090,27 +1123,14 @@ export function parseDocument(source: string, engine: MarkdownItInstance, hooks:
 
   const tokens = engine.parse(normalized, env);
   referenceLinkDiagnostics(normalized, env.references as Record<string, unknown> | undefined, collector, index);
-  let html = engine.renderer.render(tokens, engine.options, env);
-  const blocks = buildBlocks(tokens, engine, env, index);
-
+  const blocks = buildBlocks(tokens, engine, env, index, hooks.sanitizeHtml);
   // Stable ids before anything can observe the HTML.
-  ({ html } = renumberTaskItemIds(html, 1));
-  let taskItemCounter = 1;
-  for (const block of blocks) {
-    const result = renumberTaskItemIds(block.html, taskItemCounter);
-    block.html = result.html;
-    taskItemCounter = result.next;
-  }
+  let html = renumberTaskItemIds(engine.renderer.render(tokens, engine.options, env), 1).html;
 
   if (hooks.sanitizeHtml) {
     const result = hooks.sanitizeHtml(html);
     html = result.html;
     reportSanitizerFindings(collector, result.removed, index, normalized);
-    // Each block's HTML is sanitised too, so instant rendering cannot inject anything the
-    // reading view would have removed.
-    for (const block of blocks) {
-      block.html = hooks.sanitizeHtml(block.html).html;
-    }
   }
 
   const { words, cjk, latin } = countWords(stripHtml(html));

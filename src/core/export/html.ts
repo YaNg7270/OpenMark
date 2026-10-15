@@ -376,13 +376,14 @@ function normalizeDiagrams(root: HTMLElement): void {
     if (size) {
       hardened.setAttribute('width', String(size.width));
       hardened.setAttribute('height', String(size.height));
+      // Mermaid's own `useMaxWidth: true` output may already carry a `max-width`; only the
+      // missing declarations are added, so nothing is stated twice. `height: auto` matters:
+      // with both attributes set, a shrinking width would otherwise squash the diagram.
       const existing = (hardened.getAttribute('style') ?? '').replace(/;?\s*$/, '');
-      hardened.setAttribute(
-        'style',
-        existing === ''
-          ? 'max-width: 100%; height: auto'
-          : `${existing}; max-width: 100%; height: auto`,
-      );
+      const declarations = [existing];
+      if (!existing.includes('max-width')) declarations.push('max-width: 100%');
+      if (!existing.includes('height:')) declarations.push('height: auto');
+      hardened.setAttribute('style', declarations.filter(Boolean).join('; '));
     }
     hardened.setAttribute('role', 'img');
     svg.replaceWith(hardened);

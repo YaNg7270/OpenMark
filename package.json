@@ -2,7 +2,7 @@
   "name": "openmark",
   "version": "0.1.0",
   "private": true,
-  "description": "OpenMark — a Windows 11 desktop Markdown reader & editor with Typora-class instant rendering, high-fidelity LaTeX/mhchem, and immersive long-document reading.",
+  "description": "OpenMark \u2014 a Windows 11 desktop Markdown reader & editor with Typora-class instant rendering, high-fidelity LaTeX/mhchem, and immersive long-document reading.",
   "type": "module",
   "license": "MIT",
   "engines": {
@@ -24,13 +24,14 @@
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
     "test:e2e:update": "playwright test --update-snapshots",
-    "test:desktop": "wdio run tests/desktop/wdio.conf.ts",
+    "test:desktop": "node scripts/run-desktop-e2e.mjs",
     "corpus:verify": "node scripts/verify-corpus.mjs",
     "tauri": "tauri",
     "desktop:dev": "tauri dev",
     "desktop:build": "tauri build",
     "desktop:build:portable": "tauri build --no-bundle",
-    "verify": "pnpm typecheck && pnpm lint && pnpm test"
+    "verify": "pnpm typecheck && pnpm lint && pnpm test",
+    "typecheck:desktop": "node node_modules/typescript/bin/tsc --noEmit -p tsconfig.desktop.json"
   },
   "dependencies": {
     "@codemirror/autocomplete": "^6.20.3",
