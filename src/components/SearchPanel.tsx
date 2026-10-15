@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useStore } from '@/app/store';
 import { t } from '@/i18n';
 
 /**
@@ -34,9 +35,14 @@ const supportsHighlightApi = typeof CSS !== 'undefined' && 'highlights' in CSS;
 
 export function SearchPanel({ getRoot, onQueryChange }: SearchPanelProps) {
   const [query, setQuery] = useState('');
+  const [replacement, setReplacement] = useState('');
   const [active, setActive] = useState(0);
   const [matches, setMatches] = useState<Match[]>([]);
+  const [replacedCount, setReplacedCount] = useState<number | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const replaceAll = useStore((s) => s.replaceAll);
+  const readOnly = useStore((s) => s.doc.readOnly);
+  const notify = useStore((s) => s.notify);
 
   useEffect(() => {
     inputRef.current?.focus();
@@ -166,6 +172,50 @@ export function SearchPanel({ getRoot, onQueryChange }: SearchPanelProps) {
       <p className="om-search__summary" data-om-testid="search-summary">
         {summary}
       </p>
+
+      {/*
+        Replace-all only, and it operates on the document SOURCE.
+
+        The rendered DOM is derived from the source and thrown away on every change, so a
+        replacement applied to it could not survive — and a reader editing a document expects
+        the file to change. Stepping through matches one at a time is not offered here because
+        a match found in the rendered text has no reliable source offset; source mode has
+        CodeMirror's own find-and-replace panel for that workflow.
+      */}
+      <div className="om-search__replace">
+        <input
+          type="text"
+          className="om-search__input"
+          value={replacement}
+          placeholder={t('panel.search.replaceWith')}
+          aria-label={t('panel.search.replaceWith')}
+          data-om-testid="replace-input"
+          disabled={readOnly}
+          onChange={(event) => {
+            setReplacement(event.target.value);
+            setReplacedCount(null);
+          }}
+        />
+        <button
+          type="button"
+          className="om-button"
+          disabled={readOnly || query.trim() === ''}
+          data-om-testid="replace-all"
+          onClick={() => {
+            const count = replaceAll(query, replacement);
+            setReplacedCount(count);
+            setMatches(collect(query));
+            notify(count > 0 ? 'info' : 'warning', t('panel.search.replaced', { n: count }));
+          }}
+        >
+          {t('panel.search.replaceAll')}
+        </button>
+      </div>
+      {replacedCount !== null && (
+        <p className="om-search__summary" data-om-testid="replace-result">
+          {t('panel.search.replaced', { n: replacedCount })}
+        </p>
+      )}
       {matches.length > 0 && (
         <ul className="om-search__list">
           {matches.slice(0, 200).map((match, index) => (

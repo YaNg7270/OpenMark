@@ -16,7 +16,7 @@ estimated.
 | Layer | Command | Result |
 |---|---|---|
 | Unit + DOM (Vitest) | `pnpm test` | **427 passed / 0 failed** (8 files) |
-| Browser E2E (Playwright) | `pnpm test:e2e` | **39 passed / 0 failed** |
+| Browser E2E (Playwright) | `pnpm test:e2e` | **48 passed / 0 failed** (incl. 6 screenshot baselines) |
 | Desktop E2E (WebdriverIO) | `pnpm test:desktop` | **6 passed / 0 failed** |
 | Rust unit | `cargo test --lib` | **3 passed / 0 failed** |
 | Corpus validation | `pnpm corpus:verify` | **OK** — manifest matches disk |
@@ -69,7 +69,7 @@ report** and on real output:
 
 ---
 
-## 3. Browser E2E — 39
+## 3. Browser E2E — 48
 
 Runs against the production build served by `vite preview`, in the system Edge channel
 (`channel: 'msedge'`), so no browser download is required and the engine family matches
@@ -86,6 +86,8 @@ WebView2.
 | Writing modes & images | 3 | typewriter mode keeps the caret in view while typing; a dropped image becomes an insertion rather than a document; a pasted image is written beside the file |
 | Table editor | 3 | the grid opens from a table block; opening and closing it does **not** rewrite the file; cell edits, row and column additions and deletions reach the source and leave the rest of the document alone |
 | Tabs | 4 | a second document opens in its own tab and switching restores it; unsaved edits survive a switch and the dirty marker follows the tab; reopening an open file brings its tab forward instead of duplicating it; closing activates the neighbour |
+| Find & replace | 3 | replace-all rewrites every occurrence in the source and nothing else; the query is treated as literal text (`$&` is not a backreference); CRLF survives |
+| Visual baselines | 6 | reading mode, instant mode, source mode, the diagnostics panel, the formula dialog and the table editor |
 
 ---
 
@@ -217,10 +219,7 @@ licensing; both require shipping the respective licence texts, which the reposit
 
 Stated plainly, because a test report that only lists successes is not a test report:
 
-1. **No screenshot regression suite.** Playwright's `toHaveScreenshot` is configured but no
-   baselines are committed, so visual regressions in typography would not be caught
-   automatically.
-2. **The MSI installer was not install-tested.** It is `ALLUSERS=1` (per-machine, needs
+1. **The MSI installer was not install-tested.** It is `ALLUSERS=1` (per-machine, needs
    elevation). The per-user NSIS package was installed, smoke-launched and uninstalled cleanly.
 3. **Both installers are unsigned.** Installing a locally-built copy produced no SmartScreen
    prompt because the file carries no Mark-of-the-Web; a copy downloaded from the internet will
@@ -234,6 +233,17 @@ Stated plainly, because a test report that only lists successes is not a test re
    so they can be revisited.
 7. **Stress fixtures are generated, not committed** — a fresh clone must run
    `node scripts/gen-corpus-stress.mjs` before the performance harness has anything to measure.
+8. **Screenshot baselines are environment-sensitive.** They were generated on the machine
+   described at the top of this report; a different font set will produce different pixels.
+   Regenerate with `pnpm test:e2e:update` in the environment that will run them.
+
+### On the value of the screenshot baselines
+
+They were verified to have teeth rather than assumed to: setting the table cell border to
+`4px solid red` fails the reading, instant and table-editor captures. That check also exposed a
+real weakness in the first version — a viewport-sized capture of a long document only sees its
+top, so a table regression passed. The captures now target the document element, which is the
+full height regardless of the scroll container.
 
 ---
 

@@ -941,3 +941,49 @@ test.describe('tabs', () => {
     await expect(page.locator('.om-doc')).toContainText('保留');
   });
 });
+
+test.describe('find and replace', () => {
+  test('replaces every occurrence in the source and nothing else', async ({ page }) => {
+    const DOC = '# 标题\n\n张三负责这一部分，李四负责另一部分，张三再次出现。\n\n> 张三的引用。\n';
+    await openFixture(page, 'replace.md', DOC);
+
+    await page.getByTestId('panel-search').click();
+    await page.getByTestId('search-input').fill('张三');
+    // The reading view finds matches in the rendered text.
+    await expect(page.getByTestId('search-summary')).toContainText('3');
+
+    await page.getByTestId('replace-input').fill('王五');
+    await page.getByTestId('replace-all').click();
+
+    const source = await page.evaluate(() => window.__openmark__!.getSource());
+    expect(source).toBe('# 标题\n\n王五负责这一部分，李四负责另一部分，王五再次出现。\n\n> 王五的引用。\n');
+    // Nothing else may move: same line count, same structure.
+    expect(source.split('\n')).toHaveLength(DOC.split('\n').length);
+    await expect(page.getByTestId('replace-result')).toContainText('3');
+  });
+
+  test('treats the query as literal text, not a pattern', async ({ page }) => {
+    // `$&` is a backreference in a replacement string. Interpreting it would insert the match
+    // instead of the characters the reader typed.
+    await openFixture(page, 'replace-literal.md', '价格 $5 与 $5 重复。\n');
+    await page.getByTestId('panel-search').click();
+    await page.getByTestId('search-input').fill('$5');
+    await page.getByTestId('replace-input').fill('$&');
+    await page.getByTestId('replace-all').click();
+
+    const source = await page.evaluate(() => window.__openmark__!.getSource());
+    expect(source).toBe('价格 $& 与 $& 重复。\n');
+  });
+
+  test('preserves CRLF when replacing', async ({ page }) => {
+    await openFixture(page, 'replace-crlf.md', '# 标题\r\n\r\n甲和甲。\r\n');
+    await page.getByTestId('panel-search').click();
+    await page.getByTestId('search-input').fill('甲');
+    await page.getByTestId('replace-input').fill('乙');
+    await page.getByTestId('replace-all').click();
+
+    const source = await page.evaluate(() => window.__openmark__!.getSource());
+    expect(source).toBe('# 标题\r\n\r\n乙和乙。\r\n');
+    expect(/[^\r]\n/.test(source), 'a bare LF leaked into a CRLF file').toBe(false);
+  });
+});

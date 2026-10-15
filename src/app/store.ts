@@ -194,6 +194,16 @@ interface AppStore {
   /** Removes a file from the recent list, along with its saved position. */
   forgetRecent: (path: string) => void;
 
+  /**
+   * Replaces every occurrence of `query` in the document source.
+   *
+   * Replacement works on the **source**, not on the rendered DOM. The DOM is derived from the
+   * source and is discarded on every change, so a replacement applied to it could not survive;
+   * and a reader who edits a document expects the file to change. Returns the number of
+   * occurrences replaced, so the UI can report what actually happened rather than implying
+   * success.
+   */
+  replaceAll: (query: string, replacement: string) => number;
   setMode: (mode: ViewMode) => void;
   setSidebar: (panel: SidebarPanel) => void;
   setSearchQuery: (query: string) => void;
@@ -703,6 +713,18 @@ export const useStore = create<AppStore>((set, get) => ({
   unlockEditing: () => {
     set((s) => ({ doc: { ...s.doc, readOnly: false, readOnlyReason: null } }));
     get().notify('info', '已解除只读限制，保存将写入源文件。');
+  },
+
+  replaceAll: (query, replacement) => {
+    const { doc } = get();
+    if (doc.readOnly || query === '') return 0;
+    const normalized = normalizeEol(doc.source);
+    // A plain split/join rather than a regular expression: the query is a literal the reader
+    // typed, and interpreting `$&` or `.*` would replace something they did not ask for.
+    const count = normalized.split(query).length - 1;
+    if (count === 0) return 0;
+    get().setSource(applyEol(normalized.split(query).join(replacement), doc.encoding.eol));
+    return count;
   },
 
   setMode: (mode) => set((s) => ({ ui: { ...s.ui, mode } })),

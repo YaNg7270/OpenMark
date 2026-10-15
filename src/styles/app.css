@@ -1178,3 +1178,15 @@ html[data-om-focus='on'] .om-statusbar {
   background: var(--om-bg-active);
   color: var(--om-text);
 }
+
+.om-search__replace {
+  display: flex;
+  gap: 4px;
+  padding: 0 4px 8px;
+  align-items: center;
+}
+
+.om-search__replace .om-search__input {
+  flex: 1;
+  min-width: 0;
+}
