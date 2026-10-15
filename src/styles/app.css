@@ -5,10 +5,18 @@
 
 .om-shell {
   display: grid;
+  /* Three rows: the chrome block, the scrolling body, the status bar. The toolbar and the tab
+     bar share the first so that a tab bar appearing does not shift everything else down. */
   grid-template-rows: auto minmax(0, 1fr) auto;
   height: 100%;
   background: var(--om-bg);
   position: relative;
+}
+
+.om-shell__top {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 
 /* ---- toolbar ------------------------------------------------------------- */

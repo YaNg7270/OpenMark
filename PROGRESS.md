@@ -33,10 +33,10 @@ install-tested.
 | Frontend build | `vite build` | exit 0 |
 | Windows binary | `tauri build` | `src-tauri/target/release/openmark.exe`, 14,473,216 bytes, boots |
 | Rust check | `cargo check` | zero warnings |
-| Browser E2E | `playwright test` | **48 passed** (incl. 6 screenshot baselines) |
+| Browser E2E | `playwright test` | **52 passed** (incl. 7 screenshot baselines) |
 | Desktop E2E | `pnpm test:desktop` | **6 passed** (release binary, WebView2 149) |
 | Rust unit | `cargo test --lib` | **3 passed** |
-| Unit + DOM tests | `vitest run` | **427 passed** (incl. 300 corpus-conformance assertions) |
+| Unit + DOM tests | `vitest run` | **434 passed** (incl. 300 corpus-conformance assertions) |
 | Windows installers | `pnpm desktop:build` | NSIS 9,520,826 B, MSI 10,387,456 B, portable zip 10,062,412 B |
 | Desktop binary | direct launch | debug build boots and stays alive; release build verified |
 | Corpus validation | `node scripts/verify-corpus.mjs` | OK — manifest matches disk |

@@ -440,8 +440,16 @@ export const useStore = create<AppStore>((set, get) => ({
     const index = tabOrder.indexOf(id);
     if (index < 0) return;
     if (tabOrder.length <= 1) {
-      // Closing the last tab leaves an empty document rather than an empty window.
-      get().newDocument();
+      /*
+       * Closing the last tab empties it rather than closing the window, and this deliberately
+       * does not go through `newDocument`: that opens a *new* tab when the current one holds
+       * something, which would leave two tabs where the reader asked for none.
+       */
+      set((s) => ({
+        doc: { ...EMPTY_DOC, render: parse('') },
+        diagnostics: [],
+        ui: { ...s.ui, notice: null, activeHeadingId: null, progress: 0 },
+      }));
       return;
     }
 
@@ -479,11 +487,35 @@ export const useStore = create<AppStore>((set, get) => ({
 
   newDocument: () => {
     const parsed = parse('');
-    set({
-      doc: { ...EMPTY_DOC, render: parsed },
+    const blank: DocumentState = { ...EMPTY_DOC, render: parsed };
+    const state = get();
+
+    /*
+     * A new document gets its own tab unless the current one is already unused.
+     *
+     * Replacing the active tab's contents would discard whatever was open there, and with no
+     * undo for a closed document that is silent data loss. Reusing a pristine tab keeps
+     * "New, New, New" from filling the bar with empty buffers.
+     */
+    if (!isPristineTab(state.doc)) {
+      const id = newTabId();
+      set((s) => ({
+        tabOrder: [...s.tabOrder, id],
+        activeTabId: id,
+        parkedTabs: { ...s.parkedTabs, [s.activeTabId]: s.doc },
+        parkedDiagnostics: { ...s.parkedDiagnostics, [s.activeTabId]: s.diagnostics },
+        doc: blank,
+        diagnostics: [],
+        ui: { ...s.ui, mode: 'read', notice: null, activeHeadingId: null, progress: 0 },
+      }));
+      return;
+    }
+
+    set((s) => ({
+      doc: blank,
       diagnostics: [],
-      ui: { mode: 'read', sidebar: 'outline', searchQuery: '', activeHeadingId: null, progress: 0, notice: null },
-    });
+      ui: { ...s.ui, mode: 'read', notice: null, activeHeadingId: null, progress: 0 },
+    }));
   },
 
   setSource: (source) => {
@@ -649,6 +681,16 @@ export const useStore = create<AppStore>((set, get) => ({
       }));
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
+      /*
+       * A conflict is not a failure the reader can retry their way out of: the file on disk has
+       * changed and something has to be chosen. Surfacing it through the same banner as a
+       * detected external change gives them that choice instead of a dead-end error message.
+       */
+      if (/conflict/i.test(message)) {
+        set((s) => ({ doc: { ...s.doc, externalChange: { mtimeMs: 0 } } }));
+        get().notify('error', '保存被拒绝：文件已被其他程序修改。请选择重新载入或覆盖。');
+        return;
+      }
       set((s) => ({ ui: { ...s.ui, notice: { kind: 'error', message: `保存失败：${message}` } } }));
     }
   },

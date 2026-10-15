@@ -2,6 +2,7 @@ import { useEffect, useRef, type RefObject } from 'react';
 import type { Diagnostic, ParsedDocument } from '@/core/markdown/types';
 import { typesetPlaceholders } from '@/core/render/typesetter';
 import { resolveTheme } from '@/app/settings';
+import { resolveLocalImages } from '@/core/render/images';
 import { useStore } from '@/app/store';
 
 /**
@@ -21,6 +22,7 @@ export function useTypesetting(
   render: ParsedDocument | null,
   signature: string,
   revision: number,
+  documentPath: string | null,
 ): void {
   const themePreference = useStore((s) => s.settings.reading.theme);
   const reportError = useStore((s) => s.notify);
@@ -30,6 +32,10 @@ export function useTypesetting(
   // identity, which would otherwise re-typeset on every store update.
   const callbacks = useRef({ reportError, addRuntimeDiagnostics });
   callbacks.current = { reportError, addRuntimeDiagnostics };
+
+  // Read through a ref so a path change does not re-run the whole typesetting pass.
+  const pathRef = useRef(documentPath);
+  pathRef.current = documentPath;
 
   useEffect(() => {
     const host = rootRef.current;
@@ -50,9 +56,31 @@ export function useTypesetting(
         callbacks.current.reportError('error', `公式渲染失败（第 ${expr.range.start.line} 行）：${error.message}`);
       },
       onDiagnostic: (diagnostic) => collected.push(diagnostic),
-    }).then(() => {
-      if (!controller.signal.aborted) callbacks.current.addRuntimeDiagnostics(collected);
-    });
+    })
+      .then(() => {
+        /*
+         * Relative images are resolved *after* typesetting, because the typesetter's
+         * lazy rendering only fills what is on screen and an image inside an off-screen block
+         * still needs a loadable source by the time the reader reaches it.
+         */
+        if (controller.signal.aborted) return undefined;
+        return resolveLocalImages(host, pathRef.current);
+      })
+      .then((images) => {
+        if (!images || controller.signal.aborted) return;
+        for (const path of images.missingPaths) {
+          collected.push({
+            code: 'image-missing',
+            severity: 'warning',
+            message: `Image not found: ${path}`,
+            detail: '相对路径未找到对应文件。请检查图片是否随文档一起复制，或修正路径。',
+            range: { start: { line: 1, column: 1, offset: 0 }, end: { line: 1, column: 1, offset: 0 } },
+            source: 'asset',
+            excerpt: path,
+          });
+        }
+        callbacks.current.addRuntimeDiagnostics(collected);
+      });
 
     return () => controller.abort();
   }, [rootRef, scrollRef, render, signature, revision, themePreference]);

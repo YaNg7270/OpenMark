@@ -227,3 +227,31 @@ test.describe('visual baselines', () => {
     await expect(page.getByTestId('table-dialog')).toHaveScreenshot('table-editor.png', TOLERANCE);
   });
 });
+
+/*
+ * Two documents open, so the tab bar is visible.
+ *
+ * Added after a real layout bug: the tab bar was a fourth child of a three-row grid, so when it
+ * appeared it displaced every other child by one track and the sidebar ended up on top of it.
+ * The other baselines all ran with a single document — where the bar renders nothing — so none
+ * of them could have caught it.
+ */
+test('two tabs', async ({ page }) => {
+  await page.addInitScript(
+    ({ content, other }) => {
+      window.__OPENMARK_TEST_FILES__ = { 'baseline.md': content, 'other.md': other };
+    },
+    { content: MIXED, other: '# 另一个文档\n\n内容。\n' },
+  );
+  await page.goto('/');
+  await page.waitForFunction(() => Boolean(window.__openmark__));
+  await page.evaluate(() => window.__openmark__!.openPath('baseline.md'));
+  await page.evaluate(() => window.__openmark__!.openPath('other.md'));
+  await expect(page.getByTestId('tab-bar')).toBeVisible();
+  // Back to the first, so the capture shows a rendered document under an inactive second tab.
+  await page.locator('.om-tab').first().locator('.om-tab__label').click();
+  await settled(page);
+  await parkPointer(page);
+
+  await expect(page).toHaveScreenshot('two-tabs.png', TOLERANCE);
+});

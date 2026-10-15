@@ -32,6 +32,8 @@ export function App() {
   const openViaDialog = useStore((s) => s.openViaDialog);
   const openPath = useStore((s) => s.openPath);
   const save = useStore((s) => s.save);
+  const saveAs = useStore((s) => s.saveAs);
+  const newDocument = useStore((s) => s.newDocument);
   const exportHtml = useStore((s) => s.exportHtml);
   const exportPdf = useStore((s) => s.exportPdf);
   const setSource = useStore((s) => s.setSourceFromEditor);
@@ -164,7 +166,14 @@ export function App() {
       }
       if (mod && event.key.toLowerCase() === 's') {
         event.preventDefault();
-        void save();
+        // Ctrl+Shift+S is save-as, matching every editor.
+        if (event.shiftKey) void saveAs();
+        else void save();
+        return;
+      }
+      if (mod && event.key.toLowerCase() === 'n') {
+        event.preventDefault();
+        newDocument();
         return;
       }
       if (mod && event.key.toLowerCase() === 'f') {
@@ -207,7 +216,7 @@ export function App() {
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [openViaDialog, save, setMode, setSidebar, updateSettings]);
+  }, [newDocument, openViaDialog, save, saveAs, setMode, setSidebar, updateSettings]);
 
   // --- drag and drop -------------------------------------------------------------
   const onDrop = useCallback(
@@ -330,9 +339,18 @@ export function App() {
       onDragLeave={() => setDragging(false)}
       onDrop={(event) => void onDrop(event)}
     >
+      {/*
+        The toolbar and the tab bar share one grid row.
+        `.om-shell` declares three rows, and the tab bar renders nothing at all when a single
+        document is open — so as a sibling it would claim a track when visible and shift every
+        other child down one when it appeared, which put the sidebar on top of it.
+      */}
+      <div className="om-shell__top">
       <Toolbar
         onOpen={() => void openViaDialog()}
+        onNew={() => newDocument()}
         onSave={() => void save()}
+        onSaveAs={() => void saveAs()}
         onExportHtml={() => void exportHtml()}
         onExportPdf={() => void exportPdf()}
         onToggleTheme={() =>
@@ -343,6 +361,7 @@ export function App() {
         }
       />
       <TabBar />
+      </div>
       {body}
       <StatusBar />
 

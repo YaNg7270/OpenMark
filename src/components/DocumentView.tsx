@@ -43,7 +43,7 @@ export function DocumentView({ doc, onNavigate }: DocumentViewProps) {
    */
   const signature = `${activeTabId}:${doc.path ?? ''}:${doc.hash}`;
 
-  useTypesetting(hostRef, scrollRef, doc.render, signature, 0);
+  useTypesetting(hostRef, scrollRef, doc.render, signature, 0, doc.path);
   useReadingProgress(scrollRef, hostRef, { path: doc.path, hash: doc.hash }, signature);
 
   if (doc.error) {

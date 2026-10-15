@@ -15,8 +15,8 @@ estimated.
 
 | Layer | Command | Result |
 |---|---|---|
-| Unit + DOM (Vitest) | `pnpm test` | **427 passed / 0 failed** (8 files) |
-| Browser E2E (Playwright) | `pnpm test:e2e` | **48 passed / 0 failed** (incl. 6 screenshot baselines) |
+| Unit + DOM (Vitest) | `pnpm test` | **434 passed / 0 failed** (9 files) |
+| Browser E2E (Playwright) | `pnpm test:e2e` | **52 passed / 0 failed** (incl. 7 screenshot baselines) |
 | Desktop E2E (WebdriverIO) | `pnpm test:desktop` | **6 passed / 0 failed** |
 | Rust unit | `cargo test --lib` | **3 passed / 0 failed** |
 | Corpus validation | `pnpm corpus:verify` | **OK** — manifest matches disk |
@@ -32,13 +32,14 @@ WebdriverIO drives the compiled `openmark.exe` over WebView2.
 
 ---
 
-## 2. Unit and DOM tests — 427
+## 2. Unit and DOM tests — 434
 
 | File | Tests | What it establishes |
 |---|---:|---|
 | `tests/unit/corpus.test.ts` | 300 | All 148 fixtures parse, match their declared counts, and emit every declared diagnostic; plus four cross-cutting invariants (determinism, block-range integrity, no throw, no orphan placeholders) |
 | `tests/unit/table.test.ts` | 36 | Table parsing and serialisation, including a fixed-point round-trip and CJK/emoji column widths |
 | `tests/unit/dom/sanitize.test.ts` | 23 | The sanitiser's security boundary and its preservation duty |
+| `tests/unit/dom/images.test.ts` | 7 | Relative image sources are rewritten to loadable URLs; traversal is refused without touching the filesystem |
 | `tests/unit/encoding.test.ts` | 20 | BOM/EOL detection and byte-exact round-trip |
 | `tests/unit/assets.test.ts` | 20 | Image asset naming, placement and the browser fallback |
 | `tests/unit/markdown-blocks.test.ts` | 13 | Block decomposition and the splice invariant the instant editor depends on |
@@ -69,7 +70,7 @@ report** and on real output:
 
 ---
 
-## 3. Browser E2E — 48
+## 3. Browser E2E — 52
 
 Runs against the production build served by `vite preview`, in the system Edge channel
 (`channel: 'msedge'`), so no browser download is required and the engine family matches
@@ -87,7 +88,8 @@ WebView2.
 | Table editor | 3 | the grid opens from a table block; opening and closing it does **not** rewrite the file; cell edits, row and column additions and deletions reach the source and leave the rest of the document alone |
 | Tabs | 4 | a second document opens in its own tab and switching restores it; unsaved edits survive a switch and the dirty marker follows the tab; reopening an open file brings its tab forward instead of duplicating it; closing activates the neighbour |
 | Find & replace | 3 | replace-all rewrites every occurrence in the source and nothing else; the query is treated as literal text (`$&` is not a backreference); CRLF survives |
-| Visual baselines | 6 | reading mode, instant mode, source mode, the diagnostics panel, the formula dialog and the table editor |
+| Visual baselines | 7 | reading mode, instant mode, source mode, the diagnostics panel, the formula dialog, the table editor and **two tabs** |
+| File commands | 3 | New opens its own tab and leaves the open document intact; save defers to save-as without a path; Ctrl+N and Ctrl+Shift+S are wired |
 
 ---
 
@@ -189,6 +191,10 @@ or a review, not by inspection, and every one has regression coverage.
 | 15 | `\\|` in a table cell merged two cells into one | An escaped backslash followed by a real separator was read as an escaped pipe |
 | 16 | The formula rebuilder searched for the body from the start of the raw text | `\begin{cases}` ends in `a`, so editing a one-character body would have destroyed the environment |
 | 17 | A view signature omitted the active tab | Bringing a parked tab forward left the previous document's typeset output on screen |
+| 18 | **Nothing ever called the relative-image resolver** | Every local image in every document rendered as a broken icon. The function was correct; the caller was missing, which is exactly the class of defect a unit test in isolation cannot see |
+| 19 | The tab bar was a fourth child of a three-row grid | When it appeared it displaced every other child by one track, putting the sidebar on top of it. None of the existing baselines could catch it: they all ran with a single document, where the bar renders nothing |
+| 20 | `newDocument` replaced the active tab's contents | "New" silently discarded the open document, with no way back. It now opens its own tab unless the current one is unused |
+| 21 | `write_text_file_atomic` ignored the caller's expected mtime | The documented clobber guard was not enforced where the write happens, so a change made between two polls of the external-change watcher would be overwritten |
 
 Corpus corrections: three fixtures or manifest entries were themselves wrong (an "unclosed
 fence" fixture that contained a closing fence; a manifest entry pinning a code the parser no

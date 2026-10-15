@@ -39,13 +39,23 @@ export const AVAILABLE_MODES: Record<ViewMode, boolean> = {
 
 interface ToolbarProps {
   onOpen: () => void;
+  onNew: () => void;
   onSave: () => void;
+  onSaveAs: () => void;
   onToggleTheme: () => void;
   onExportHtml: () => void;
   onExportPdf: () => void;
 }
 
-export function Toolbar({ onOpen, onSave, onToggleTheme, onExportHtml, onExportPdf }: ToolbarProps) {
+export function Toolbar({
+  onOpen,
+  onNew,
+  onSave,
+  onSaveAs,
+  onToggleTheme,
+  onExportHtml,
+  onExportPdf,
+}: ToolbarProps) {
   const mode = useStore((s) => s.ui.mode);
   const sidebar = useStore((s) => s.ui.sidebar);
   const theme = useStore((s) => s.settings.reading.theme);
@@ -74,6 +84,9 @@ export function Toolbar({ onOpen, onSave, onToggleTheme, onExportHtml, onExportP
       </div>
 
       <div className="om-toolbar__group">
+        <button type="button" className="om-button" onClick={onNew} data-om-testid="new-button">
+          {t('toolbar.new')}
+        </button>
         <button type="button" className="om-button" onClick={onOpen} data-om-testid="open-button">
           {t('toolbar.open')}
         </button>
@@ -81,10 +94,23 @@ export function Toolbar({ onOpen, onSave, onToggleTheme, onExportHtml, onExportP
           type="button"
           className="om-button"
           onClick={onSave}
-          disabled={doc.readOnly}
+          disabled={doc.readOnly || !doc.path}
           data-om-testid="save-button"
         >
           {t('toolbar.save')}
+        </button>
+        {/*
+          Save-as is a separate control rather than a modifier on save, and it stays enabled for
+          a read-only document: writing a copy to a new path modifies nothing the reader opened.
+        */}
+        <button
+          type="button"
+          className="om-button"
+          onClick={onSaveAs}
+          disabled={!doc.source}
+          data-om-testid="save-as-button"
+        >
+          {t('toolbar.saveAs')}
         </button>
       </div>
 

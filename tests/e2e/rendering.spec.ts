@@ -987,3 +987,55 @@ test.describe('find and replace', () => {
     expect(/[^\r]\n/.test(source), 'a bare LF leaked into a CRLF file').toBe(false);
   });
 });
+
+test.describe('file commands', () => {
+  test('New opens an empty document in a new tab and leaves the current one intact', async ({ page }) => {
+    await openFixture(page, 'existing.md', '# 已有文档\n\n内容。\n');
+    await expect(page.getByTestId('document-name')).toHaveText('existing.md');
+
+    await page.getByTestId('new-button').click();
+    await expect(page.getByTestId('document-name')).toHaveText('untitled.md');
+    // An empty document offers the recent list rather than a blank page.
+    await expect(page.locator('.om-doc')).toContainText('打开一个 Markdown 文件');
+    await expect(page.getByTestId('tab-bar')).toBeVisible();
+    await expect(page.locator('.om-tab')).toHaveCount(2);
+
+    // The original must still be there, unchanged.
+    await page.locator('.om-tab').first().locator('.om-tab__label').click();
+    await expect(page.getByTestId('document-name')).toHaveText('existing.md');
+  });
+
+  test('save is disabled without a path but save-as stays available', async ({ page }) => {
+    await page.addInitScript(() => {
+      window.__OPENMARK_TEST_FILES__ = {};
+    });
+    await page.goto('/');
+    await expect(page.locator('.om-toolbar')).toBeVisible();
+
+    // Nothing open: both are inert because there is nothing to write.
+    await expect(page.getByTestId('save-button')).toBeDisabled();
+    await expect(page.getByTestId('save-as-button')).toBeDisabled();
+
+    await page.getByTestId('new-button').click();
+    await page.getByTestId('mode-source').click();
+    await page.locator('.om-source__host .cm-content').click();
+    await page.keyboard.type('# 无标题草稿');
+
+    // A never-saved document has no path; save must defer to save-as rather than fail.
+    await expect(page.getByTestId('save-button')).toBeDisabled();
+    await expect(page.getByTestId('save-as-button')).toBeEnabled();
+  });
+
+  test('Ctrl+N and Ctrl+Shift+S are wired', async ({ page }) => {
+    await openFixture(page, 'shortcuts.md', '# 快捷键\n\n内容。\n');
+
+    await page.locator('.om-doc-scroll').click();
+    await page.keyboard.press('Control+n');
+    await expect(page.getByTestId('document-name')).toHaveText('untitled.md');
+    await expect(page.locator('.om-tab')).toHaveCount(2);
+
+    // Ctrl+Shift+S must not be swallowed by the plain Ctrl+S handler.
+    await page.keyboard.press('Control+Shift+s');
+    await expect(page.getByTestId('tab-bar')).toBeVisible();
+  });
+});

@@ -208,6 +208,7 @@ pub fn write_text_file_atomic(
     request: tauri::ipc::Request<'_>,
 ) -> Result<WriteResult, String> {
     let make_backup = backup_flag(&request);
+    let expected_mtime = expected_mtime_ms(&request);
     let target = PathBuf::from(path);
     let dir = target
         .parent()
@@ -216,6 +217,29 @@ pub fn write_text_file_atomic(
         .unwrap_or_else(|| PathBuf::from("."));
     if !dir.is_dir() {
         return Err(format!("directory does not exist: {}", dir.display()));
+    }
+
+    /*
+     * Refuse to overwrite a file that changed since it was read.
+     *
+     * The frontend also polls for external changes and shows a banner, but polling has a window
+     * in which another program can write between two checks — and that window is exactly when a
+     * save would destroy the other program's work. The guard belongs where the write happens.
+     *
+     * Compared against the filesystem rather than a cached value, so a change made by any tool
+     * at any time is caught.
+     */
+    if let Some(expected) = expected_mtime {
+        if let Ok(meta) = fs::metadata(&target) {
+            if meta.is_file() {
+                let actual = mtime_ms(&meta)?;
+                if actual != expected {
+                    return Err(format!(
+                        "conflict: the file changed on disk since it was opened (expected mtime {expected}, found {actual})"
+                    ));
+                }
+            }
+        }
     }
     let stem = target
         .file_name()
@@ -260,6 +284,21 @@ pub fn write_text_file_atomic(
 
 /// Reads the optional `makeBackup` / `make_backup` boolean out of the invoke
 /// payload without deserialising the (potentially large) `bytes` array twice.
+/// The mtime the caller believes the file has, if it supplied one.
+///
+/// Read from the raw request body because the value is optional and lives alongside the other
+/// named arguments; declaring it as a command parameter would make it mandatory at the
+/// TypeScript call site for no benefit.
+fn expected_mtime_ms(request: &tauri::ipc::Request<'_>) -> Option<i64> {
+    match request.body() {
+        tauri::ipc::InvokeBody::Json(value) => value
+            .get("expectedMtimeMs")
+            .or_else(|| value.get("expected_mtime_ms"))
+            .and_then(|flag| flag.as_i64()),
+        tauri::ipc::InvokeBody::Raw(_) => None,
+    }
+}
+
 fn backup_flag(request: &tauri::ipc::Request<'_>) -> bool {
     match request.body() {
         tauri::ipc::InvokeBody::Json(value) => value
