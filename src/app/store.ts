@@ -233,10 +233,16 @@ function evaluateReadOnly(
     };
   }
 
+  /*
+   * Only genuine *errors* gate read-only, and the set is deliberately small:
+   * `html-sanitized` used to be listed here but is now a warning, so the clause could never
+   * match. `invalid-utf8` is included because saving would replace the undecodable bytes for
+   * good, which is exactly the kind of irreversible loss this mode exists to prevent.
+   */
   const structural = diagnostics.filter(
     (d) =>
       d.severity === 'error' &&
-      (d.code === 'unclosed-fence' || d.code === 'unclosed-math' || d.code === 'html-sanitized'),
+      (d.code === 'unclosed-fence' || d.code === 'unclosed-math' || d.code === 'invalid-utf8'),
   );
   if (structural.length > 0) {
     return {

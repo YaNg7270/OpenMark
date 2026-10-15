@@ -15,8 +15,8 @@ estimated.
 
 | Layer | Command | Result |
 |---|---|---|
-| Unit + DOM (Vitest) | `pnpm test` | **371 passed / 0 failed** (6 files) |
-| Browser E2E (Playwright) | `pnpm test:e2e` | **29 passed / 0 failed** |
+| Unit + DOM (Vitest) | `pnpm test` | **427 passed / 0 failed** (7 files) |
+| Browser E2E (Playwright) | `pnpm test:e2e` | **39 passed / 0 failed** |
 | Desktop E2E (WebdriverIO) | `pnpm test:desktop` | **6 passed / 0 failed** |
 | Rust unit | `cargo test --lib` | **3 passed / 0 failed** |
 | Corpus validation | `pnpm corpus:verify` | **OK** — manifest matches disk |
@@ -32,13 +32,15 @@ WebdriverIO drives the compiled `openmark.exe` over WebView2.
 
 ---
 
-## 2. Unit and DOM tests — 371
+## 2. Unit and DOM tests — 427
 
 | File | Tests | What it establishes |
 |---|---:|---|
 | `tests/unit/corpus.test.ts` | 300 | All 148 fixtures parse, match their declared counts, and emit every declared diagnostic; plus four cross-cutting invariants (determinism, block-range integrity, no throw, no orphan placeholders) |
+| `tests/unit/table.test.ts` | 36 | Table parsing and serialisation, including a fixed-point round-trip and CJK/emoji column widths |
 | `tests/unit/dom/sanitize.test.ts` | 23 | The sanitiser's security boundary and its preservation duty |
 | `tests/unit/encoding.test.ts` | 20 | BOM/EOL detection and byte-exact round-trip |
+| `tests/unit/assets.test.ts` | 20 | Image asset naming, placement and the browser fallback |
 | `tests/unit/markdown-blocks.test.ts` | 13 | Block decomposition and the splice invariant the instant editor depends on |
 | `tests/unit/math-source.test.ts` | 11 | Formula source reconstruction for every delimiter form |
 | `tests/unit/roundtrip.test.ts` | 4 | Identity, edit, block-edit and property-based (fast-check) preservation |
@@ -67,7 +69,7 @@ report** and on real output:
 
 ---
 
-## 3. Browser E2E — 29
+## 3. Browser E2E — 39
 
 Runs against the production build served by `vite preview`, in the system Edge channel
 (`channel: 'msedge'`), so no browser download is required and the engine family matches
@@ -81,6 +83,9 @@ WebView2.
 | Session state | 3 | recent files ordered most-recent-first; reading position restored on reopen; a file can be removed |
 | Formula tools | 4 | copy as LaTeX; edit through the dialog splices only that formula; a broken formula is reported without losing the source; a maths fence stays intact |
 | Export | 2 | the produced HTML contains typeset maths, inline SVG and inlined styles, and **no script tag**; export is disabled until the document has a path |
+| Writing modes & images | 3 | typewriter mode keeps the caret in view while typing; a dropped image becomes an insertion rather than a document; a pasted image is written beside the file |
+| Table editor | 3 | the grid opens from a table block; opening and closing it does **not** rewrite the file; cell edits, row and column additions and deletions reach the source and leave the rest of the document alone |
+| Tabs | 4 | a second document opens in its own tab and switching restores it; unsaved edits survive a switch and the dirty marker follows the tab; reopening an open file brings its tab forward instead of duplicating it; closing activates the neighbour |
 
 ---
 
@@ -171,6 +176,13 @@ or a review, not by inspection, and every one has regression coverage.
 | 8 | `engine.render()` crashed when called without an `env` | Any consumer that only wanted HTML got an exception |
 | 9 | Invalid YAML frontmatter was reported under a maths diagnostic code | Misleading diagnostics |
 | 10 | `dist/` was deleted by a concurrent process during a test run | Cost real debugging time; now documented as a coordination hazard |
+| 11 | `rememberPosition` resolved the document path at **save** time | A tab switch mutates the DOM before running the outgoing view's effect cleanup, so the cleanup filed its position under the arriving document — losing the reader's place in the one they left. Affected ordinary use, not only tab switching |
+| 12 | Restoring a reading position animated down from the top | The scrolling container has `scroll-behavior: smooth`; smooth is right for a clicked link and wrong for a restore. Saved and restored offsets now match exactly |
+| 13 | Binary image bytes were routed through the text writer | The text path preserves BOM and line endings, so it rewrites every `\r\n` byte pair inside a PNG — corrupting the file |
+| 14 | The window drop handler tested `defaultPrevented` after calling `preventDefault()` | The guard always fired, so **every** drop silently did nothing |
+| 15 | `\\|` in a table cell merged two cells into one | An escaped backslash followed by a real separator was read as an escaped pipe |
+| 16 | The formula rebuilder searched for the body from the start of the raw text | `\begin{cases}` ends in `a`, so editing a one-character body would have destroyed the environment |
+| 17 | A view signature omitted the active tab | Bringing a parked tab forward left the previous document's typeset output on screen |
 
 Corpus corrections: three fixtures or manifest entries were themselves wrong (an "unclosed
 fence" fixture that contained a closing fence; a manifest entry pinning a code the parser no

@@ -7,18 +7,22 @@ Living ledger for the OpenMark build. Updated at the end of every work session.
 - **Stack as built:** Tauri 2.12 (Rust 1.99) + React 19 + TypeScript 7 + Vite 8,
   `markdown-it@15` + GFM plugins, MathJax 4.1.3 (SVG output, mhchem), Mermaid 12, Shiki 4,
   DOMPurify 3.4.
-- **Last updated:** 2026-10-16 (session 1, continued again)
+- **Last updated:** 2026-10-16 (session 1, final)
 
 ---
 
 ## 1. Where the project stands
 
-Phases 0–3 are complete and Phase 4 is largely complete. All four view modes work, including
-Typora-style instant rendering with in-place block editing; formulas render offline with real
-glyphs and can be copied or edited in place; diagnostics cover every code the corpus declares;
-HTML and PDF export are wired into the toolbar; and Windows installers and a portable package
-have been produced. The remaining work is Phase 5: final acceptance, the test report, and the
-user-facing documentation.
+All five phases are complete. Every feature the goal lists as required is implemented and
+verified: four view modes including Typora-style instant rendering, multi-tab documents with
+recent files and last-reading-position memory, table grid editing, image paste and drop with
+asset management, offline LaTeX and chemistry with copy and edit tools, document diagnostics
+and health checks, HTML and PDF export, and Windows installers plus a portable package. Four
+test layers pass against the shipping artefacts.
+
+What remains is not implementation work but the honest gaps recorded in
+`docs/TEST_REPORT.md` §8 — chiefly that neither installer is code-signed and the MSI was not
+install-tested.
 
 ### Verified in this session (current evidence, not carried-over claims)
 
@@ -29,15 +33,28 @@ user-facing documentation.
 | Frontend build | `vite build` | exit 0 |
 | Windows binary | `tauri build` | `src-tauri/target/release/openmark.exe`, 14,473,216 bytes, boots |
 | Rust check | `cargo check` | zero warnings |
-| Browser E2E | `playwright test` | **29 passed** |
+| Browser E2E | `playwright test` | **39 passed** |
 | Desktop E2E | `pnpm test:desktop` | **6 passed** (real binary, WebView2 149) |
 | Rust unit | `cargo test --lib` | **3 passed** |
-| Unit + DOM tests | `vitest run` | **371 passed** (incl. 300 corpus-conformance assertions) |
+| Unit + DOM tests | `vitest run` | **427 passed** (incl. 300 corpus-conformance assertions) |
 | Windows installers | `tauri build` | NSIS 8,911,640 B, MSI 9,777,152 B, portable zip 10,039,070 B |
 | Desktop binary | direct launch | debug build boots and stays alive; release build verified |
 | Corpus validation | `node scripts/verify-corpus.mjs` | OK — manifest matches disk |
 | Corpus diagnostics | `vitest run corpus.test.ts` | **148/148 fixtures emit every declared diagnostic** |
 | Corpus size | — | 148 markdown docs, 355 formula cases (40 expected-error), 5 stress fixtures |
+
+### Milestone: the editing feature set is complete
+
+Instant rendering, multi-tab documents, a table grid editor, image paste and drag with asset
+management, CodeMirror 6 source editing, typewriter mode and find/replace are all in place.
+The through-line is that every editing path splices the **authoritative source** rather than
+re-serialising a document model, which is what makes a WYSIWYG experience compatible with a
+byte-preservation guarantee.
+
+Building them found seven more real defects, including two that affected ordinary use: the
+reading-position save resolved its path at save time, so switching documents filed the
+position under the wrong file; and restoring a position animated down from the top because
+the scrolling container has `scroll-behavior: smooth`.
 
 ### Milestone: every declared diagnostic is now emitted
 
@@ -144,14 +161,12 @@ Each of these was found by a test, not by inspection. All have regression covera
 
 1. **No screenshot regression baselines.** Playwright's screenshot comparison is configured but
    no images are committed, so a typography regression would not be caught automatically.
-2. **Table editing and image paste are not implemented.** Instant mode edits whole blocks, so a
+2. **The MSI installer is not install-tested**, and neither installer is code-signed.
+3. **Find and replace exists only in source mode.** The reading view has search but no replace.
+4. **No accessibility audit**, and MathJax's semantic enrichment is off by default.
+5. **Typewriter mode centres on typing only**, not on caret movement from arrow keys. Instant mode edits whole blocks, so a
    table can be edited as text, but there is no grid editor and no paste/drag image handling.
-3. **Tabs are not implemented.** One document at a time; the recent-files list is the
-   substitute.
-4. **Typewriter mode is a setting with no implementation.** Focus mode works; the setting is
-   stored and projected to CSS but nothing reads it.
-5. **The MSI installer is not install-tested**, and neither installer is code-signed. See
-   `docs/TEST_REPORT.md` §8 for the full list of what is not verified.
+
 
 ### P2
 
@@ -169,13 +184,13 @@ Each of these was found by a test, not by inspection. All have regression covera
 
 ## 5. Next actions, in priority order
 
-1. **Table editing** — a grid editor for GFM tables, and image paste/drag with asset placement.
-2. **Tabs**, replacing the single-document model.
-3. **Typewriter mode**, which is currently a setting nothing reads.
-4. **Find and replace in the reading view.** Source mode has CodeMirror's panel; the reading
-   view only searches.
-5. **MathJax accessibility features** — the payload is vendored but disabled; enabling them
-   needs the SRE worker lifecycle handled explicitly.
+1. **Screenshot regression baselines**, so a typography change cannot slip through.
+2. **Find and replace in the reading view.** Source mode has CodeMirror's panel already.
+3. **MathJax accessibility** — the payload is vendored but disabled; enabling it needs the SRE
+   worker lifecycle handled explicitly, and an accessibility audit afterwards.
+4. **Code signing**, which is the only way to remove the SmartScreen warning for downloaded
+   installers.
+5. **MSI install test** on a machine where elevation is available.
 
 ---
 

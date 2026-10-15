@@ -5,7 +5,9 @@ description = "OpenMark — a Windows 11 desktop Markdown reader & editor with i
 authors = ["OpenMark"]
 license = "MIT"
 edition = "2021"
-rust-version = "1.77.2"
+# Tauri 2.12 requires Rust 1.90. The previous value (1.77.2) was wrong and would
+# only mislead anyone building with an older toolchain.
+rust-version = "1.90"
 
 # The desktop host for the React frontend in ../src.
 # `openmark_lib` is the real crate; `main.rs` is a thin launcher.
