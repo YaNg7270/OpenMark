@@ -372,23 +372,31 @@ function normalizeDiagrams(root: HTMLElement): void {
     const hardened = holder.querySelector('svg');
     if (!hardened) continue;
 
-    const box = (hardened.getAttribute('viewBox') ?? '').trim().split(/[\s,]+/).map(Number);
-    const width = box[2];
-    const height = box[3];
-    if (box.length === 4 && Number.isFinite(width) && Number.isFinite(height) && width! > 0 && height! > 0) {
-      hardened.setAttribute('width', String(width));
-      hardened.setAttribute('height', String(height));
-      const style = hardened.getAttribute('style') ?? '';
-      if (!style.includes('max-width')) {
-        hardened.setAttribute(
-          'style',
-          `${style ? `${style.replace(/;?\s*$/, '; ')}` : ''}max-width: 100%; height: auto`,
-        );
-      }
+    const size = readViewBoxSize(hardened.getAttribute('viewBox'));
+    if (size) {
+      hardened.setAttribute('width', String(size.width));
+      hardened.setAttribute('height', String(size.height));
+      const existing = (hardened.getAttribute('style') ?? '').replace(/;?\s*$/, '');
+      hardened.setAttribute(
+        'style',
+        existing === ''
+          ? 'max-width: 100%; height: auto'
+          : `${existing}; max-width: 100%; height: auto`,
+      );
     }
     hardened.setAttribute('role', 'img');
     svg.replaceWith(hardened);
   }
+}
+
+/** An SVG `viewBox`'s width and height, when it has a usable one. */
+function readViewBoxSize(viewBox: string | null): { width: number; height: number } | null {
+  const parts = (viewBox ?? '').trim().split(/[\s,]+/);
+  if (parts.length !== 4) return null;
+  const width = Number(parts[2]);
+  const height = Number(parts[3]);
+  if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) return null;
+  return { width, height };
 }
 
 /** The copy button lives in the toolbar and has no meaning in a static file. */

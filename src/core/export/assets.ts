@@ -124,7 +124,9 @@ export async function inlineImages(root: ParentNode, options: InlineImagesOption
     const srcset = image.getAttribute('srcset') ?? '';
     if (classifyImageSrcSet(srcset) === 'remote') continue;
     image.removeAttribute('srcset');
-    report.warnings.push('removed a srcset that could not be inlined');
+    report.warnings.push(
+      `removed the srcset of ${image.getAttribute('src') ?? '(no src)'}: its candidates cannot be inlined`,
+    );
   }
 }
 

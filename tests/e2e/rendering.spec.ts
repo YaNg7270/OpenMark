@@ -623,3 +623,65 @@ test.describe('formula tools', () => {
     expect(source).toBe('# 围栏公式\n\n```math\nc = d\n```\n');
   });
 });
+
+
+test.describe('export', () => {
+  const DOC = [
+    '# 导出测试',
+    '',
+    '行内公式 $E = mc^2$。',
+    '',
+    '$$',
+    '\\int_0^1 x\\,dx = \\frac{1}{2}',
+    '$$',
+    '',
+    '```mermaid',
+    'graph TD; A-->B;',
+    '```',
+    '',
+    '```js',
+    'const answer = 42;',
+    '```',
+    '',
+    '正文结尾。',
+  ].join('\n');
+
+  test('produces a self-contained HTML file with typeset content and no scripts', async ({ page }) => {
+    await openFixture(page, 'export-doc.md', DOC);
+    // Let the reader typeset before exporting: the exporter reuses what is already rendered.
+    await expect(page.locator('mjx-container').first()).toBeVisible();
+    await expect(page.locator('.om-mermaid svg').first()).toBeVisible({ timeout: 30_000 });
+
+    const downloadPromise = page.waitForEvent('download');
+    await page.getByTestId('export-html').click();
+    const download = await downloadPromise;
+
+    const stream = await download.createReadStream();
+    const chunks: Buffer[] = [];
+    for await (const chunk of stream) chunks.push(Buffer.from(chunk));
+    const html = Buffer.concat(chunks).toString('utf8');
+
+    expect(html).toContain('<!doctype html>');
+    expect(html).toContain('导出测试');
+    // Behaviour must not travel with the document.
+    expect(html).not.toContain('<script');
+    // The maths and the diagram must be the rendered artefacts, not their source.
+    expect(html).toContain('mjx-container');
+    expect(html).toContain('<svg');
+    // Highlighting is inlined, since the exported file has no stylesheet to load.
+    expect(html).toContain('style=');
+  });
+
+  test('is disabled until the document has a location on disk', async ({ page }) => {
+    // A self-contained export needs a directory to resolve relative images against, so the
+    // buttons stay disabled until the document has one. The seam must still be installed, or
+    // the app never boots with the test API.
+    await page.addInitScript(() => {
+      window.__OPENMARK_TEST_FILES__ = {};
+    });
+    await page.goto('/');
+    await expect(page.locator('.om-toolbar')).toBeVisible();
+    await expect(page.getByTestId('export-html')).toBeDisabled();
+    await expect(page.getByTestId('export-pdf')).toBeDisabled();
+  });
+});

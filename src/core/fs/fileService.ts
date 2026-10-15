@@ -100,8 +100,17 @@ interface FilePayload {
   mtime_ms: number;
 }
 
-/** File extension filter shared by the open and save dialogs. */
+/** The open dialog only ever opens markdown. */
 const MARKDOWN_FILTERS = [{ name: 'Markdown', extensions: ['md', 'markdown', 'mdown', 'mkd', 'txt'] }];
+
+/** Save-dialog filters, chosen by what is being written. */
+const SAVE_FILTERS: Record<SaveKind, { name: string; extensions: string[] }[]> = {
+  markdown: MARKDOWN_FILTERS,
+  html: [{ name: 'HTML', extensions: ['html', 'htm'] }],
+  pdf: [{ name: 'PDF', extensions: ['pdf'] }],
+};
+
+export type SaveKind = 'markdown' | 'html' | 'pdf';
 
 /**
  * Shows the native open dialog. Returns `null` when the user cancels.
@@ -113,9 +122,18 @@ export async function pickOpenPath(): Promise<string | null> {
   return typeof selected === 'string' ? selected : null;
 }
 
-export async function pickSavePath(suggestedName = 'untitled.md'): Promise<string | null> {
-  if (!isDesktop()) return null;
-  const selected = await saveDialog({ defaultPath: suggestedName, filters: MARKDOWN_FILTERS });
+export async function pickSavePath(suggestedName = 'untitled.md', kind: SaveKind = 'markdown'): Promise<string | null> {
+  /*
+   * Outside the desktop shell there is no native dialog, so the browser backend resolves to a
+   * single file with a derived name and hands it to the download manager. Returning `null`
+   * would be simpler but would make saving and exporting dead ends in that environment, which
+   * is the opposite of useful — and it would leave the browser test suite unable to exercise
+   * the export path at all. `kind` only selects the dialog's filter, which does not exist
+   * here, so it is unused on this branch.
+   */
+  void kind;
+  if (!isDesktop()) return suggestedName;
+  const selected = await saveDialog({ defaultPath: suggestedName, filters: SAVE_FILTERS[kind] });
   return selected ?? null;
 }
 

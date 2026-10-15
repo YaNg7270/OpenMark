@@ -3,6 +3,7 @@ import type { MarkdownIt } from 'markdown-it';
 import type { Diagnostic, OutlineEntry, ParsedDocument } from '@/core/markdown/types';
 import { createEngine, parseDocument } from '@/core/markdown/engine';
 import { rebuildMathSource } from '@/core/markdown/math-source';
+import { tryExportStandaloneHtml, tryExportPdf } from '@/core/export';
 import { assetDiagnostics, type AssetStatus } from '@/core/diagnostics/assets';
 import type { ImageReference } from '@/core/markdown/types';
 import { sanitizeHtml } from '@/core/markdown/sanitize';
@@ -135,6 +136,17 @@ interface AppStore {
    * rebuilt safely, in which case nothing is written.
    */
   applyMathEdit: (mathId: string, newTex: string) => boolean;
+  /**
+   * Writes a self-contained HTML copy of the document.
+   *
+   * The export is taken from the *live* rendered DOM when it is available, so the formulas and
+   * diagrams in the file are the ones the reader is looking at rather than a second
+   * typesetting pass that could differ. Lazy rendering leaves off-screen formulas empty, and
+   * the exporter fills those in itself.
+   */
+  exportHtml: () => Promise<void>;
+  /** Writes a PDF, printed from the same self-contained HTML by the desktop shell. */
+  exportPdf: () => Promise<void>;
   save: () => Promise<void>;
   saveAs: () => Promise<void>;
   checkExternalChange: () => Promise<void>;
@@ -349,6 +361,75 @@ export const useStore = create<AppStore>((set, get) => ({
     return true;
   },
 
+  exportHtml: async () => {
+    const { doc } = get();
+    if (!doc.render || !doc.path) {
+      get().notify('warning', '请先保存文档，再导出。');
+      return;
+    }
+    const target = await files.pickSavePath(withExtension(doc.name, 'html'), 'html');
+    if (!target) return;
+
+    const outcome = await tryExportStandaloneHtml({
+      result: doc.render,
+      sourcePath: doc.path,
+      liveRoot: document.querySelector<HTMLElement>('.om-doc'),
+      theme: resolveTheme(get().settings.reading.theme),
+    });
+    if (!outcome.ok) {
+      get().notify('error', `导出失败：${outcome.error.message}`);
+      return;
+    }
+    // Report anything the export could not carry over, so the reader is not left wondering
+    // why a figure is missing from the file they just produced.
+    const report = outcome.result.report;
+    if (!report.verification.selfContained) {
+      get().notify('warning', '导出的文件包含外部引用，离线打开时可能无法完整显示。');
+    } else if (report.missingImages.length > 0 || report.mathErrors.length > 0) {
+      get().notify(
+        'warning',
+        `导出完成，但有 ${report.missingImages.length} 张图片和 ${report.mathErrors.length} 个公式未能包含。`,
+      );
+    }
+
+    try {
+      await files.writeFile(target, outcome.result.html, { bom: false, eol: 'lf', makeBackup: false });
+      get().notify('info', `已导出 HTML：${baseName(target)}`);
+    } catch (err) {
+      get().notify('error', `写入失败：${err instanceof Error ? err.message : String(err)}`);
+    }
+  },
+
+  exportPdf: async () => {
+    const { doc } = get();
+    if (!doc.render || !doc.path) {
+      get().notify('warning', '请先保存文档，再导出。');
+      return;
+    }
+    const target = await files.pickSavePath(withExtension(doc.name, 'pdf'), 'pdf');
+    if (!target) return;
+
+    // Print from the same self-contained HTML the HTML export produces, so the two outputs
+    // cannot drift apart.
+    const source = await tryExportStandaloneHtml({
+      result: doc.render,
+      sourcePath: doc.path,
+      liveRoot: document.querySelector<HTMLElement>('.om-doc'),
+      theme: 'light',
+    });
+    if (!source.ok) {
+      get().notify('error', `导出失败：${source.error.message}`);
+      return;
+    }
+
+    const outcome = await tryExportPdf(source.result.html, target);
+    if (!outcome.ok) {
+      get().notify('error', outcome.error.message);
+      return;
+    }
+    get().notify('info', `已导出 PDF：${baseName(target)}${outcome.result.pageCount ? `（${outcome.result.pageCount} 页）` : ''}`);
+  },
+
   save: async () => {
     const { doc, settings } = get();
     if (doc.readOnly) {
@@ -460,6 +541,16 @@ export const useStore = create<AppStore>((set, get) => ({
     set({ settings: next });
   },
 }));
+
+/** Replaces a markdown file name's extension with another one. */
+function withExtension(name: string, extension: string): string {
+  return `${name.replace(/\.(md|markdown|mdown|mkd|txt)$/i, '')}.${extension}`;
+}
+
+/** The file's own name, for a status message. */
+function baseName(path: string): string {
+  return path.split(/[\\/]/).pop() ?? path;
+}
 
 /** True when the document has unsaved edits. */
 export function isDirty(doc: DocumentState): boolean {

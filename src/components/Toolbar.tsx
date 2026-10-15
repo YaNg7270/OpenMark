@@ -41,9 +41,11 @@ interface ToolbarProps {
   onOpen: () => void;
   onSave: () => void;
   onToggleTheme: () => void;
+  onExportHtml: () => void;
+  onExportPdf: () => void;
 }
 
-export function Toolbar({ onOpen, onSave, onToggleTheme }: ToolbarProps) {
+export function Toolbar({ onOpen, onSave, onToggleTheme, onExportHtml, onExportPdf }: ToolbarProps) {
   const mode = useStore((s) => s.ui.mode);
   const sidebar = useStore((s) => s.ui.sidebar);
   const theme = useStore((s) => s.settings.reading.theme);
@@ -100,6 +102,32 @@ export function Toolbar({ onOpen, onSave, onToggleTheme }: ToolbarProps) {
             {t(m.key)}
           </button>
         ))}
+      </div>
+
+      <div className="om-toolbar__group">
+        {/*
+          Export is disabled until the document has a path: a self-contained HTML file needs a
+          directory to resolve relative images against, and offering the button before that
+          would produce a broken export.
+        */}
+        <button
+          type="button"
+          className="om-button"
+          onClick={onExportHtml}
+          disabled={!doc.path || !doc.render}
+          data-om-testid="export-html"
+        >
+          {t('toolbar.exportHtml')}
+        </button>
+        <button
+          type="button"
+          className="om-button"
+          onClick={onExportPdf}
+          disabled={!doc.path || !doc.render}
+          data-om-testid="export-pdf"
+        >
+          {t('toolbar.exportPdf')}
+        </button>
       </div>
 
       <div className="om-toolbar__group om-toolbar__group--end">

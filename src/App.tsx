@@ -30,6 +30,8 @@ export function App() {
   const openViaDialog = useStore((s) => s.openViaDialog);
   const openPath = useStore((s) => s.openPath);
   const save = useStore((s) => s.save);
+  const exportHtml = useStore((s) => s.exportHtml);
+  const exportPdf = useStore((s) => s.exportPdf);
   const setSource = useStore((s) => s.setSourceFromEditor);
   const setMode = useStore((s) => s.setMode);
   const setSidebar = useStore((s) => s.setSidebar);
@@ -294,6 +296,8 @@ export function App() {
       <Toolbar
         onOpen={() => void openViaDialog()}
         onSave={() => void save()}
+        onExportHtml={() => void exportHtml()}
+        onExportPdf={() => void exportPdf()}
         onToggleTheme={() =>
           updateSettings((draft) => {
             const next = draft.reading.theme === 'dark' ? 'light' : 'dark';

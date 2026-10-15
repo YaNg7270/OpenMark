@@ -4,10 +4,11 @@
  * Everything asserted here is produced by the shipped code paths: `src/components/Toolbar.tsx`
  * for the shell, `src/components/SourceEditor.tsx` for source mode, and
  * `src/core/render/typesetter.ts` + MathJax 4 for the formulas. Nothing is mocked, and the
- * document is opened through the same "file handed to the process" path Windows uses for
- * "Open with" (see `markdown_paths` in `src-tauri/src/lib.rs`).
+ * fixture is opened through the application's own "a file was opened by the OS" event.
  */
 
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { $, browser, expect } from '@wdio/globals';
 
 // Mocha injects these as globals. The repository's tsconfig pins `types` to
@@ -15,6 +16,13 @@ import { $, browser, expect } from '@wdio/globals';
 // signatures this file uses are declared here rather than by widening the shared tsconfig.
 declare function describe(title: string, fn: () => void): void;
 declare function it(title: string, fn: () => void | Promise<void>): void;
+
+/** `withGlobalTauri: true` in tauri.conf.json exposes the Tauri API on `window`. */
+interface TauriGlobal {
+  event: { emit(name: string, payload: unknown): Promise<void> };
+}
+
+const FIXTURE_PATH = resolve(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'math-render.md');
 
 const TOOLBAR = '.om-toolbar';
 const DOCUMENT_NAME = '[data-om-testid="document-name"]';
@@ -43,6 +51,30 @@ async function waitFor(selector: string, timeoutMsg: string, timeout = MOUNT_TIM
 }
 
 /**
+ * Opens a document the way the OS does.
+ *
+ * `src-tauri/src/lib.rs` delivers files handed to the process ("Open with", a shortcut, a
+ * second instance) to the frontend as an `openmark://open-file` event, and `frontend_ready`
+ * replays the ones that arrived before the bridge existed. A WebDriver session cannot use
+ * that route on Windows: msedgedriver starts the WebView2 host process with a bare command
+ * line, so `tauri:options.args` never reaches the app (verified — the live process command
+ * line is just the executable path). Emitting the same event drives the identical handler —
+ * `openPath()` → `read_text_file` IPC → parse → render — and is the only alternative to the
+ * native file dialog, which WebDriver cannot operate.
+ */
+async function openFixture(path: string): Promise<void> {
+  await browser.execute(
+    (target: string) => {
+      // The page under test is the app's own webview, where `withGlobalTauri: true`
+      // guarantees this global; the cast only names what the page really exposes.
+      const tauri = window as unknown as { __TAURI__: TauriGlobal };
+      return tauri.__TAURI__.event.emit('openmark://open-file', target);
+    },
+    path,
+  );
+}
+
+/**
  * Typesetting is lazy — a placeholder is only filled when it approaches the viewport — so a
  * formula must be scrolled into view before it can be asserted on.
  */
@@ -64,16 +96,22 @@ describe('OpenMark desktop shell', () => {
     expect(await browser.getTitle()).toContain('OpenMark');
   });
 
-  it('renders the toolbar and the document name of the opened fixture', async () => {
+  it('renders the toolbar with its document name element', async () => {
     await waitFor(DOCUMENT_NAME, 'the document name element is missing');
 
     await expect($(OPEN_BUTTON)).toExist();
     await expect($(SAVE_BUTTON)).toExist();
 
-    // The fixture arrived through the process command line; the toolbar must name it.
+    // Empty start: the shell names the placeholder document before a file is opened.
+    expect((await $(DOCUMENT_NAME).getText()).length).toBeGreaterThan(0);
+  });
+
+  it('opens the fixture through the shell open-file event', async () => {
+    await openFixture(FIXTURE_PATH);
+
     await browser.waitUntil(async () => (await $(DOCUMENT_NAME).getText()).includes('math-render'), {
       timeout: MOUNT_TIMEOUT_MS,
-      timeoutMsg: 'the fixture passed on the command line was never opened',
+      timeoutMsg: `the fixture was never opened (${FIXTURE_PATH})`,
     });
 
     console.log(`[desktop-e2e] document-name=${await $(DOCUMENT_NAME).getText()}`);

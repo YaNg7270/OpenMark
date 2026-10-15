@@ -54,13 +54,11 @@ const appBinary =
 const tauriDriverPath = process.env['OPENMARK_TAURI_DRIVER'];
 
 /**
- * The fixture is handed to the app as a command-line argument, which is the same path the
- * Windows "Open with" integration uses: `markdown_paths()` in `src-tauri/src/lib.rs` parks
- * it and replays it as `openmark://open-file` once the frontend reports it is listening.
- * Driving the native file dialog is not possible from WebDriver, so this *is* the real
- * user-facing open flow.
+ * The fixture is *not* passed on the app's command line. On Windows, msedgedriver launches
+ * the WebView2 host process with a bare command line — `tauri:options.args` is dropped before
+ * it reaches the app (verified against the live process) — so the spec opens
+ * `fixtures/math-render.md` through the shell's own `openmark://open-file` event instead.
  */
-const fixture = resolve(here, 'fixtures', 'math-render.md');
 
 export const config = {
   runner: 'local',
@@ -72,7 +70,6 @@ export const config = {
       browserName: 'tauri',
       'tauri:options': {
         application: appBinary,
-        args: [fixture],
       },
     },
   ],
