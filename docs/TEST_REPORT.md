@@ -16,7 +16,7 @@ estimated.
 | Layer | Command | Result |
 |---|---|---|
 | Unit + DOM (Vitest) | `pnpm test` | **434 passed / 0 failed** (9 files) |
-| Browser E2E (Playwright) | `pnpm test:e2e` | **53 passed / 0 failed** (incl. 7 screenshot baselines) |
+| Browser E2E (Playwright) | `pnpm test:e2e` | **59 passed / 0 failed** (incl. 7 screenshot baselines and 6 accessibility audits) |
 | Desktop E2E (WebdriverIO) | `pnpm test:desktop` | **6 passed / 0 failed** |
 | Rust unit | `cargo test --lib` | **3 passed / 0 failed** |
 | Corpus validation | `pnpm corpus:verify` | **OK** — manifest matches disk |
@@ -70,7 +70,7 @@ report** and on real output:
 
 ---
 
-## 3. Browser E2E — 53
+## 3. Browser E2E — 59
 
 Runs against the production build served by `vite preview`, in the system Edge channel
 (`channel: 'msedge'`), so no browser download is required and the engine family matches
@@ -91,6 +91,7 @@ WebView2.
 | Visual baselines | 7 | reading mode, instant mode, source mode, the diagnostics panel, the formula dialog, the table editor and **two tabs** |
 | File commands | 3 | New opens its own tab and leaves the open document intact; save defers to save-as without a path; Ctrl+N and Ctrl+Shift+S are wired |
 | Split view | 1 | both panes stay on the same region, asserted in *both* directions — a one-way sync would pass a test that only scrolled one side |
+| Accessibility | 6 | axe-core runs against the shell, all four view modes, every side panel and both dialogs; any violation fails |
 
 ---
 
@@ -205,7 +206,26 @@ worse than no corpus.
 
 ---
 
-## 7. Security verification
+## 7. Accessibility
+
+`tests/e2e/a11y.spec.ts` runs the axe-core ruleset against the shell, all four view modes, every
+side panel and both dialogs, and fails on any violation. Only the `region` rule is disabled, and
+for a stated reason: the application is a single-window desktop shell, not a web page, so forcing
+a landmark structure onto it would produce rules-compliance rather than usability.
+
+It found six real problems, all fixed and now enforced:
+
+| Finding | Why it mattered |
+|---|---|
+| Focusable content inside `aria-hidden` | The code block toolbar was marked decorative while holding a copy button — reachable but invisible to assistive technology |
+| Faint text at 2.92:1 contrast | Below the 4.5:1 minimum for body-size text; de-emphasised still has to be readable |
+| Accent text at 3.98:1 on the soft accent background | Same threshold, on the active outline entry |
+| Formulas had no accessible name | Disabling MathJax's enrichment removed the label that normally supplies one, so a screen reader announced an unlabelled graphic |
+| Diagrams had no accessible name | The same, for Mermaid output |
+| The editor was not a tab stop | Its scroll region therefore had no keyboard access at all |
+| No level-one heading | A screen reader arriving in the window was not told which document was open |
+
+## 8. Security verification
 
 | Property | Evidence |
 |---|---|
@@ -222,7 +242,7 @@ licensing; both require shipping the respective licence texts, which the reposit
 
 ---
 
-## 8. What is **not** verified
+## 9. What is **not** verified
 
 Stated plainly, because a test report that only lists successes is not a test report:
 
@@ -235,9 +255,10 @@ Stated plainly, because a test report that only lists successes is not a test re
    double-clicking a `.md` after installation.**
 5. **Memory over a long session was not profiled.** The figures above are heap growth across a
    single parse, not resident memory during extended use.
-6. **No accessibility audit.** MathJax's semantic enrichment, speech and Braille are disabled by
-   default because the SRE web worker made rendering non-deterministic; the payload is vendored
-   so they can be revisited.
+6. **MathJax's semantic enrichment, speech and Braille are off by default**, because the SRE web
+   worker made rendering non-deterministic. The payload is vendored so they can be re-enabled
+   once its lifecycle is handled explicitly. In the meantime each formula carries its LaTeX as
+   an accessible name, which is information but not spoken mathematics.
 7. **Stress fixtures are generated, not committed** — a fresh clone must run
    `node scripts/gen-corpus-stress.mjs` before the performance harness has anything to measure.
 8. **Screenshot baselines are environment-sensitive.** They were generated on the machine
@@ -254,7 +275,7 @@ full height regardless of the scroll container.
 
 ---
 
-## 9. Reproducing this report
+## 10. Reproducing this report
 
 ```bash
 source scripts/env.sh                 # or follow the absolute-path invocations in SESSION_HANDOFF.md

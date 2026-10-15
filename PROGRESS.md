@@ -33,7 +33,7 @@ install-tested.
 | Frontend build | `vite build` | exit 0 |
 | Windows binary | `tauri build` | `src-tauri/target/release/openmark.exe`, 14,473,216 bytes, boots |
 | Rust check | `cargo check` | zero warnings |
-| Browser E2E | `playwright test` | **53 passed** (incl. 7 screenshot baselines) |
+| Browser E2E | `playwright test` | **59 passed** (incl. 7 screenshot baselines and 6 axe-core accessibility audits) |
 | Desktop E2E | `pnpm test:desktop` | **6 passed** (release binary, WebView2 149) |
 | Rust unit | `cargo test --lib` | **3 passed** |
 | Unit + DOM tests | `vitest run` | **434 passed** (incl. 300 corpus-conformance assertions) |
@@ -161,8 +161,7 @@ Each of these was found by a test, not by inspection. All have regression covera
 
 1. **The MSI installer is not install-tested**, and neither installer is code-signed. This is an
    environment limitation (elevation), not a defect.
-2. **No accessibility audit**, and MathJax's semantic enrichment is off by default.
-3. **Typewriter mode centres on typing only**, not on caret movement from arrow keys.
+2. **Typewriter mode centres on typing only**, not on caret movement from arrow keys.
 4. **Find and replace steps through one match at a time only in source mode.** A per-match
    control in the reading view needs a source offset for a DOM match, which is not reliable. Instant mode edits whole blocks, so a
    table can be edited as text, but there is no grid editor and no paste/drag image handling.
@@ -170,7 +169,7 @@ Each of these was found by a test, not by inspection. All have regression covera
 
 ### P2
 
-6. **Accessibility features in MathJax are disabled.** v4 enables semantic enrichment, speech
+6. **MathJax's semantic enrichment is disabled by default.** v4 enables semantic enrichment, speech
    and Braille by default, which spins up an SRE web worker and made rendering
    non-deterministic in testing. The payload is vendored, so this can be turned on once the
    worker lifecycle is handled explicitly.
@@ -186,8 +185,9 @@ Each of these was found by a test, not by inspection. All have regression covera
 
 1. **Screenshot regression baselines**, so a typography change cannot slip through.
 2. **Find and replace in the reading view.** Source mode has CodeMirror's panel already.
-3. **MathJax accessibility** — the payload is vendored but disabled; enabling it needs the SRE
-   worker lifecycle handled explicitly, and an accessibility audit afterwards.
+3. **MathJax semantic enrichment** — the payload is vendored but disabled; enabling it needs the
+   SRE worker lifecycle handled explicitly. The axe audit is in place, so the change would be
+   checked rather than hoped for.
 4. **Code signing**, which is the only way to remove the SmartScreen warning for downloaded
    installers.
 5. **MSI install test** on a machine where elevation is available.
