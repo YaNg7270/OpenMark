@@ -768,3 +768,82 @@ test.describe('writing modes and images', () => {
       .toContain('data:image/png;base64,');
   });
 });
+
+test.describe('table editor', () => {
+  const DOC = ['# 表格', '', '| 名称 | 数量 |', '| :--- | ---: |', '| 苹果 | 3 |', '| 香蕉 | 5 |', ''].join('\n');
+
+  test('opens the grid from a table block and does not rewrite an unchanged table', async ({ page }) => {
+    await openFixture(page, 'table.md', DOC);
+    await page.getByTestId('mode-instant').click();
+
+    await expect(page.locator('.om-block[data-om-kind="table"]')).toHaveCount(1);
+    await page.getByTestId('table-edit-1').click();
+
+    const dialog = page.getByTestId('table-dialog');
+    await expect(dialog).toBeVisible();
+    await expect(page.getByTestId('table-header-0')).toHaveValue('名称');
+    await expect(page.getByTestId('table-cell-0-1')).toHaveValue('3');
+
+    // Opening and closing must leave the file byte-identical: serialising normalises pipe
+    // padding, so an unconditional write would turn a look into a whole-block diff.
+    await page.getByTestId('table-save').click();
+    await expect(dialog).toHaveCount(0);
+    expect(await page.evaluate(() => window.__openmark__!.getSource())).toBe(DOC);
+  });
+
+  test('edits a cell, adds a row and adds a column, and splices only the table', async ({ page }) => {
+    await openFixture(page, 'table-edit.md', DOC);
+    await page.getByTestId('mode-instant').click();
+    await page.getByTestId('table-edit-1').click();
+
+    await page.getByTestId('table-cell-0-1').fill('30');
+    await page.getByTestId('table-add-row').click();
+    await page.getByTestId('table-header-2').count().catch(() => 0);
+    await page.getByTestId('table-add-column').click();
+    await page.getByTestId('table-header-2').fill('备注');
+    await page.getByTestId('table-save').click();
+
+    const source = await page.evaluate(() => window.__openmark__!.getSource());
+    // The heading and the blank lines around the table must be untouched.
+    expect(source.startsWith('# 表格\n\n|')).toBe(true);
+
+    /*
+     * Asserted in full rather than by substring, because the interesting properties are all
+     * structural: the original alignment markers survive, the added column defaults to no
+     * alignment, CJK headers are padded to the right visual width, and the new row is empty.
+     */
+    expect(JSON.stringify(source)).toBe(
+      JSON.stringify(
+        [
+          '# 表格',
+          '',
+          '| 名称 | 数量 | 备注 |',
+          '| :--- | ---: | ---- |',
+          '| 苹果 | 30   |      |',
+          '| 香蕉 | 5    |      |',
+          '|      |      |      |',
+          '',
+        ].join('\n'),
+      ),
+    );
+
+    // And the result must still be a table the parser recognises.
+    await expect(page.locator('.om-block[data-om-kind="table"]')).toHaveCount(1);
+  });
+
+  test('deletes a row and a column', async ({ page }) => {
+    await openFixture(page, 'table-delete.md', DOC);
+    await page.getByTestId('mode-instant').click();
+    await page.getByTestId('table-edit-1').click();
+
+    await page.locator('.om-table-editor tbody tr').first().locator('.om-table-editor__remove').click();
+    await page.locator('.om-table-editor thead th').first().locator('.om-table-editor__remove').click();
+    await page.getByTestId('table-save').click();
+
+    const source = await page.evaluate(() => window.__openmark__!.getSource());
+    expect(source).not.toContain('苹果');
+    expect(source).not.toContain('名称');
+    expect(source).toContain('数量');
+    expect(source).toContain('5');
+  });
+});

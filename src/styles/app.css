@@ -972,3 +972,112 @@ html[data-om-focus='on'] .om-statusbar {
   background: var(--om-warning-soft);
   color: var(--om-text);
 }
+
+
+/* ---- table editor -------------------------------------------------------- */
+
+.om-modal__panel--wide {
+  width: min(1000px, 94vw);
+}
+
+.om-table-editor {
+  overflow: auto;
+  max-height: 60vh;
+  border: 1px solid var(--om-border);
+  border-radius: var(--om-radius-sm);
+}
+
+.om-table-editor table {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+}
+
+.om-table-editor th,
+.om-table-editor td {
+  padding: 3px;
+  border-right: 1px solid var(--om-border);
+  border-bottom: 1px solid var(--om-border);
+  vertical-align: top;
+}
+
+.om-table-editor thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--om-bg-subtle);
+}
+
+.om-table-editor input {
+  width: 100%;
+  min-width: 90px;
+  font: inherit;
+  font-size: 12.5px;
+  padding: 3px 5px;
+  border: 1px solid transparent;
+  border-radius: var(--om-radius-sm);
+  background: transparent;
+  color: var(--om-text);
+}
+
+.om-table-editor input:hover {
+  border-color: var(--om-border);
+}
+
+.om-table-editor input:focus {
+  outline: none;
+  border-color: var(--om-accent);
+  background: var(--om-bg-elevated);
+}
+
+.om-table-editor__align {
+  width: 100%;
+  margin-top: 2px;
+  font: inherit;
+  font-size: 10.5px;
+  padding: 1px 2px;
+  border: 1px solid var(--om-border);
+  border-radius: var(--om-radius-sm);
+  background: var(--om-bg-elevated);
+  color: var(--om-text-muted);
+}
+
+.om-table-editor__remove {
+  width: 100%;
+  height: 18px;
+  font-size: 12px;
+}
+
+.om-table-editor__spacer {
+  width: 32px;
+  text-align: center;
+  background: var(--om-bg-subtle);
+}
+
+/* The grid affordance sits in the block's top-right corner and stays out of the way. */
+.om-block__grid-button {
+  position: absolute;
+  top: 2px;
+  inset-inline-end: 2px;
+  z-index: 2;
+  font: inherit;
+  font-size: 11px;
+  padding: 1px 7px;
+  border: 1px solid var(--om-border);
+  border-radius: var(--om-radius-sm);
+  background: var(--om-bg-elevated);
+  color: var(--om-text-muted);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity var(--om-transition);
+}
+
+.om-block:hover .om-block__grid-button,
+.om-block__grid-button:focus-visible {
+  opacity: 1;
+}
+
+.om-block__grid-button:hover {
+  color: var(--om-text);
+  border-color: var(--om-border-strong);
+}

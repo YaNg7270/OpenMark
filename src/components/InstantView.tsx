@@ -3,6 +3,7 @@ import type { SourceBlock } from '@/core/markdown/types';
 import { useStore, type DocumentState } from '@/app/store';
 import { useReadingProgress, useTypesetting } from './useTypesetting';
 import { MathTools } from './MathTools';
+import { TableEditor } from './TableEditor';
 import { imageMarkdown, saveImageAsset } from '@/core/fs/assets';
 import { t } from '@/i18n';
 
@@ -43,6 +44,7 @@ export function InstantView({ doc, onNavigate }: InstantViewProps) {
   const progress = useStore((s) => s.ui.progress);
 
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [editingTable, setEditingTable] = useState<SourceBlock | null>(null);
   const [revision, setRevision] = useState(0);
 
   const blocks = doc.render?.blocks ?? NO_BLOCKS;
@@ -100,11 +102,23 @@ export function InstantView({ doc, onNavigate }: InstantViewProps) {
               onCommit={(text) => commit(block.index, text)}
               onExit={() => setEditingIndex(null)}
               onNavigate={onNavigate}
+              onEditTable={() => setEditingTable(block)}
             />
           ))}
         </article>
       </div>
       <MathTools rootRef={hostRef} render={doc.render} documentKey={signature} />
+
+      {editingTable && (
+        <TableEditor
+          source={editingTable.source}
+          onClose={() => setEditingTable(null)}
+          onSave={(next) => {
+            commit(editingTable.index, next);
+            setEditingTable(null);
+          }}
+        />
+      )}
     </>
   );
 }
@@ -118,9 +132,21 @@ interface BlockProps {
   onCommit: (text: string) => void;
   onExit: () => void;
   onNavigate: (href: string) => void;
+  /** Opens the grid editor. Tables are the one block a plain text box serves badly. */
+  onEditTable: () => void;
 }
 
-function Block({ block, active, readOnly, documentPath, onActivate, onCommit, onExit, onNavigate }: BlockProps) {
+function Block({
+  block,
+  active,
+  readOnly,
+  documentPath,
+  onActivate,
+  onCommit,
+  onExit,
+  onNavigate,
+  onEditTable,
+}: BlockProps) {
   const timer = useRef(0);
   const latest = useRef(block.source);
 
@@ -162,6 +188,24 @@ function Block({ block, active, readOnly, documentPath, onActivate, onCommit, on
         /* Safe: produced by our renderer and passed through DOMPurify. */
         dangerouslySetInnerHTML={{ __html: block.html }}
       />
+      {!active && block.kind === 'table' && !readOnly && (
+        /*
+         * A table is offered the grid editor rather than the plain source box. Editing pipe
+         * alignment by hand is exactly the work a grid exists to remove, and the grid writes
+         * back through the same block splice, so nothing else in the document can move.
+         */
+        <button
+          type="button"
+          className="om-block__grid-button"
+          data-om-testid={`table-edit-${block.index}`}
+          onClick={(event) => {
+            event.stopPropagation();
+            onEditTable();
+          }}
+        >
+          {t('table.edit')}
+        </button>
+      )}
       {active && (
         <textarea
           className="om-block__editor"
