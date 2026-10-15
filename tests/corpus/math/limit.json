@@ -1,0 +1,82 @@
+[
+  {
+    "id": "m069",
+    "tex": "\\lim_{x \\to 0} \\frac{\\sin x}{x} = 1",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "limit"
+  },
+  {
+    "id": "m070",
+    "tex": "\\lim_{n\\to\\infty} \\left(1+\\frac{1}{n}\\right)^n = e",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "limit"
+  },
+  {
+    "id": "m071",
+    "tex": "\\limsup_{n\\to\\infty} a_n",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "limit"
+  },
+  {
+    "id": "m072",
+    "tex": "\\liminf_{n\\to\\infty} a_n",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "limit"
+  },
+  {
+    "id": "m073",
+    "tex": "\\sup_{x \\in A} f(x)",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "limit"
+  },
+  {
+    "id": "m074",
+    "tex": "\\inf_{n \\ge 1} a_n",
+    "display": false,
+    "delimiter": "paren-inline",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "limit"
+  },
+  {
+    "id": "m075",
+    "tex": "\\lim_{h \\to 0} \\frac{f(x+h)-f(x)}{h}",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "limit"
+  },
+  {
+    "id": "m351",
+    "tex": "\\lim_{n \\to \\infty} \\frac{1}{n} = 0",
+    "display": true,
+    "delimiter": "math-fence",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "limit"
+  }
+]

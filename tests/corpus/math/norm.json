@@ -1,0 +1,42 @@
+[
+  {
+    "id": "m042",
+    "tex": "\\lVert v \\rVert",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "norm"
+  },
+  {
+    "id": "m043",
+    "tex": "\\|A\\|",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "norm"
+  },
+  {
+    "id": "m044",
+    "tex": "\\left\\lVert x \\right\\rVert_2",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "norm"
+  },
+  {
+    "id": "m045",
+    "tex": "\\lVert A \\rVert_F = \\sqrt{\\sum_{i,j} a_{ij}^2}",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "norm"
+  }
+]

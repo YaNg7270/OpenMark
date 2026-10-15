@@ -1,0 +1,26 @@
+[
+  {
+    "id": "m104",
+    "tex": "\\begin{equation} E = mc^2 \\end{equation}",
+    "display": true,
+    "delimiter": "latex-env",
+    "packages": [
+      "ams"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "environment"
+  },
+  {
+    "id": "m105",
+    "tex": "\\begin{flalign} a &= b & c &= d \\end{flalign}",
+    "display": true,
+    "delimiter": "latex-env",
+    "packages": [
+      "ams"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "environment"
+  }
+]

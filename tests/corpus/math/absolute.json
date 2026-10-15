@@ -1,0 +1,52 @@
+[
+  {
+    "id": "m037",
+    "tex": "|x|",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "absolute"
+  },
+  {
+    "id": "m038",
+    "tex": "\\lvert x \\rvert",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "absolute"
+  },
+  {
+    "id": "m039",
+    "tex": "\\left| x \\right|",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "absolute"
+  },
+  {
+    "id": "m040",
+    "tex": "\\left|\\frac{a}{b}\\right|",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "absolute"
+  },
+  {
+    "id": "m041",
+    "tex": "|x-y| \\le |x|+|y|",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "absolute"
+  }
+]

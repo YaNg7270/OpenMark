@@ -1,0 +1,82 @@
+[
+  {
+    "id": "m340",
+    "tex": "a^2+b^2=c^2",
+    "display": false,
+    "delimiter": "math-fence",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "delimiter"
+  },
+  {
+    "id": "m341",
+    "tex": "\\int_0^1 x\\,dx = \\frac{1}{2}",
+    "display": true,
+    "delimiter": "math-fence",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "delimiter"
+  },
+  {
+    "id": "m342",
+    "tex": "E = mc^2",
+    "display": true,
+    "delimiter": "paren-block",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "delimiter"
+  },
+  {
+    "id": "m343",
+    "tex": "x \\ne 0",
+    "display": false,
+    "delimiter": "paren-inline",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "delimiter"
+  },
+  {
+    "id": "m344",
+    "tex": "e^{i\\pi} + 1 = 0",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "delimiter"
+  },
+  {
+    "id": "m345",
+    "tex": "n! = \\prod_{k=1}^{n} k",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "delimiter"
+  },
+  {
+    "id": "m346",
+    "tex": "\\int_{-\\infty}^{\\infty} e^{-t^{2}}\\,dt = \\sqrt{\\pi}",
+    "display": true,
+    "delimiter": "paren-block",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "delimiter"
+  },
+  {
+    "id": "m349",
+    "tex": "x^{2} + y^{2} = r^{2}",
+    "display": true,
+    "delimiter": "math-fence",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "delimiter"
+  }
+]

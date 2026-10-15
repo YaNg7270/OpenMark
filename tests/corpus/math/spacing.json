@@ -1,0 +1,92 @@
+[
+  {
+    "id": "m222",
+    "tex": "a\\,b",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "spacing"
+  },
+  {
+    "id": "m223",
+    "tex": "a\\;b",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "spacing"
+  },
+  {
+    "id": "m224",
+    "tex": "a\\quad b",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "spacing"
+  },
+  {
+    "id": "m225",
+    "tex": "a\\qquad b",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "spacing"
+  },
+  {
+    "id": "m226",
+    "tex": "a\\!b",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "spacing"
+  },
+  {
+    "id": "m227",
+    "tex": "a\\:b",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "spacing"
+  },
+  {
+    "id": "m228",
+    "tex": "\\int_0^1 f(x)\\,dx",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "spacing"
+  },
+  {
+    "id": "m229",
+    "tex": "\\forall \\varepsilon > 0 \\; \\exists \\delta > 0",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "spacing"
+  },
+  {
+    "id": "m230",
+    "tex": "\\int\\!\\!\\int f",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "spacing"
+  }
+]

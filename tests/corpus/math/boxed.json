@@ -1,0 +1,26 @@
+[
+  {
+    "id": "m246",
+    "tex": "\\boxed{E = mc^2}",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [
+      "ams"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "boxed"
+  },
+  {
+    "id": "m247",
+    "tex": "\\boxed{x^2 + y^2 = r^2}",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [
+      "ams"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "boxed"
+  }
+]

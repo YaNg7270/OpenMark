@@ -1,0 +1,177 @@
+/* ============================================================================
+   OpenMark design tokens.
+
+   Every user-facing appearance setting (page width, density, font size, line
+   height, image and formula scale) is expressed as one of these variables, so the
+   settings panel only ever writes CSS custom properties — no component needs to
+   know about preferences.
+   ========================================================================== */
+
+:root {
+  color-scheme: light dark;
+
+  /* --- typography --- */
+  --om-font-ui:
+    'Segoe UI Variable Text', 'Segoe UI', -apple-system, 'Microsoft YaHei UI', 'PingFang SC', 'Noto Sans SC',
+    system-ui, sans-serif;
+  --om-font-content:
+    'Source Han Serif SC', 'Noto Serif SC', 'Songti SC', 'SimSun', Georgia, 'Times New Roman', serif;
+  --om-font-sans-content:
+    'Source Han Sans SC', 'Noto Sans SC', 'Microsoft YaHei', -apple-system, 'Segoe UI', sans-serif;
+  --om-font-mono: 'Cascadia Code', 'JetBrains Mono', Consolas, 'Courier New', ui-monospace, monospace;
+
+  --om-font-size: 16px;
+  --om-line-height: 1.75;
+  --om-letter-spacing: 0.01em;
+  /* Latin text is measured in `ch` for a stable reading rhythm. */
+  --om-content-width: 46rem;
+  --om-content-padding: 3.5rem;
+
+  /* --- math --- */
+  --om-math-scale: 1;
+  --om-image-scale: 1;
+
+  /* --- rhythm (density) --- */
+  --om-density: 1;
+  --om-gap-block: calc(1.1em * var(--om-density));
+  --om-radius: 6px;
+  --om-radius-sm: 4px;
+
+  --om-transition: 140ms cubic-bezier(0.2, 0, 0.13, 1);
+}
+
+/* ---- light ---- */
+:root,
+[data-om-theme='light'] {
+  --om-bg: #ffffff;
+  --om-bg-subtle: #f7f8fa;
+  --om-bg-elevated: #ffffff;
+  --om-bg-hover: #eef0f4;
+  --om-bg-active: #e3e7ee;
+  --om-text: #1f2328;
+  --om-text-muted: #5a6169;
+  --om-text-faint: #8b939c;
+  --om-border: #e2e5ea;
+  --om-border-strong: #cdd3db;
+  --om-accent: #2f6feb;
+  --om-accent-text: #ffffff;
+  --om-accent-soft: #e8f0fe;
+  --om-success: #1a7f37;
+  --om-warning: #9a6700;
+  --om-error: #cf222e;
+  --om-error-soft: #ffebe9;
+  --om-warning-soft: #fff8c5;
+  --om-code-bg: #f6f8fa;
+  --om-mark-bg: #fff3a3;
+  --om-shadow: 0 1px 2px rgb(31 35 40 / 8%), 0 8px 24px rgb(31 35 40 / 6%);
+}
+
+/* ---- dark ---- */
+[data-om-theme='dark'] {
+  --om-bg: #16181d;
+  --om-bg-subtle: #1c1f26;
+  --om-bg-elevated: #21252d;
+  --om-bg-hover: #262b34;
+  --om-bg-active: #2f3540;
+  --om-text: #dfe3e9;
+  --om-text-muted: #9aa3af;
+  --om-text-faint: #6c757f;
+  --om-border: #2b303a;
+  --om-border-strong: #3a414d;
+  --om-accent: #6ea8fe;
+  --om-accent-text: #10131a;
+  --om-accent-soft: #1d2836;
+  --om-success: #4ac26b;
+  --om-warning: #d4a72c;
+  --om-error: #ff6b6b;
+  --om-error-soft: #33201f;
+  --om-warning-soft: #322c1a;
+  --om-code-bg: #1b1e24;
+  --om-mark-bg: #5c4d00;
+  --om-shadow: 0 1px 2px rgb(0 0 0 / 30%), 0 8px 24px rgb(0 0 0 / 40%);
+}
+
+/* Users who ask for maximum contrast get it, without a separate theme. */
+@media (prefers-contrast: more) {
+  :root {
+    --om-border: color-mix(in srgb, var(--om-text) 45%, transparent);
+    --om-text-muted: var(--om-text);
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: var(--om-font-ui);
+  font-size: 14px;
+  color: var(--om-text);
+  background: var(--om-bg);
+  /* A desktop shell must not rubber-band or show a text caret on chrome. */
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* The app is a native-feeling desktop window: no accidental text selection of chrome,
+   no browser context menu on the shell, and no drag-to-select on the sidebar. */
+#root {
+  user-select: none;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--om-accent) 28%, transparent);
+}
+
+:focus-visible {
+  outline: 2px solid var(--om-accent);
+  outline-offset: 2px;
+  border-radius: var(--om-radius-sm);
+}
+
+/* Scrollbars: thin and theme-aware, like a native Windows app rather than a web page. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--om-border-strong) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--om-border-strong);
+  border: 3px solid transparent;
+  background-clip: content-box;
+  border-radius: 8px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--om-text-faint);
+  background-clip: content-box;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

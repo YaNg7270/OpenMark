@@ -1,0 +1,62 @@
+[
+  {
+    "id": "m011",
+    "tex": "\\sqrt{2}",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "root"
+  },
+  {
+    "id": "m012",
+    "tex": "\\sqrt[3]{x}",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "root"
+  },
+  {
+    "id": "m013",
+    "tex": "\\sqrt{x^2+y^2}",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "root"
+  },
+  {
+    "id": "m014",
+    "tex": "\\sqrt{\\frac{a}{b}}",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "root"
+  },
+  {
+    "id": "m015",
+    "tex": "\\sqrt[4]{16}",
+    "display": false,
+    "delimiter": "paren-inline",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "root"
+  },
+  {
+    "id": "m016",
+    "tex": "\\sqrt{\\sqrt{x}}",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "root"
+  }
+]

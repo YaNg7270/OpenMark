@@ -1,0 +1,56 @@
+[
+  {
+    "id": "m054",
+    "tex": "\\prod_{k=1}^{m} k",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "product"
+  },
+  {
+    "id": "m055",
+    "tex": "\\prod_{p \\text{ prime}} \\frac{1}{1-p^{-s}}",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [
+      "textmacros"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "product"
+  },
+  {
+    "id": "m056",
+    "tex": "\\coprod_{i} X_i",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [
+      "ams"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "product"
+  },
+  {
+    "id": "m057",
+    "tex": "\\prod_{n=1}^{\\infty} a_n",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "product"
+  },
+  {
+    "id": "m058",
+    "tex": "x \\cdot y",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "product"
+  }
+]

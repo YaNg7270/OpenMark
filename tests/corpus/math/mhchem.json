@@ -1,0 +1,399 @@
+[
+  {
+    "id": "m256",
+    "tex": "\\ce{H2O}",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [
+      "mhchem"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "mhchem"
+  },
+  {
+    "id": "m257",
+    "tex": "\\ce{CO2 + H2O -> H2CO3}",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [
+      "mhchem"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "mhchem"
+  },
+  {
+    "id": "m258",
+    "tex": "\\ce{2H2 + O2 -> 2H2O}",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [
+      "mhchem"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "mhchem"
+  },
+  {
+    "id": "m259",
+    "tex": "\\ce{CH4 + 2O2 -> CO2 + 2H2O}",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [
+      "mhchem"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "mhchem"
+  },
+  {
+    "id": "m260",
+    "tex": "\\ce{N2 + 3H2 <=> 2NH3}",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [
+      "mhchem"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "mhchem"
+  },
+  {
+    "id": "m261",
+    "tex": "\\ce{A <- B}",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [
+      "mhchem"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "mhchem"
+  },
+  {
+    "id": "m262",
+    "tex": "\\ce{A <-> B}",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [
+      "mhchem"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "mhchem"
+  },
+  {
+    "id": "m263",
+    "tex": "\\ce{NaCl(s) -> Na+(aq) + Cl-(aq)}",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [
+      "mhchem"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "mhchem"
+  },
+  {
+    "id": "m264",
+    "tex": "\\ce{H2O(l)}",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [
+      "mhchem"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "mhchem"
+  },
+  {
+    "id": "m265",
+    "tex": "\\ce{CO2(g)}",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [
+      "mhchem"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "mhchem"
+  },
+  {
+    "id": "m266",
+    "tex": "\\ce{Fe(s)}",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [
+      "mhchem"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "mhchem"
+  },
+  {
+    "id": "m267",
+    "tex": "\\ce{CaCO3(s) <=> CaO(s) + CO2(g)}",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [
+      "mhchem"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "mhchem"
+  },
+  {
+    "id": "m268",
+    "tex": "\\ce{SO4^2-}",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [
+      "mhchem"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "mhchem"
+  },
+  {
+    "id": "m269",
+    "tex": "\\ce{Fe^3+}",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [
+      "mhchem"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "mhchem"
+  },
+  {
+    "id": "m270",
+    "tex": "\\ce{PO4^3-}",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [
+      "mhchem"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "mhchem"
+  },
+  {
+    "id": "m271",
+    "tex": "\\ce{^{14}C}",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [
+      "mhchem"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "mhchem"
+  },
+  {
+    "id": "m272",
+    "tex": "\\ce{^{238}_{92}U}",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [
+      "mhchem"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "mhchem"
+  },
+  {
+    "id": "m273",
+    "tex": "\\ce{^1H}",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [
+      "mhchem"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "mhchem"
+  },
+  {
+    "id": "m274",
+    "tex": "\\ce{CuSO4 * 5H2O}",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [
+      "mhchem"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "mhchem"
+  },
+  {
+    "id": "m275",
+    "tex": "\\ce{Na2CO3 * 10H2O}",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [
+      "mhchem"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "mhchem"
+  },
+  {
+    "id": "m276",
+    "tex": "\\ce{[Ag(NH3)2]+}",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [
+      "mhchem"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "mhchem"
+  },
+  {
+    "id": "m277",
+    "tex": "\\ce{[Fe(CN)6]^4-}",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [
+      "mhchem"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "mhchem"
+  },
+  {
+    "id": "m278",
+    "tex": "\\ce{Ca(OH)2}",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [
+      "mhchem"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "mhchem"
+  },
+  {
+    "id": "m279",
+    "tex": "\\ce{H2SO4}",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [
+      "mhchem"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "mhchem"
+  },
+  {
+    "id": "m280",
+    "tex": "\\ce{KMnO4}",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [
+      "mhchem"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "mhchem"
+  },
+  {
+    "id": "m281",
+    "tex": "\\ce{CH3COOH + NaOH -> CH3COONa + H2O}",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [
+      "mhchem"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "mhchem"
+  },
+  {
+    "id": "m282",
+    "tex": "\\ce{C6H12O6 ->[酶] 2C2H5OH + 2CO2}",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [
+      "mhchem",
+      "unicode"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "mhchem"
+  },
+  {
+    "id": "m283",
+    "tex": "\\ce{Ca^{2+} + 2 OH- -> Ca(OH)2 v}",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [
+      "mhchem"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "mhchem"
+  },
+  {
+    "id": "m284",
+    "tex": "\\ce{NH4+ + OH- -> NH3 ^ + H2O}",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [
+      "mhchem"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "mhchem"
+  },
+  {
+    "id": "m285",
+    "tex": "\\ce{3 Fe + 4 H2O -> Fe3O4 + 4 H2}",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [
+      "mhchem"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "mhchem"
+  },
+  {
+    "id": "m286",
+    "tex": "\\ce{2 Na + Cl2 -> 2 NaCl}",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [
+      "mhchem"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "mhchem"
+  },
+  {
+    "id": "m287",
+    "tex": "\\ce{H+ + OH- -> H2O}",
+    "display": false,
+    "delimiter": "paren-inline",
+    "packages": [
+      "mhchem"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "mhchem"
+  },
+  {
+    "id": "m352",
+    "tex": "\\ce{4 Fe + 3 O2 -> 2 Fe2O3}",
+    "display": true,
+    "delimiter": "math-fence",
+    "packages": [
+      "mhchem"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "mhchem"
+  }
+]

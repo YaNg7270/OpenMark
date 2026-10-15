@@ -1,0 +1,26 @@
+# Line-ending policy.
+#
+# The test corpus declares exact byte counts and content expectations in its manifest, and
+# the round-trip guarantees are stated in terms of on-disk bytes. Letting Git rewrite line
+# endings on checkout would silently invalidate both, so everything is stored and checked
+# out as LF.
+#
+# The application itself handles CRLF files correctly — that is a product feature, tested in
+# tests/unit/encoding.test.ts — but the *repository* stays LF.
+* text=auto eol=lf
+
+# Binary assets must never be normalised.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.icns binary
+*.woff binary
+*.woff2 binary
+*.wasm binary
+*.pdf binary
+
+# Generated files that should not appear in diffs or language stats.
+pnpm-lock.yaml -diff linguist-generated
+src-tauri/Cargo.lock -diff linguist-generated

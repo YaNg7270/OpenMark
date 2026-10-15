@@ -1,0 +1,108 @@
+[
+  {
+    "id": "m001",
+    "tex": "\\frac{a}{b}",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "fraction"
+  },
+  {
+    "id": "m002",
+    "tex": "\\frac{a+b}{c-d}",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "fraction"
+  },
+  {
+    "id": "m003",
+    "tex": "\\dfrac{1}{2}",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [
+      "ams"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "fraction"
+  },
+  {
+    "id": "m004",
+    "tex": "\\tfrac{3}{4}",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [
+      "ams"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "fraction"
+  },
+  {
+    "id": "m005",
+    "tex": "\\cfrac{1}{1+x}",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [
+      "ams"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "fraction"
+  },
+  {
+    "id": "m006",
+    "tex": "\\frac{\\frac{a}{b}}{\\frac{c}{d}}",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "fraction"
+  },
+  {
+    "id": "m007",
+    "tex": "\\frac{1}{x+1}",
+    "display": false,
+    "delimiter": "paren-inline",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "fraction"
+  },
+  {
+    "id": "m008",
+    "tex": "\\frac{\\partial f}{\\partial x}",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "fraction"
+  },
+  {
+    "id": "m009",
+    "tex": "\\frac{n!}{k!(n-k)!}",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "fraction"
+  },
+  {
+    "id": "m010",
+    "tex": "\\frac{2}{3}\\times\\frac{5}{7}",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "fraction"
+  }
+]

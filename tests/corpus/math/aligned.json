@@ -1,0 +1,86 @@
+[
+  {
+    "id": "m098",
+    "tex": "\\begin{aligned} a &= b+c \\\\ &= d \\end{aligned}",
+    "display": true,
+    "delimiter": "latex-env",
+    "packages": [
+      "ams"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "aligned"
+  },
+  {
+    "id": "m099",
+    "tex": "\\begin{align} x &= a+b \\\\ y &= c+d \\end{align}",
+    "display": true,
+    "delimiter": "latex-env",
+    "packages": [
+      "ams"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "aligned"
+  },
+  {
+    "id": "m100",
+    "tex": "\\begin{align*} f(x) &= (x+1)^2 \\\\ &= x^2+2x+1 \\end{align*}",
+    "display": true,
+    "delimiter": "latex-env",
+    "packages": [
+      "ams"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "aligned"
+  },
+  {
+    "id": "m101",
+    "tex": "\\begin{gather} a = b \\\\ c = d \\end{gather}",
+    "display": true,
+    "delimiter": "latex-env",
+    "packages": [
+      "ams"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "aligned"
+  },
+  {
+    "id": "m102",
+    "tex": "\\begin{split} f(x) &= a \\\\ &\\quad + b \\end{split}",
+    "display": true,
+    "delimiter": "latex-env",
+    "packages": [
+      "ams"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "aligned"
+  },
+  {
+    "id": "m103",
+    "tex": "\\begin{multline} a + b + c \\\\ + d + e \\end{multline}",
+    "display": true,
+    "delimiter": "latex-env",
+    "packages": [
+      "ams"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "aligned"
+  },
+  {
+    "id": "m355",
+    "tex": "\\begin{alignat}{2} a &= b &\\quad c &= d \\end{alignat}",
+    "display": true,
+    "delimiter": "latex-env",
+    "packages": [
+      "ams"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "aligned"
+  }
+]

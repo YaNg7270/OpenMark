@@ -1,0 +1,38 @@
+[
+  {
+    "id": "m243",
+    "tex": "\\cancel{x}",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [
+      "cancel"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "cancel"
+  },
+  {
+    "id": "m244",
+    "tex": "\\bcancel{(a+b)}",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [
+      "cancel"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "cancel"
+  },
+  {
+    "id": "m245",
+    "tex": "\\xcancel{\\frac{a}{b}}",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [
+      "cancel"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "cancel"
+  }
+]

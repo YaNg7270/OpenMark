@@ -1,0 +1,102 @@
+[
+  {
+    "id": "m204",
+    "tex": "\\left( \\frac{a}{b} \\right)",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "delimiters"
+  },
+  {
+    "id": "m205",
+    "tex": "\\left[ 0, 1 \\right]",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "delimiters"
+  },
+  {
+    "id": "m206",
+    "tex": "\\left\\{ x \\mid x > 0 \\right\\}",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "delimiters"
+  },
+  {
+    "id": "m207",
+    "tex": "\\left\\langle u, v \\right\\rangle",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "delimiters"
+  },
+  {
+    "id": "m208",
+    "tex": "\\left\\lfloor x \\right\\rfloor",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "delimiters"
+  },
+  {
+    "id": "m209",
+    "tex": "\\left\\lceil x \\right\\rceil",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "delimiters"
+  },
+  {
+    "id": "m210",
+    "tex": "\\bigl( x + y \\bigr)",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "delimiters"
+  },
+  {
+    "id": "m211",
+    "tex": "\\Bigl[ \\Bigr]",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "delimiters"
+  },
+  {
+    "id": "m212",
+    "tex": "\\left( \\sum_{i=1}^{n} a_i \\right)^2",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "delimiters"
+  },
+  {
+    "id": "m213",
+    "tex": "\\left. \\frac{dy}{dx} \\right|_{x=0}",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "delimiters"
+  }
+]

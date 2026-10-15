@@ -1,0 +1,152 @@
+[
+  {
+    "id": "m148",
+    "tex": "a \\pm b",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "operator"
+  },
+  {
+    "id": "m149",
+    "tex": "a \\mp b",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "operator"
+  },
+  {
+    "id": "m150",
+    "tex": "a \\times b",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "operator"
+  },
+  {
+    "id": "m151",
+    "tex": "a \\div b",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "operator"
+  },
+  {
+    "id": "m152",
+    "tex": "a \\cdot b",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "operator"
+  },
+  {
+    "id": "m153",
+    "tex": "a \\ast b",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "operator"
+  },
+  {
+    "id": "m154",
+    "tex": "a \\star b",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "operator"
+  },
+  {
+    "id": "m155",
+    "tex": "a \\circ b",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "operator"
+  },
+  {
+    "id": "m156",
+    "tex": "a \\bullet b",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "operator"
+  },
+  {
+    "id": "m157",
+    "tex": "a \\oplus b",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "operator"
+  },
+  {
+    "id": "m158",
+    "tex": "a \\otimes b",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "operator"
+  },
+  {
+    "id": "m159",
+    "tex": "a \\odot b",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "operator"
+  },
+  {
+    "id": "m160",
+    "tex": "a \\dagger b",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "operator"
+  },
+  {
+    "id": "m161",
+    "tex": "a \\wedge b",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "operator"
+  },
+  {
+    "id": "m162",
+    "tex": "\\sum_{i} a_i \\otimes b_i",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "operator"
+  }
+]

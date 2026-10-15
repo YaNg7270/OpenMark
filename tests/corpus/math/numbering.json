@@ -1,0 +1,98 @@
+[
+  {
+    "id": "m248",
+    "tex": "E = mc^2 \\tag{1}",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [
+      "ams"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "numbering"
+  },
+  {
+    "id": "m249",
+    "tex": "a = b \\label{eq:main}",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [
+      "ams"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "numbering"
+  },
+  {
+    "id": "m250",
+    "tex": "\\ref{eq:main}",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [
+      "ams"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "numbering"
+  },
+  {
+    "id": "m251",
+    "tex": "\\eqref{eq:main}",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [
+      "ams"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "numbering"
+  },
+  {
+    "id": "m252",
+    "tex": "x = y \\tag*{$\\ast$}",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [
+      "ams"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "numbering"
+  },
+  {
+    "id": "m253",
+    "tex": "a = b \\notag \\\\ c = d",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [
+      "ams"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "numbering"
+  },
+  {
+    "id": "m254",
+    "tex": "f = g \\nonumber",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [
+      "ams"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "numbering"
+  },
+  {
+    "id": "m255",
+    "tex": "\\begin{align} a &= b \\tag{2.1} \\\\ c &= d \\tag{2.2} \\end{align}",
+    "display": true,
+    "delimiter": "latex-env",
+    "packages": [
+      "ams"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "numbering"
+  }
+]

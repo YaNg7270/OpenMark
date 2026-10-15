@@ -1,0 +1,4 @@
+# Rust build output. The root .gitignore covers these too; keeping a local copy
+# makes `src-tauri` sane to work with in isolation (e.g. a partial checkout).
+/target/
+/gen/

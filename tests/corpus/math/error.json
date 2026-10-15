@@ -1,0 +1,448 @@
+[
+  {
+    "id": "m300",
+    "tex": "\\thisIsNotAMacro{}",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "error",
+    "reason": "Unknown control sequence: MathJax reports `Undefined control sequence \\thisIsNotAMacro`.",
+    "category": "error"
+  },
+  {
+    "id": "m301",
+    "tex": "\\notacommand",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "error",
+    "reason": "Bare unknown control sequence must be reported as math-unknown-macro, not silently dropped.",
+    "category": "error"
+  },
+  {
+    "id": "m302",
+    "tex": "\\frac{a}",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [],
+    "expect": "error",
+    "reason": "`\\frac` needs two arguments; only one was supplied.",
+    "category": "error"
+  },
+  {
+    "id": "m303",
+    "tex": "\\frac",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [],
+    "expect": "error",
+    "reason": "`\\frac` with no arguments is an error.",
+    "category": "error"
+  },
+  {
+    "id": "m304",
+    "tex": "\\sqrt[3{x}",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "error",
+    "reason": "`\\sqrt` bracket and brace do not pair: the optional argument is unterminated.",
+    "category": "error"
+  },
+  {
+    "id": "m305",
+    "tex": "\\frac{1}{",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "error",
+    "reason": "Unclosed `{` after the second argument — math-unbalanced-braces.",
+    "category": "error"
+  },
+  {
+    "id": "m306",
+    "tex": "{a+b",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "error",
+    "reason": "Unclosed group `{` must be reported as math-unbalanced-braces.",
+    "category": "error"
+  },
+  {
+    "id": "m307",
+    "tex": "a}b",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "error",
+    "reason": "Unmatched closing brace must be reported as math-unbalanced-braces.",
+    "category": "error"
+  },
+  {
+    "id": "m308",
+    "tex": "\\begin{align} a &= b",
+    "display": true,
+    "delimiter": "latex-env",
+    "packages": [
+      "ams"
+    ],
+    "expect": "error",
+    "reason": "`\\begin{align}` without `\\end{align}` — math-unbalanced-environment.",
+    "category": "error"
+  },
+  {
+    "id": "m309",
+    "tex": "\\begin{align*} x &= 1",
+    "display": true,
+    "delimiter": "latex-env",
+    "packages": [
+      "ams"
+    ],
+    "expect": "error",
+    "reason": "Unclosed `align*` environment.",
+    "category": "error"
+  },
+  {
+    "id": "m310",
+    "tex": "\\begin{cases} 1 & x>0",
+    "display": true,
+    "delimiter": "latex-env",
+    "packages": [
+      "ams"
+    ],
+    "expect": "error",
+    "reason": "Unclosed `cases` environment.",
+    "category": "error"
+  },
+  {
+    "id": "m311",
+    "tex": "\\end{align}",
+    "display": true,
+    "delimiter": "latex-env",
+    "packages": [
+      "ams"
+    ],
+    "expect": "error",
+    "reason": "`\\end{align}` with no matching `\\begin{align}`.",
+    "category": "error"
+  },
+  {
+    "id": "m312",
+    "tex": "\\begin{matrix} 1 & 2 \\\\ 3 & 4 \\end{matrix}",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [
+      "ams"
+    ],
+    "expect": "error",
+    "reason": "A bare `matrix` environment outside a math delimiter: the matrix environment is only valid inside math mode, so this must be reported rather than rendered as a paragraph.",
+    "category": "error"
+  },
+  {
+    "id": "m313",
+    "tex": "\\begin{foobar} x \\end{foobar}",
+    "display": true,
+    "delimiter": "latex-env",
+    "packages": [],
+    "expect": "error",
+    "reason": "`foobar` is not in MATH_ENVIRONMENTS — math-unsupported-environment.",
+    "category": "error"
+  },
+  {
+    "id": "m314",
+    "tex": "\\begin{equation} x",
+    "display": true,
+    "delimiter": "latex-env",
+    "packages": [
+      "ams"
+    ],
+    "expect": "error",
+    "reason": "Unclosed `equation` environment.",
+    "category": "error"
+  },
+  {
+    "id": "m315",
+    "tex": "\\left( x + y",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [],
+    "expect": "error",
+    "reason": "`\\left(` has no matching `\\right)`: MathJax reports a missing `\\right`.",
+    "category": "error"
+  },
+  {
+    "id": "m316",
+    "tex": "x + y \\right)",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [],
+    "expect": "error",
+    "reason": "`\\right)` with no preceding `\\left(`.",
+    "category": "error"
+  },
+  {
+    "id": "m317",
+    "tex": "\\left\\{ x \\right]",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [],
+    "expect": "error",
+    "reason": "`\\left\\{` closed by `\\right]` — mismatched delimiter pair.",
+    "category": "error"
+  },
+  {
+    "id": "m318",
+    "tex": "a & b",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "error",
+    "reason": "Alignment tab `&` outside an alignment environment inside inline math.",
+    "category": "error"
+  },
+  {
+    "id": "m319",
+    "tex": "x = y \\end{cases}",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [],
+    "expect": "error",
+    "reason": "`\\end{cases}` with no matching `\\begin{cases}` — unbalanced environment.",
+    "category": "error"
+  },
+  {
+    "id": "m320",
+    "tex": "\\ce{H2O",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [
+      "mhchem"
+    ],
+    "expect": "error",
+    "reason": "Unclosed brace inside `\\ce{}`.",
+    "category": "error"
+  },
+  {
+    "id": "m321",
+    "tex": "\\ce{}",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [
+      "mhchem"
+    ],
+    "expect": "error",
+    "reason": "Empty `\\ce{}` has nothing to parse.",
+    "category": "error"
+  },
+  {
+    "id": "m322",
+    "tex": "\\ce{2H2 + O2 ->}",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [
+      "mhchem"
+    ],
+    "expect": "error",
+    "reason": "Reaction arrow with no right-hand side.",
+    "category": "error"
+  },
+  {
+    "id": "m323",
+    "tex": "\\ce{H2O -> }",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [
+      "mhchem"
+    ],
+    "expect": "error",
+    "reason": "Reaction arrow with no product.",
+    "category": "error"
+  },
+  {
+    "id": "m324",
+    "tex": "\\ce{H2O_{(}}",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [
+      "mhchem"
+    ],
+    "expect": "error",
+    "reason": "Malformed state annotation inside `\\ce{}`.",
+    "category": "error"
+  },
+  {
+    "id": "m325",
+    "tex": "\\ce{A -> B",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [
+      "mhchem"
+    ],
+    "expect": "error",
+    "reason": "Unclosed `\\ce{}` argument.",
+    "category": "error"
+  },
+  {
+    "id": "m326",
+    "tex": "\\pu{abc}",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [
+      "mhchem"
+    ],
+    "expect": "error",
+    "reason": "`\\pu` with no parseable unit.",
+    "category": "error"
+  },
+  {
+    "id": "m327",
+    "tex": "\\pu{5 }",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [
+      "mhchem"
+    ],
+    "expect": "error",
+    "reason": "`\\pu` with a value but no unit.",
+    "category": "error"
+  },
+  {
+    "id": "m328",
+    "tex": "\\pu{}",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [
+      "mhchem"
+    ],
+    "expect": "error",
+    "reason": "Empty `\\pu{}`.",
+    "category": "error"
+  },
+  {
+    "id": "m329",
+    "tex": "\\xrightarrow",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [
+      "ams"
+    ],
+    "expect": "error",
+    "reason": "`\\xrightarrow` requires an argument.",
+    "category": "error"
+  },
+  {
+    "id": "m330",
+    "tex": "\\boxed",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [
+      "ams"
+    ],
+    "expect": "error",
+    "reason": "`\\boxed` requires an argument.",
+    "category": "error"
+  },
+  {
+    "id": "m331",
+    "tex": "\\textcolor{}",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [
+      "color"
+    ],
+    "expect": "error",
+    "reason": "`\\textcolor` needs a colour and a body.",
+    "category": "error"
+  },
+  {
+    "id": "m332",
+    "tex": "\\operatorname",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "error",
+    "reason": "`\\operatorname` requires an argument.",
+    "category": "error"
+  },
+  {
+    "id": "m333",
+    "tex": "\\tag",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [
+      "ams"
+    ],
+    "expect": "error",
+    "reason": "`\\tag` requires an argument.",
+    "category": "error"
+  },
+  {
+    "id": "m334",
+    "tex": "\\ref",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [
+      "ams"
+    ],
+    "expect": "error",
+    "reason": "`\\ref` requires a label argument.",
+    "category": "error"
+  },
+  {
+    "id": "m335",
+    "tex": "\\substack{a",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [
+      "ams"
+    ],
+    "expect": "error",
+    "reason": "Unclosed brace in `\\substack`.",
+    "category": "error"
+  },
+  {
+    "id": "m336",
+    "tex": "\\overbrace{x",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [],
+    "expect": "error",
+    "reason": "Unclosed brace in `\\overbrace`.",
+    "category": "error"
+  },
+  {
+    "id": "m337",
+    "tex": "\\begin{array}{c} a & b",
+    "display": true,
+    "delimiter": "latex-env",
+    "packages": [
+      "ams"
+    ],
+    "expect": "error",
+    "reason": "Unclosed `array` environment.",
+    "category": "error"
+  },
+  {
+    "id": "m338",
+    "tex": "\\begin{cases} 1 & x>0 \\end{cases*}",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [
+      "ams"
+    ],
+    "expect": "error",
+    "reason": "`\\begin{cases}` closed by `\\end{cases*}` — environment name mismatch, must be reported as math-unbalanced-environment.",
+    "category": "error"
+  },
+  {
+    "id": "m339",
+    "tex": "x \\overbrace",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [],
+    "expect": "error",
+    "reason": "`\\overbrace` with no argument.",
+    "category": "error"
+  }
+]

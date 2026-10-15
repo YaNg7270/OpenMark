@@ -1,0 +1,104 @@
+[
+  {
+    "id": "m017",
+    "tex": "x^2",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "exponent"
+  },
+  {
+    "id": "m018",
+    "tex": "x^{n+1}",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "exponent"
+  },
+  {
+    "id": "m019",
+    "tex": "e^{-x^2}",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "exponent"
+  },
+  {
+    "id": "m020",
+    "tex": "2^{10}",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "exponent"
+  },
+  {
+    "id": "m021",
+    "tex": "x^{y^{z}}",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "exponent"
+  },
+  {
+    "id": "m022",
+    "tex": "\\left(e^{x}\\right)^{n}",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "exponent"
+  },
+  {
+    "id": "m023",
+    "tex": "a^{b}_{c}",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "exponent"
+  },
+  {
+    "id": "m024",
+    "tex": "10^{-3}",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "exponent"
+  },
+  {
+    "id": "m025",
+    "tex": "(x+y)^n = \\sum_{k=0}^{n}\\binom{n}{k}x^k y^{n-k}",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [
+      "ams"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "exponent"
+  },
+  {
+    "id": "m026",
+    "tex": "n^{2}",
+    "display": false,
+    "delimiter": "paren-inline",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "exponent"
+  }
+]

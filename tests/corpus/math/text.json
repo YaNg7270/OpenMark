@@ -1,0 +1,91 @@
+[
+  {
+    "id": "m231",
+    "tex": "\\text{if } x > 0",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [
+      "textmacros"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "text"
+  },
+  {
+    "id": "m232",
+    "tex": "\\text{for all } n \\in \\mathbb{N}",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [
+      "textmacros"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "text"
+  },
+  {
+    "id": "m233",
+    "tex": "\\operatorname{sgn}(x)",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "text"
+  },
+  {
+    "id": "m234",
+    "tex": "\\operatorname{arg\\,max}_x f(x)",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "text"
+  },
+  {
+    "id": "m235",
+    "tex": "\\mathrm{d}x",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "text"
+  },
+  {
+    "id": "m236",
+    "tex": "\\text{中文公式说明}",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [
+      "textmacros",
+      "unicode"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "text"
+  },
+  {
+    "id": "m353",
+    "tex": "\\log_{2} n",
+    "display": false,
+    "delimiter": "paren-inline",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "text"
+  },
+  {
+    "id": "m354",
+    "tex": "\\binom{n}{k}",
+    "display": false,
+    "delimiter": "paren-inline",
+    "packages": [
+      "ams"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "text"
+  }
+]

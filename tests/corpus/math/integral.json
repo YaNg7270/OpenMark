@@ -1,0 +1,102 @@
+[
+  {
+    "id": "m059",
+    "tex": "\\int_a^b f(x)\\,dx",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "integral"
+  },
+  {
+    "id": "m060",
+    "tex": "\\int_0^\\infty e^{-x}\\,dx = 1",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "integral"
+  },
+  {
+    "id": "m061",
+    "tex": "\\iint_D f(x,y)\\,dA",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "integral"
+  },
+  {
+    "id": "m062",
+    "tex": "\\iiint_V \\rho\\,dV",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "integral"
+  },
+  {
+    "id": "m063",
+    "tex": "\\oint_C \\mathbf{F}\\cdot d\\mathbf{r}",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "integral"
+  },
+  {
+    "id": "m064",
+    "tex": "\\int\\limits_{0}^{1} x^2\\,dx",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "integral"
+  },
+  {
+    "id": "m065",
+    "tex": "\\int_{-\\infty}^{\\infty} e^{-x^2}\\,dx = \\sqrt{\\pi}",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "integral"
+  },
+  {
+    "id": "m066",
+    "tex": "\\int \\frac{dx}{1+x^2}",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "integral"
+  },
+  {
+    "id": "m067",
+    "tex": "\\int\\!\\!\\int_D f\\,dA",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "integral"
+  },
+  {
+    "id": "m068",
+    "tex": "\\int_0^T \\dot{q}(t)\\,dt",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "integral"
+  }
+]

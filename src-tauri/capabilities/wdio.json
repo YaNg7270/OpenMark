@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "wdio",
+  "description": "Test-only surface for the WebDriverIO desktop E2E suite (@wdio/tauri-service + tauri-plugin-wdio). The plugin is only registered in debug builds, so these commands do not exist in a release binary.",
+  "windows": ["main"],
+  "permissions": ["wdio:default"]
+}

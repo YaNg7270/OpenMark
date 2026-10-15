@@ -1,0 +1,32 @@
+[
+  {
+    "id": "m079",
+    "tex": "\\frac{\\partial f}{\\partial t}",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "partial"
+  },
+  {
+    "id": "m080",
+    "tex": "\\frac{\\partial^2 u}{\\partial x \\partial y}",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "partial"
+  },
+  {
+    "id": "m081",
+    "tex": "\\nabla f = \\left(\\frac{\\partial f}{\\partial x}, \\frac{\\partial f}{\\partial y}\\right)",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "partial"
+  }
+]

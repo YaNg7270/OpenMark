@@ -1,0 +1,38 @@
+[
+  {
+    "id": "m095",
+    "tex": "\\begin{cases} 1 & x > 0 \\\\ 0 & x = 0 \\\\ -1 & x < 0 \\end{cases}",
+    "display": true,
+    "delimiter": "latex-env",
+    "packages": [
+      "ams"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "cases"
+  },
+  {
+    "id": "m096",
+    "tex": "\\begin{dcases} x^2 & x \\ge 0 \\\\ -x & x < 0 \\end{dcases}",
+    "display": true,
+    "delimiter": "latex-env",
+    "packages": [
+      "mathtools"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "cases"
+  },
+  {
+    "id": "m097",
+    "tex": "\\begin{rcases} a \\\\ b \\end{rcases}",
+    "display": true,
+    "delimiter": "latex-env",
+    "packages": [
+      "mathtools"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "cases"
+  }
+]

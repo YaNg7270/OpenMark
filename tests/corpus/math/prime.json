@@ -1,0 +1,42 @@
+[
+  {
+    "id": "m033",
+    "tex": "f'(x)",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "prime"
+  },
+  {
+    "id": "m034",
+    "tex": "f''(x)",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "prime"
+  },
+  {
+    "id": "m035",
+    "tex": "y'''",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "prime"
+  },
+  {
+    "id": "m036",
+    "tex": "g'(t) = 2t",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "prime"
+  }
+]

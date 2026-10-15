@@ -1,0 +1,74 @@
+[
+  {
+    "id": "m237",
+    "tex": "\\textcolor{red}{x}",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [
+      "color"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "color"
+  },
+  {
+    "id": "m238",
+    "tex": "\\textcolor{blue}{\\frac{a}{b}}",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [
+      "color"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "color"
+  },
+  {
+    "id": "m239",
+    "tex": "\\color{green} y = mx + c",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [
+      "color"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "color"
+  },
+  {
+    "id": "m240",
+    "tex": "x + \\textcolor{#ff8800}{y}",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [
+      "color"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "color"
+  },
+  {
+    "id": "m241",
+    "tex": "\\textcolor{red}{a} + \\textcolor{blue}{b}",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [
+      "color"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "color"
+  },
+  {
+    "id": "m242",
+    "tex": "\\colorbox{yellow}{x}",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [
+      "color"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "color"
+  }
+]

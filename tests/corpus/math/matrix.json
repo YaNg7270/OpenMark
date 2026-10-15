@@ -1,0 +1,146 @@
+[
+  {
+    "id": "m084",
+    "tex": "\\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix}",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [
+      "ams"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "matrix"
+  },
+  {
+    "id": "m085",
+    "tex": "\\begin{bmatrix} 1 & 0 \\\\ 0 & 1 \\end{bmatrix}",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [
+      "ams"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "matrix"
+  },
+  {
+    "id": "m086",
+    "tex": "\\begin{vmatrix} a & b \\\\ c & d \\end{vmatrix} = ad-bc",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [
+      "ams"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "matrix"
+  },
+  {
+    "id": "m087",
+    "tex": "\\begin{Vmatrix} x \\end{Vmatrix}",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [
+      "ams"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "matrix"
+  },
+  {
+    "id": "m088",
+    "tex": "\\begin{Bmatrix} 1 \\\\ 2 \\end{Bmatrix}",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [
+      "ams"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "matrix"
+  },
+  {
+    "id": "m089",
+    "tex": "\\begin{matrix} 1 & 2 \\\\ 3 & 4 \\end{matrix}",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [
+      "ams"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "matrix"
+  },
+  {
+    "id": "m090",
+    "tex": "\\begin{smallmatrix} a & b \\\\ c & d \\end{smallmatrix}",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [
+      "ams"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "matrix"
+  },
+  {
+    "id": "m091",
+    "tex": "\\begin{array}{c|c} a & b \\\\ \\hline c & d \\end{array}",
+    "display": true,
+    "delimiter": "latex-env",
+    "packages": [
+      "ams"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "matrix"
+  },
+  {
+    "id": "m092",
+    "tex": "\\begin{array}{lcr} 1 & 2 & 3 \\\\ 4 & 5 & 6 \\end{array}",
+    "display": true,
+    "delimiter": "latex-env",
+    "packages": [
+      "ams"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "matrix"
+  },
+  {
+    "id": "m093",
+    "tex": "\\mathbf{A} = \\begin{pmatrix} 1 & 2 \\\\ 3 & 4 \\end{pmatrix}",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [
+      "ams"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "matrix"
+  },
+  {
+    "id": "m094",
+    "tex": "\\begin{pmatrix} \\cos\\theta & -\\sin\\theta \\\\ \\sin\\theta & \\cos\\theta \\end{pmatrix}",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [
+      "ams"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "matrix"
+  },
+  {
+    "id": "m347",
+    "tex": "\\begin{pmatrix} 1 & 0 \\\\ 0 & 1 \\end{pmatrix}",
+    "display": true,
+    "delimiter": "paren-block",
+    "packages": [
+      "ams"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "matrix"
+  }
+]

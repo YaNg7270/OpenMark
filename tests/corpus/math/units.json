@@ -1,0 +1,147 @@
+[
+  {
+    "id": "m288",
+    "tex": "\\pu{5 m}",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [
+      "mhchem"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "units"
+  },
+  {
+    "id": "m289",
+    "tex": "\\pu{9.81 m/s2}",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [
+      "mhchem"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "units"
+  },
+  {
+    "id": "m290",
+    "tex": "\\pu{1.5e-3 mol}",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [
+      "mhchem"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "units"
+  },
+  {
+    "id": "m291",
+    "tex": "\\pu{2.5 kg m2/s2}",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [
+      "mhchem"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "units"
+  },
+  {
+    "id": "m292",
+    "tex": "\\pu{100 km/h}",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [
+      "mhchem"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "units"
+  },
+  {
+    "id": "m293",
+    "tex": "\\pu{298 K}",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [
+      "mhchem"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "units"
+  },
+  {
+    "id": "m294",
+    "tex": "\\pu{1.6e-19 C}",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [
+      "mhchem"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "units"
+  },
+  {
+    "id": "m295",
+    "tex": "\\pu{6.022e23 mol-1}",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [
+      "mhchem"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "units"
+  },
+  {
+    "id": "m296",
+    "tex": "\\pu{3.0e8 m/s}",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [
+      "mhchem"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "units"
+  },
+  {
+    "id": "m297",
+    "tex": "\\pu{12.5 mL} \\text{ of solution}",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [
+      "mhchem",
+      "textmacros"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "units"
+  },
+  {
+    "id": "m298",
+    "tex": "\\ce{H2O} \\quad \\pu{18.02 g/mol}",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [
+      "mhchem"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "units"
+  },
+  {
+    "id": "m299",
+    "tex": "E = \\pu{1.2e3 J}",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [
+      "mhchem"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "units"
+  }
+]

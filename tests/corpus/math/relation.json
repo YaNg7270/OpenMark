@@ -1,0 +1,164 @@
+[
+  {
+    "id": "m163",
+    "tex": "a \\le b",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "relation"
+  },
+  {
+    "id": "m164",
+    "tex": "a \\ge b",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "relation"
+  },
+  {
+    "id": "m165",
+    "tex": "a \\ne b",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "relation"
+  },
+  {
+    "id": "m166",
+    "tex": "a \\approx b",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "relation"
+  },
+  {
+    "id": "m167",
+    "tex": "a \\equiv b",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "relation"
+  },
+  {
+    "id": "m168",
+    "tex": "a \\sim b",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "relation"
+  },
+  {
+    "id": "m169",
+    "tex": "a \\simeq b",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "relation"
+  },
+  {
+    "id": "m170",
+    "tex": "a \\cong b",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "relation"
+  },
+  {
+    "id": "m171",
+    "tex": "a \\propto b",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "relation"
+  },
+  {
+    "id": "m172",
+    "tex": "a \\prec b",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "relation"
+  },
+  {
+    "id": "m173",
+    "tex": "a \\succ b",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "relation"
+  },
+  {
+    "id": "m174",
+    "tex": "a \\subset b",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "relation"
+  },
+  {
+    "id": "m175",
+    "tex": "a \\supseteq b",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "relation"
+  },
+  {
+    "id": "m176",
+    "tex": "a \\notin b",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "relation"
+  },
+  {
+    "id": "m177",
+    "tex": "A \\subseteq B \\Rightarrow |A| \\le |B|",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "relation"
+  },
+  {
+    "id": "m178",
+    "tex": "x \\in \\mathbb{R} \\setminus \\{0\\}",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [
+      "ams"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "relation"
+  }
+]

@@ -1,0 +1,92 @@
+[
+  {
+    "id": "m214",
+    "tex": "\\overbrace{a+b+c}^{n}",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "decoration"
+  },
+  {
+    "id": "m215",
+    "tex": "\\underbrace{x_1 + x_2}_{n \\text{ terms}}",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [
+      "textmacros"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "decoration"
+  },
+  {
+    "id": "m216",
+    "tex": "\\overbrace{\\underbrace{a}_{1} + b}^{2}",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "decoration"
+  },
+  {
+    "id": "m217",
+    "tex": "a \\xrightarrow{f} b",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [
+      "ams"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "decoration"
+  },
+  {
+    "id": "m218",
+    "tex": "x \\xleftarrow{g} y",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [
+      "ams"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "decoration"
+  },
+  {
+    "id": "m219",
+    "tex": "\\overset{?}{=}",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [
+      "ams"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "decoration"
+  },
+  {
+    "id": "m220",
+    "tex": "\\underset{n \\to \\infty}{\\lim}",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [
+      "ams"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "decoration"
+  },
+  {
+    "id": "m221",
+    "tex": "\\overrightarrow{AB}",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "decoration"
+  }
+]

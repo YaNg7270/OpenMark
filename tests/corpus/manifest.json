@@ -1,0 +1,6966 @@
+{
+  "version": 1,
+  "generatedAt": "2026-10-15T15:54:52Z",
+  "markdown": [
+    {
+      "file": "markdown/01-headings-atx.md",
+      "title": "Heading Levels in ATX Style",
+      "categories": [
+        "structure",
+        "headings"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 9,
+        "tables": 0,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "ATX headings at every level, one written with closing hashes; exercises headingCount and outline levels."
+    },
+    {
+      "file": "markdown/02-headings-setext.md",
+      "title": "Setext Headings In Their Native Form",
+      "categories": [
+        "structure",
+        "headings",
+        "setext"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 5,
+        "tables": 0,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "Setext headings only: `===` underlines give h1 and `---` gives h2, so the underline form is not mistaken for a thematic break."
+    },
+    {
+      "file": "markdown/03-headings-six-levels.md",
+      "title": "A Document With A Strict Heading Hierarchy",
+      "categories": [
+        "structure",
+        "headings",
+        "outline"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 6,
+        "tables": 0,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "A strict h1 to h6 hierarchy used to assert outline nesting depth."
+    },
+    {
+      "file": "markdown/04-paragraphs-and-breaks.md",
+      "title": "Paragraphs And Line Breaks",
+      "categories": [
+        "structure",
+        "paragraphs",
+        "line-breaks"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 1,
+        "tables": 0,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "Soft breaks, two-space hard breaks and backslash hard breaks inside paragraphs."
+    },
+    {
+      "file": "markdown/05-blockquotes.md",
+      "title": "Blockquotes",
+      "categories": [
+        "structure",
+        "blockquotes"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 1,
+        "tables": 0,
+        "codeBlocks": 1,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "Single and three-level nested blockquotes, including a quote holding a list and a fenced code block (the fence still counts as code)."
+    },
+    {
+      "file": "markdown/06-thematic-breaks.md",
+      "title": "Thematic Breaks",
+      "categories": [
+        "structure",
+        "thematic-breaks"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 1,
+        "tables": 0,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "All three thematic-break spellings with blank lines between them."
+    },
+    {
+      "file": "markdown/07-indented-code.md",
+      "title": "Indented Code Blocks",
+      "categories": [
+        "structure",
+        "code",
+        "indented-code"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 1,
+        "tables": 0,
+        "codeBlocks": 2,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "Exactly two indented code blocks; proves codeCount includes indented code and needs no fence."
+    },
+    {
+      "file": "markdown/08-lists-unordered.md",
+      "title": "Unordered Lists",
+      "categories": [
+        "lists",
+        "unordered"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 1,
+        "tables": 0,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "Three unordered lists using `-`, `*` and `+`, each in its own list."
+    },
+    {
+      "file": "markdown/09-lists-ordered.md",
+      "title": "Ordered Lists",
+      "categories": [
+        "lists",
+        "ordered"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 1,
+        "tables": 0,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "Ordered lists with `1.` numbering, one nesting a second ordered level."
+    },
+    {
+      "file": "markdown/100-security-script-block.md",
+      "title": "Script Block",
+      "categories": [
+        "security",
+        "html"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 1,
+        "tables": 0,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [
+        "html-sanitized",
+        "script-removed"
+      ],
+      "notes": "A block script element must never execute."
+    },
+    {
+      "file": "markdown/101-security-script-inline.md",
+      "title": "Inline Script and Image Handler",
+      "categories": [
+        "security",
+        "html"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 1,
+        "tables": 0,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [
+        "html-sanitized",
+        "script-removed"
+      ],
+      "notes": "An inline script element and an img onerror payload."
+    },
+    {
+      "file": "markdown/102-security-img-onerror.md",
+      "title": "Markdown Image With HTML Handler",
+      "categories": [
+        "security",
+        "html",
+        "images"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 1,
+        "tables": 0,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 1,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [
+        "html-sanitized"
+      ],
+      "notes": "A markdown image beside an img element carrying onerror."
+    },
+    {
+      "file": "markdown/103-security-javascript-href.md",
+      "title": "JavaScript Href",
+      "categories": [
+        "security",
+        "links"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 1,
+        "tables": 0,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [
+        "html-sanitized"
+      ],
+      "notes": "A javascript: href in raw HTML and in markdown link syntax."
+    },
+    {
+      "file": "markdown/104-security-iframe-object-embed.md",
+      "title": "Frames, Objects and Embeds",
+      "categories": [
+        "security",
+        "html"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 1,
+        "tables": 0,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [
+        "html-sanitized"
+      ],
+      "notes": "iframe, object and embed elements must be stripped."
+    },
+    {
+      "file": "markdown/105-security-svg-script.md",
+      "title": "SVG With Embedded Script",
+      "categories": [
+        "security",
+        "html",
+        "svg"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 1,
+        "tables": 0,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [
+        "html-sanitized",
+        "script-removed"
+      ],
+      "notes": "An inline SVG containing a script element."
+    },
+    {
+      "file": "markdown/106-security-event-handlers.md",
+      "title": "Event Handler Attributes",
+      "categories": [
+        "security",
+        "html"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 1,
+        "tables": 0,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [
+        "html-sanitized"
+      ],
+      "notes": "Event handlers on otherwise-allowed tags."
+    },
+    {
+      "file": "markdown/107-security-path-traversal-image.md",
+      "title": "Path Traversal Image Targets",
+      "categories": [
+        "security",
+        "images",
+        "paths"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 1,
+        "tables": 0,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 2,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [
+        "image-path-escapes-root"
+      ],
+      "notes": "Path-traversal image references must be refused rather than resolved."
+    },
+    {
+      "file": "markdown/108-security-remote-image.md",
+      "title": "Remote Images",
+      "categories": [
+        "security",
+        "images",
+        "remote"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 1,
+        "tables": 0,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 2,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [
+        "image-remote"
+      ],
+      "notes": "Remote images must be reported, never fetched silently."
+    },
+    {
+      "file": "markdown/110-health-missing-images.md",
+      "title": "Health Check: Missing Images",
+      "categories": [
+        "health",
+        "images"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 1,
+        "tables": 0,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 4,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [
+        "image-missing"
+      ],
+      "notes": "Four images whose targets do not exist."
+    },
+    {
+      "file": "markdown/111-health-broken-relative.md",
+      "title": "Health Check: Broken Relative Targets",
+      "categories": [
+        "health",
+        "links",
+        "images"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 1,
+        "tables": 0,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 2,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [
+        "image-missing"
+      ],
+      "notes": "Broken relative links and images; links have no dedicated diagnostic code in the union yet."
+    },
+    {
+      "file": "markdown/112-health-unclosed-fence.md",
+      "title": "Health Check: Unclosed Fence",
+      "categories": [
+        "health",
+        "code",
+        "diagnostics"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 2,
+        "tables": 0,
+        "codeBlocks": 1,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [
+        "unclosed-fence"
+      ],
+      "notes": "A fence that is never closed, so the rest of the file is treated as code."
+    },
+    {
+      "file": "markdown/113-health-unclosed-math.md",
+      "title": "Health Check: Unclosed Math Block",
+      "categories": [
+        "health",
+        "math",
+        "diagnostics"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 1,
+        "tables": 0,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [
+        "unclosed-math"
+      ],
+      "notes": "A `$$` opener with no closer."
+    },
+    {
+      "file": "markdown/114-health-duplicate-headings.md",
+      "title": "Health Check: Duplicate Headings",
+      "categories": [
+        "health",
+        "headings",
+        "anchors"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 6,
+        "tables": 0,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [
+        "duplicate-heading-anchor"
+      ],
+      "notes": "Three identical `## Repeat Me` headings force anchor disambiguation."
+    },
+    {
+      "file": "markdown/115-health-inconsistent-marker.md",
+      "title": "Health Check: Inconsistent List Markers",
+      "categories": [
+        "health",
+        "lists",
+        "diagnostics"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 1,
+        "tables": 0,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [
+        "inconsistent-list-marker"
+      ],
+      "notes": "Sibling items alternating between `-` and `*`."
+    },
+    {
+      "file": "markdown/116-health-tab-list-indent.md",
+      "title": "Health Check: Tab-Indented Nested List",
+      "categories": [
+        "health",
+        "lists",
+        "tabs"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 1,
+        "tables": 0,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [
+        "tab-indent-in-list"
+      ],
+      "notes": "Nested list items indented with a tab instead of spaces."
+    },
+    {
+      "file": "markdown/117-health-dangling-reference.md",
+      "title": "Health Check: Dangling References",
+      "categories": [
+        "health",
+        "links",
+        "diagnostics"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 1,
+        "tables": 0,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [
+        "dangling-reference-link"
+      ],
+      "notes": "Reference links with no matching definition anywhere in the file."
+    },
+    {
+      "file": "markdown/12-lists-start-number.md",
+      "title": "Lists With Custom Start Numbers",
+      "categories": [
+        "lists",
+        "ordered",
+        "start-number"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 1,
+        "tables": 0,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "Ordered lists starting at 3 and at 10; the start number must survive into numbering."
+    },
+    {
+      "file": "markdown/13-lists-nested-deep.md",
+      "title": "Deeply Nested Unordered List",
+      "categories": [
+        "lists",
+        "nesting"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 1,
+        "tables": 0,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "One unordered list nested four levels deep."
+    },
+    {
+      "file": "markdown/14-lists-mixed-markers.md",
+      "title": "Mixed Parent And Child Markers",
+      "categories": [
+        "lists",
+        "nesting",
+        "markers"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 1,
+        "tables": 0,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "An ordered list containing an unordered sublist and the reverse."
+    },
+    {
+      "file": "markdown/15-lists-task.md",
+      "title": "Task Lists",
+      "categories": [
+        "lists",
+        "task-lists",
+        "gfm"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 1,
+        "tables": 0,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 8
+      },
+      "diagnostics": [],
+      "notes": "Five unchecked and three checked task items."
+    },
+    {
+      "file": "markdown/16-lists-loose-tight.md",
+      "title": "Tight And Loose Lists",
+      "categories": [
+        "lists",
+        "loose-tight"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 1,
+        "tables": 0,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "One tight and one loose list in the same document; loose items wrap their content in paragraphs."
+    },
+    {
+      "file": "markdown/17-lists-with-blocks.md",
+      "title": "List Items Containing Block Content",
+      "categories": [
+        "lists",
+        "blocks"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 1,
+        "tables": 1,
+        "codeBlocks": 1,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "List items containing a second paragraph, a fenced code block and a GFM table."
+    },
+    {
+      "file": "markdown/18-lists-cjk-punctuation.md",
+      "title": "中文列表与全角标点",
+      "categories": [
+        "lists",
+        "cjk",
+        "punctuation"
+      ],
+      "language": "zh",
+      "expect": {
+        "headings": 1,
+        "tables": 0,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "Chinese list items using full-width punctuation and Chinese quotation marks."
+    },
+    {
+      "file": "markdown/19-blockquote-nested-deep.md",
+      "title": "嵌套引用与中英混排",
+      "categories": [
+        "blockquotes",
+        "cjk",
+        "mixed-language"
+      ],
+      "language": "mixed",
+      "expect": {
+        "headings": 1,
+        "tables": 0,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "Three-level nested blockquotes whose paragraphs interleave Chinese and Latin."
+    },
+    {
+      "file": "markdown/1A-lists-long-items.md",
+      "title": "Long List Items",
+      "categories": [
+        "lists",
+        "long-items"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 1,
+        "tables": 0,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "An unordered list of long wrapped items with no blank lines between them."
+    },
+    {
+      "file": "markdown/20-tables-simple.md",
+      "title": "Simple Data Tables",
+      "categories": [
+        "tables",
+        "gfm"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 1,
+        "tables": 1,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "One three-column, four-row GFM table."
+    },
+    {
+      "file": "markdown/200-zh-data-structures.md",
+      "title": "常用数据结构的取舍",
+      "categories": [
+        "cjk",
+        "prose",
+        "data-structures"
+      ],
+      "language": "zh",
+      "expect": {
+        "headings": 7,
+        "tables": 1,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "以中文撰写的数据结构讲义，含标题、列表、表格与引用块。"
+    },
+    {
+      "file": "markdown/201-zh-algorithms-complexity.md",
+      "title": "算法复杂度导论",
+      "categories": [
+        "cjk",
+        "prose",
+        "algorithms"
+      ],
+      "language": "zh",
+      "expect": {
+        "headings": 6,
+        "tables": 0,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "以中文撰写的算法复杂度讲义，含标题、列表、表格与引用块。"
+    },
+    {
+      "file": "markdown/202-zh-operating-systems.md",
+      "title": "操作系统核心概念",
+      "categories": [
+        "cjk",
+        "prose",
+        "operating-systems"
+      ],
+      "language": "zh",
+      "expect": {
+        "headings": 6,
+        "tables": 1,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "以中文撰写的操作系统讲义，含标题、列表、表格与引用块。"
+    },
+    {
+      "file": "markdown/203-zh-computer-networks.md",
+      "title": "计算机网络基础",
+      "categories": [
+        "cjk",
+        "prose",
+        "networking"
+      ],
+      "language": "zh",
+      "expect": {
+        "headings": 5,
+        "tables": 1,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "以中文撰写的计算机网络讲义，含标题、列表、表格与引用块。"
+    },
+    {
+      "file": "markdown/204-zh-databases.md",
+      "title": "关系数据库设计要点",
+      "categories": [
+        "cjk",
+        "prose",
+        "databases"
+      ],
+      "language": "zh",
+      "expect": {
+        "headings": 5,
+        "tables": 1,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "以中文撰写的数据库讲义，含标题、列表、表格与引用块。"
+    },
+    {
+      "file": "markdown/205-zh-compiler-frontend.md",
+      "title": "编译器前端概览",
+      "categories": [
+        "cjk",
+        "prose",
+        "compilers"
+      ],
+      "language": "zh",
+      "expect": {
+        "headings": 5,
+        "tables": 1,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "以中文撰写的编译原理讲义，含标题、列表、表格与引用块。"
+    },
+    {
+      "file": "markdown/206-zh-linear-algebra.md",
+      "title": "线性代数核心概念",
+      "categories": [
+        "cjk",
+        "prose",
+        "linear-algebra"
+      ],
+      "language": "zh",
+      "expect": {
+        "headings": 5,
+        "tables": 1,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "以中文撰写的线性代数讲义，含标题、列表、表格与引用块。"
+    },
+    {
+      "file": "markdown/207-zh-calculus.md",
+      "title": "微积分基本思想",
+      "categories": [
+        "cjk",
+        "prose",
+        "calculus"
+      ],
+      "language": "zh",
+      "expect": {
+        "headings": 5,
+        "tables": 1,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "以中文撰写的微积分讲义，含标题、列表、表格与引用块。"
+    },
+    {
+      "file": "markdown/208-zh-probability.md",
+      "title": "概率论基础",
+      "categories": [
+        "cjk",
+        "prose",
+        "probability"
+      ],
+      "language": "zh",
+      "expect": {
+        "headings": 5,
+        "tables": 1,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "以中文撰写的概率论讲义，含标题、列表、表格与引用块。"
+    },
+    {
+      "file": "markdown/209-zh-statistics.md",
+      "title": "统计学基本方法",
+      "categories": [
+        "cjk",
+        "prose",
+        "statistics"
+      ],
+      "language": "zh",
+      "expect": {
+        "headings": 5,
+        "tables": 1,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "以中文撰写的统计学讲义，含标题、列表、表格与引用块。"
+    },
+    {
+      "file": "markdown/21-tables-aligned.md",
+      "title": "Aligned Table Variants",
+      "categories": [
+        "tables",
+        "alignment"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 1,
+        "tables": 3,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "Three tables pinning left, centre and right alignment."
+    },
+    {
+      "file": "markdown/210-zh-machine-learning.md",
+      "title": "机器学习入门",
+      "categories": [
+        "cjk",
+        "prose",
+        "machine-learning"
+      ],
+      "language": "zh",
+      "expect": {
+        "headings": 5,
+        "tables": 1,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "以中文撰写的机器学习讲义，含标题、列表、表格与引用块。"
+    },
+    {
+      "file": "markdown/211-zh-deep-learning.md",
+      "title": "深度学习核心机制",
+      "categories": [
+        "cjk",
+        "prose",
+        "deep-learning"
+      ],
+      "language": "zh",
+      "expect": {
+        "headings": 5,
+        "tables": 1,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "以中文撰写的深度学习讲义，含标题、列表、表格与引用块。"
+    },
+    {
+      "file": "markdown/212-zh-classical-mechanics.md",
+      "title": "经典力学基础",
+      "categories": [
+        "cjk",
+        "prose",
+        "mechanics"
+      ],
+      "language": "zh",
+      "expect": {
+        "headings": 5,
+        "tables": 1,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "以中文撰写的经典力学讲义，含标题、列表、表格与引用块。"
+    },
+    {
+      "file": "markdown/213-zh-electromagnetism.md",
+      "title": "电磁学纲要",
+      "categories": [
+        "cjk",
+        "prose",
+        "electromagnetism"
+      ],
+      "language": "zh",
+      "expect": {
+        "headings": 5,
+        "tables": 1,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "以中文撰写的电磁学讲义，含标题、列表、表格与引用块。"
+    },
+    {
+      "file": "markdown/214-zh-thermodynamics.md",
+      "title": "热力学基础",
+      "categories": [
+        "cjk",
+        "prose",
+        "thermodynamics"
+      ],
+      "language": "zh",
+      "expect": {
+        "headings": 5,
+        "tables": 1,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "以中文撰写的热力学讲义，含标题、列表、表格与引用块。"
+    },
+    {
+      "file": "markdown/215-zh-organic-chemistry.md",
+      "title": "有机化学入门",
+      "categories": [
+        "cjk",
+        "prose",
+        "chemistry"
+      ],
+      "language": "zh",
+      "expect": {
+        "headings": 4,
+        "tables": 1,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "以中文撰写的有机化学讲义，含标题、列表、表格与引用块。"
+    },
+    {
+      "file": "markdown/216-zh-analytical-chemistry.md",
+      "title": "分析化学方法",
+      "categories": [
+        "cjk",
+        "prose",
+        "analytical-chemistry"
+      ],
+      "language": "zh",
+      "expect": {
+        "headings": 5,
+        "tables": 1,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "以中文撰写的分析化学讲义，含标题、列表、表格与引用块。"
+    },
+    {
+      "file": "markdown/217-zh-materials-science.md",
+      "title": "材料科学基础",
+      "categories": [
+        "cjk",
+        "prose",
+        "materials-science"
+      ],
+      "language": "zh",
+      "expect": {
+        "headings": 5,
+        "tables": 1,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "以中文撰写的材料科学讲义，含标题、列表、表格与引用块。"
+    },
+    {
+      "file": "markdown/218-zh-molecular-biology.md",
+      "title": "分子生物学核心内容",
+      "categories": [
+        "cjk",
+        "prose",
+        "molecular-biology"
+      ],
+      "language": "zh",
+      "expect": {
+        "headings": 5,
+        "tables": 1,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "以中文撰写的分子生物学讲义，含标题、列表、表格与引用块。"
+    },
+    {
+      "file": "markdown/219-zh-ecology.md",
+      "title": "生态学基本原理",
+      "categories": [
+        "cjk",
+        "prose",
+        "ecology"
+      ],
+      "language": "zh",
+      "expect": {
+        "headings": 5,
+        "tables": 1,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "以中文撰写的生态学讲义，含标题、列表、表格与引用块。"
+    },
+    {
+      "file": "markdown/22-tables-inline-formatting.md",
+      "title": "Tables With Inline Formatting",
+      "categories": [
+        "tables",
+        "inline"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 1,
+        "tables": 1,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "Table cells holding inline code, bold, italic and a link."
+    },
+    {
+      "file": "markdown/220-zh-economics.md",
+      "title": "经济学基础概念",
+      "categories": [
+        "cjk",
+        "prose",
+        "economics"
+      ],
+      "language": "zh",
+      "expect": {
+        "headings": 5,
+        "tables": 1,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "以中文撰写的经济学讲义，含标题、列表、表格与引用块。"
+    },
+    {
+      "file": "markdown/221-zh-linguistics.md",
+      "title": "语言学基础",
+      "categories": [
+        "cjk",
+        "prose",
+        "linguistics"
+      ],
+      "language": "zh",
+      "expect": {
+        "headings": 5,
+        "tables": 1,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "以中文撰写的语言学讲义，含标题、列表、表格与引用块。"
+    },
+    {
+      "file": "markdown/222-zh-geography.md",
+      "title": "自然地理概览",
+      "categories": [
+        "cjk",
+        "prose",
+        "geography"
+      ],
+      "language": "zh",
+      "expect": {
+        "headings": 5,
+        "tables": 1,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "以中文撰写的自然地理讲义，含标题、列表、表格与引用块。"
+    },
+    {
+      "file": "markdown/223-zh-astronomy.md",
+      "title": "天文学基础",
+      "categories": [
+        "cjk",
+        "prose",
+        "astronomy"
+      ],
+      "language": "zh",
+      "expect": {
+        "headings": 4,
+        "tables": 1,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "以中文撰写的天文学讲义，含标题、列表、表格与引用块。"
+    },
+    {
+      "file": "markdown/224-zh-software-engineering.md",
+      "title": "软件工程实践",
+      "categories": [
+        "cjk",
+        "prose",
+        "software-engineering"
+      ],
+      "language": "zh",
+      "expect": {
+        "headings": 4,
+        "tables": 1,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "以中文撰写的软件工程讲义，含标题、列表、表格与引用块。"
+    },
+    {
+      "file": "markdown/225-zh-database-systems-lab.md",
+      "title": "数据库实验指导",
+      "categories": [
+        "cjk",
+        "prose",
+        "databases",
+        "sql"
+      ],
+      "language": "zh",
+      "expect": {
+        "headings": 6,
+        "tables": 1,
+        "codeBlocks": 4,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "以中文撰写的数据库实验讲义，含标题、列表、表格与引用块。"
+    },
+    {
+      "file": "markdown/23-tables-escaped-pipes.md",
+      "title": "Tables With Escaped Pipes",
+      "categories": [
+        "tables",
+        "escaping"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 1,
+        "tables": 1,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "Literal pipes escaped as `\\|` inside cells."
+    },
+    {
+      "file": "markdown/24-tables-inside-lists.md",
+      "title": "表格嵌套在列表项中",
+      "categories": [
+        "tables",
+        "lists"
+      ],
+      "language": "mixed",
+      "expect": {
+        "headings": 1,
+        "tables": 1,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "A table nested inside a list item with mixed-language prose."
+    },
+    {
+      "file": "markdown/25-tables-wide-ten-columns.md",
+      "title": "Wide Ten Column Table",
+      "categories": [
+        "tables",
+        "wide"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 1,
+        "tables": 1,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "A ten-column table; column count and alignment parsing at width."
+    },
+    {
+      "file": "markdown/26-tables-cjk-heavy.md",
+      "title": "中文技术写作中的表格",
+      "categories": [
+        "tables",
+        "cjk"
+      ],
+      "language": "zh",
+      "expect": {
+        "headings": 1,
+        "tables": 1,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "A table whose cells are full Chinese sentences, exercising CJK measuring and wrapping."
+    },
+    {
+      "file": "markdown/27-tables-long-cells-wrap.md",
+      "title": "Tables With Long Cells",
+      "categories": [
+        "tables",
+        "wrapping"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 1,
+        "tables": 1,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "One cell holding eighty-plus words to exercise cell wrapping."
+    },
+    {
+      "file": "markdown/30-code-fenced-info.md",
+      "title": "Fenced Code With Info Strings",
+      "categories": [
+        "code",
+        "fence",
+        "highlight"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 1,
+        "tables": 0,
+        "codeBlocks": 3,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "Fences carrying js, python and xml info strings."
+    },
+    {
+      "file": "markdown/300-mixed-frontend-architecture.md",
+      "title": "前端架构：组件边界、状态提升与渲染性能",
+      "categories": [
+        "mixed-language",
+        "frontend-architecture"
+      ],
+      "language": "mixed",
+      "expect": {
+        "headings": 5,
+        "tables": 1,
+        "codeBlocks": 1,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "中英混排的技术文档：前端架构，同一段落内交替使用中文与英文术语。"
+    },
+    {
+      "file": "markdown/301-mixed-typescript-types.md",
+      "title": "TypeScript 类型系统：泛型、条件类型与类型收窄",
+      "categories": [
+        "mixed-language",
+        "typescript"
+      ],
+      "language": "mixed",
+      "expect": {
+        "headings": 5,
+        "tables": 1,
+        "codeBlocks": 1,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "中英混排的技术文档：TypeScript 类型系统，同一段落内交替使用中文与英文术语。"
+    },
+    {
+      "file": "markdown/302-mixed-react-state.md",
+      "title": "React 状态管理：单向数据流、受控组件与并发渲染",
+      "categories": [
+        "mixed-language",
+        "react"
+      ],
+      "language": "mixed",
+      "expect": {
+        "headings": 6,
+        "tables": 1,
+        "codeBlocks": 1,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "中英混排的技术文档：React 状态管理，同一段落内交替使用中文与英文术语。"
+    },
+    {
+      "file": "markdown/303-mixed-rust-ownership.md",
+      "title": "Rust 所有权：借用检查、生命周期与零成本抽象",
+      "categories": [
+        "mixed-language",
+        "rust"
+      ],
+      "language": "mixed",
+      "expect": {
+        "headings": 5,
+        "tables": 1,
+        "codeBlocks": 1,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "中英混排的技术文档：Rust 所有权，同一段落内交替使用中文与英文术语。"
+    },
+    {
+      "file": "markdown/304-mixed-cloud-native.md",
+      "title": "云原生：容器镜像、声明式配置与弹性伸缩",
+      "categories": [
+        "mixed-language",
+        "cloud-native"
+      ],
+      "language": "mixed",
+      "expect": {
+        "headings": 5,
+        "tables": 1,
+        "codeBlocks": 1,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "中英混排的技术文档：云原生，同一段落内交替使用中文与英文术语。"
+    },
+    {
+      "file": "markdown/305-mixed-kubernetes-operations.md",
+      "title": "Kubernetes 运维：探针、资源配额与滚动更新",
+      "categories": [
+        "mixed-language",
+        "kubernetes"
+      ],
+      "language": "mixed",
+      "expect": {
+        "headings": 5,
+        "tables": 1,
+        "codeBlocks": 1,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "中英混排的技术文档：Kubernetes 运维，同一段落内交替使用中文与英文术语。"
+    },
+    {
+      "file": "markdown/306-mixed-version-control.md",
+      "title": "版本控制：分支策略、变基与合并、代码评审",
+      "categories": [
+        "mixed-language",
+        "version-control"
+      ],
+      "language": "mixed",
+      "expect": {
+        "headings": 7,
+        "tables": 1,
+        "codeBlocks": 1,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "中英混排的技术文档：版本控制，同一段落内交替使用中文与英文术语。"
+    },
+    {
+      "file": "markdown/307-mixed-testing-strategy.md",
+      "title": "测试策略：单元测试、集成测试与测试金字塔",
+      "categories": [
+        "mixed-language",
+        "testing"
+      ],
+      "language": "mixed",
+      "expect": {
+        "headings": 5,
+        "tables": 1,
+        "codeBlocks": 1,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "中英混排的技术文档：测试策略，同一段落内交替使用中文与英文术语。"
+    },
+    {
+      "file": "markdown/308-mixed-performance-profiling.md",
+      "title": "性能剖析：火焰图、内存分配与缓存命中率",
+      "categories": [
+        "mixed-language",
+        "performance"
+      ],
+      "language": "mixed",
+      "expect": {
+        "headings": 6,
+        "tables": 1,
+        "codeBlocks": 1,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "中英混排的技术文档：性能剖析，同一段落内交替使用中文与英文术语。"
+    },
+    {
+      "file": "markdown/309-mixed-database-indexing.md",
+      "title": "数据库索引：B+ 树、最左前缀与覆盖索引",
+      "categories": [
+        "mixed-language",
+        "databases"
+      ],
+      "language": "mixed",
+      "expect": {
+        "headings": 5,
+        "tables": 1,
+        "codeBlocks": 1,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "中英混排的技术文档：数据库索引，同一段落内交替使用中文与英文术语。"
+    },
+    {
+      "file": "markdown/31-code-fenced-plain.md",
+      "title": "Plain Fenced Code",
+      "categories": [
+        "code",
+        "fence"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 1,
+        "tables": 0,
+        "codeBlocks": 2,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "Fences with no info string, rendered as plain text."
+    },
+    {
+      "file": "markdown/310-mixed-http-caching.md",
+      "title": "HTTP 缓存：强缓存、协商缓存与 CDN 回源",
+      "categories": [
+        "mixed-language",
+        "http"
+      ],
+      "language": "mixed",
+      "expect": {
+        "headings": 6,
+        "tables": 1,
+        "codeBlocks": 1,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "中英混排的技术文档：HTTP 缓存，同一段落内交替使用中文与英文术语。"
+    },
+    {
+      "file": "markdown/311-mixed-build-tooling.md",
+      "title": "构建工具：打包、代码分割与 tree shaking",
+      "categories": [
+        "mixed-language",
+        "build-tooling"
+      ],
+      "language": "mixed",
+      "expect": {
+        "headings": 6,
+        "tables": 1,
+        "codeBlocks": 1,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "中英混排的技术文档：构建工具，同一段落内交替使用中文与英文术语。"
+    },
+    {
+      "file": "markdown/312-mixed-package-management.md",
+      "title": "包管理：依赖树、锁文件与语义化版本",
+      "categories": [
+        "mixed-language",
+        "package-management"
+      ],
+      "language": "mixed",
+      "expect": {
+        "headings": 5,
+        "tables": 1,
+        "codeBlocks": 1,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "中英混排的技术文档：包管理，同一段落内交替使用中文与英文术语。"
+    },
+    {
+      "file": "markdown/313-mixed-observability.md",
+      "title": "可观测性：指标、日志与链路追踪",
+      "categories": [
+        "mixed-language",
+        "observability"
+      ],
+      "language": "mixed",
+      "expect": {
+        "headings": 5,
+        "tables": 1,
+        "codeBlocks": 1,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "中英混排的技术文档：可观测性，同一段落内交替使用中文与英文术语。"
+    },
+    {
+      "file": "markdown/314-mixed-security-basics.md",
+      "title": "Web 安全：同源策略、CSP 与 XSS/CSRF",
+      "categories": [
+        "mixed-language",
+        "security"
+      ],
+      "language": "mixed",
+      "expect": {
+        "headings": 6,
+        "tables": 1,
+        "codeBlocks": 1,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "中英混排的技术文档：Web 安全，同一段落内交替使用中文与英文术语。"
+    },
+    {
+      "file": "markdown/315-mixed-cryptography.md",
+      "title": "应用密码学：对称加密、非对称加密与哈希签名",
+      "categories": [
+        "mixed-language",
+        "cryptography"
+      ],
+      "language": "mixed",
+      "expect": {
+        "headings": 5,
+        "tables": 1,
+        "codeBlocks": 1,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "中英混排的技术文档：应用密码学，同一段落内交替使用中文与英文术语。"
+    },
+    {
+      "file": "markdown/316-mixed-machine-learning-engineering.md",
+      "title": "机器学习工程：特征管道、离线评估与模型上线",
+      "categories": [
+        "mixed-language",
+        "machine-learning"
+      ],
+      "language": "mixed",
+      "expect": {
+        "headings": 6,
+        "tables": 1,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "中英混排的技术文档：机器学习工程，同一段落内交替使用中文与英文术语。"
+    },
+    {
+      "file": "markdown/317-mixed-data-visualization.md",
+      "title": "数据可视化：编码通道、坐标轴与可访问配色",
+      "categories": [
+        "mixed-language",
+        "data-visualization"
+      ],
+      "language": "mixed",
+      "expect": {
+        "headings": 6,
+        "tables": 1,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "中英混排的技术文档：数据可视化，同一段落内交替使用中文与英文术语。"
+    },
+    {
+      "file": "markdown/318-mixed-accessibility.md",
+      "title": "无障碍：语义化标签、焦点管理与屏幕阅读器",
+      "categories": [
+        "mixed-language",
+        "accessibility"
+      ],
+      "language": "mixed",
+      "expect": {
+        "headings": 7,
+        "tables": 1,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "中英混排的技术文档：无障碍，同一段落内交替使用中文与英文术语。"
+    },
+    {
+      "file": "markdown/319-mixed-internationalization.md",
+      "title": "国际化：区域设置、复数规则与双向文本",
+      "categories": [
+        "mixed-language",
+        "internationalization"
+      ],
+      "language": "mixed",
+      "expect": {
+        "headings": 5,
+        "tables": 1,
+        "codeBlocks": 1,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "中英混排的技术文档：国际化，同一段落内交替使用中文与英文术语。"
+    },
+    {
+      "file": "markdown/32-code-tilde-fences.md",
+      "title": "Tilde Delimited Fences",
+      "categories": [
+        "code",
+        "fence",
+        "tilde"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 1,
+        "tables": 0,
+        "codeBlocks": 3,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "Tilde fences, one of them without an info string."
+    },
+    {
+      "file": "markdown/320-mixed-computer-graphics.md",
+      "title": "计算机图形学：光栅化、着色器与抗锯齿",
+      "categories": [
+        "mixed-language",
+        "graphics"
+      ],
+      "language": "mixed",
+      "expect": {
+        "headings": 6,
+        "tables": 1,
+        "codeBlocks": 1,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "中英混排的技术文档：计算机图形学，同一段落内交替使用中文与英文术语。"
+    },
+    {
+      "file": "markdown/321-mixed-documentation-writing.md",
+      "title": "技术写作：结构化写作、术语一致与示例驱动",
+      "categories": [
+        "mixed-language",
+        "documentation"
+      ],
+      "language": "mixed",
+      "expect": {
+        "headings": 6,
+        "tables": 1,
+        "codeBlocks": 1,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "中英混排的技术文档：技术写作，同一段落内交替使用中文与英文术语。"
+    },
+    {
+      "file": "markdown/33-code-nested-fences.md",
+      "title": "Nested Fences",
+      "categories": [
+        "code",
+        "fence",
+        "nesting"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 1,
+        "tables": 0,
+        "codeBlocks": 1,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "A four-backtick fence containing a three-backtick fence; the inner fence is content."
+    },
+    {
+      "file": "markdown/34-code-dollar-not-math.md",
+      "title": "Dollar Signs Inside Code",
+      "categories": [
+        "code",
+        "math-ambiguity"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 1,
+        "tables": 0,
+        "codeBlocks": 2,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "`$` and `$$` inside JavaScript fences must stay code and never become math."
+    },
+    {
+      "file": "markdown/35-code-backticks-inline.md",
+      "title": "Backticks In Inline Code",
+      "categories": [
+        "code",
+        "inline-code"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 1,
+        "tables": 0,
+        "codeBlocks": 1,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "Double-backtick inline spans containing literal backticks, plus a fence-writing example."
+    },
+    {
+      "file": "markdown/36-code-mermaid.md",
+      "title": "Mermaid Diagrams",
+      "categories": [
+        "mermaid",
+        "diagrams"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 1,
+        "tables": 0,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "Two mermaid fences: diagrams, which are not code blocks."
+    },
+    {
+      "file": "markdown/37-code-math-fence.md",
+      "title": "Math Fences",
+      "categories": [
+        "math",
+        "math-fence"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 1,
+        "tables": 0,
+        "codeBlocks": 0,
+        "math": 2,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "Two ```math fences: display math, which is not a code block."
+    },
+    {
+      "file": "markdown/38-code-langs-systems.md",
+      "title": "System Languages",
+      "categories": [
+        "code",
+        "languages"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 1,
+        "tables": 0,
+        "codeBlocks": 4,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "js, ts, python and rust fences."
+    },
+    {
+      "file": "markdown/39-code-langs-data.md",
+      "title": "Data And Service Languages",
+      "categories": [
+        "code",
+        "languages"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 1,
+        "tables": 0,
+        "codeBlocks": 5,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "go, java, sql, yaml and json fences."
+    },
+    {
+      "file": "markdown/40-code-langs-web.md",
+      "title": "Web And Build Languages",
+      "categories": [
+        "code",
+        "languages"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 1,
+        "tables": 0,
+        "codeBlocks": 4,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "bash, diff, html and css fences."
+    },
+    {
+      "file": "markdown/400-book-algorithms.md",
+      "title": "Chapter 1 — Sorting, Searching and the Cost of Order",
+      "categories": [
+        "textbook",
+        "long-form",
+        "algorithms"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 19,
+        "tables": 2,
+        "codeBlocks": 4,
+        "math": 57,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "长篇教材章节：sorting and searching；含大纲、交叉引用、列表、表格、代码与公式。"
+    },
+    {
+      "file": "markdown/401-book-linear-algebra.md",
+      "title": "第 2 章 — 矩阵、向量空间与线性变换",
+      "categories": [
+        "textbook",
+        "long-form",
+        "linear-algebra"
+      ],
+      "language": "zh",
+      "expect": {
+        "headings": 25,
+        "tables": 2,
+        "codeBlocks": 1,
+        "math": 141,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "长篇教材章节：矩阵与线性变换；含大纲、交叉引用、列表、表格、代码与公式。"
+    },
+    {
+      "file": "markdown/402-book-operating-systems.md",
+      "title": "Chapter 3 — Processes, Scheduling and Virtual Memory",
+      "categories": [
+        "textbook",
+        "long-form",
+        "operating-systems"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 21,
+        "tables": 3,
+        "codeBlocks": 3,
+        "math": 49,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "长篇教材章节：processes, scheduling and virtual memory；含大纲、交叉引用、列表、表格、代码与公式。"
+    },
+    {
+      "file": "markdown/403-book-machine-learning.md",
+      "title": "Chapter 4 — 机器学习基础：从线性回归到 Regularization",
+      "categories": [
+        "textbook",
+        "long-form",
+        "machine-learning"
+      ],
+      "language": "mixed",
+      "expect": {
+        "headings": 25,
+        "tables": 3,
+        "codeBlocks": 2,
+        "math": 71,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "长篇教材章节：machine learning foundations；含大纲、交叉引用、列表、表格、代码与公式。"
+    },
+    {
+      "file": "markdown/404-book-organic-chemistry.md",
+      "title": "第 5 章 — 官能团、亲核取代与立体化学",
+      "categories": [
+        "textbook",
+        "long-form",
+        "chemistry"
+      ],
+      "language": "zh",
+      "expect": {
+        "headings": 27,
+        "tables": 7,
+        "codeBlocks": 2,
+        "math": 31,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "长篇教材章节：有机化学的官能团与反应机理；含大纲、交叉引用、列表、表格、代码与公式。"
+    },
+    {
+      "file": "markdown/405-book-databases.md",
+      "title": "Chapter 6 — Relational Modelling, Normalisation and Query Planning",
+      "categories": [
+        "textbook",
+        "long-form",
+        "databases"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 26,
+        "tables": 4,
+        "codeBlocks": 4,
+        "math": 52,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "长篇教材章节：relational modelling and query planning；含大纲、交叉引用、列表、表格、代码与公式。"
+    },
+    {
+      "file": "markdown/406-book-compilers.md",
+      "title": "Chapter 7 — 编译原理：从源文本到优化后的中间表示",
+      "categories": [
+        "textbook",
+        "long-form",
+        "compilers"
+      ],
+      "language": "mixed",
+      "expect": {
+        "headings": 28,
+        "tables": 3,
+        "codeBlocks": 12,
+        "math": 25,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "长篇教材章节：compiler front end and optimisations；含大纲、交叉引用、列表、表格、代码与公式。"
+    },
+    {
+      "file": "markdown/407-book-probability.md",
+      "title": "第 8 章 — 概率论：随机变量、分布与极限定理",
+      "categories": [
+        "textbook",
+        "long-form",
+        "probability"
+      ],
+      "language": "zh",
+      "expect": {
+        "headings": 27,
+        "tables": 2,
+        "codeBlocks": 1,
+        "math": 170,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "长篇教材章节：随机变量与极限定理；含大纲、交叉引用、列表、表格、代码与公式。"
+    },
+    {
+      "file": "markdown/50-math-inline-dollar.md",
+      "title": "Inline Mathematics with Dollar Delimiters",
+      "categories": [
+        "math",
+        "inline-math"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 1,
+        "tables": 0,
+        "codeBlocks": 0,
+        "math": 6,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "Six inline `$...$` expressions embedded in prose."
+    },
+    {
+      "file": "markdown/51-math-display-own-lines.md",
+      "title": "Display Mathematics on Their Own Lines",
+      "categories": [
+        "math",
+        "display-math"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 1,
+        "tables": 0,
+        "codeBlocks": 0,
+        "math": 3,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "Three `$$` blocks with opener and closer on their own lines."
+    },
+    {
+      "file": "markdown/52-math-display-mid-paragraph.md",
+      "title": "Display Mathematics inside a Paragraph",
+      "categories": [
+        "math",
+        "display-math"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 1,
+        "tables": 0,
+        "codeBlocks": 0,
+        "math": 2,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "Two `$$...$$` spans in the middle of a paragraph."
+    },
+    {
+      "file": "markdown/53-math-paren-inline.md",
+      "title": "Inline Mathematics with Parenthesis Delimiters",
+      "categories": [
+        "math",
+        "inline-math",
+        "paren-inline"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 1,
+        "tables": 0,
+        "codeBlocks": 0,
+        "math": 3,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "Three `\\(...\\)` inline expressions."
+    },
+    {
+      "file": "markdown/54-math-paren-block.md",
+      "title": "Display Mathematics with Parenthesis Delimiters",
+      "categories": [
+        "math",
+        "display-math",
+        "paren-block"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 1,
+        "tables": 0,
+        "codeBlocks": 0,
+        "math": 2,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "Two `\\[...\\]` display blocks."
+    },
+    {
+      "file": "markdown/55-math-align-environment.md",
+      "title": "Named Environments for Aligned Mathematics",
+      "categories": [
+        "math",
+        "environments"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 1,
+        "tables": 0,
+        "codeBlocks": 0,
+        "math": 3,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "Top-level align, gather and cases environments."
+    },
+    {
+      "file": "markdown/56-math-multiline-derivation.md",
+      "title": "A Multi-Step Derivation",
+      "categories": [
+        "math",
+        "environments",
+        "align"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 1,
+        "tables": 0,
+        "codeBlocks": 0,
+        "math": 1,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "A five-step align* derivation aligned on `&=`."
+    },
+    {
+      "file": "markdown/57-math-matrices.md",
+      "title": "矩阵与行列式的排版",
+      "categories": [
+        "math",
+        "matrices",
+        "cjk"
+      ],
+      "language": "zh",
+      "expect": {
+        "headings": 1,
+        "tables": 0,
+        "codeBlocks": 0,
+        "math": 4,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "pmatrix, bmatrix, vmatrix and array inside Chinese prose."
+    },
+    {
+      "file": "markdown/58-math-cases-piecewise.md",
+      "title": "Piecewise Functions",
+      "categories": [
+        "math",
+        "cases"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 1,
+        "tables": 0,
+        "codeBlocks": 0,
+        "math": 2,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "Piecewise functions written with cases and dcases."
+    },
+    {
+      "file": "markdown/59-math-greek-operators.md",
+      "title": "Greek Letters, Operators and Relations",
+      "categories": [
+        "math",
+        "greek",
+        "operators"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 1,
+        "tables": 0,
+        "codeBlocks": 0,
+        "math": 19,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "Greek letters, operators, relations and arrows inline."
+    },
+    {
+      "file": "markdown/60-math-calculus-limits.md",
+      "title": "Calculus Displays",
+      "categories": [
+        "math",
+        "calculus"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 1,
+        "tables": 0,
+        "codeBlocks": 0,
+        "math": 6,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "Limits, derivatives, and single, double and contour integrals."
+    },
+    {
+      "file": "markdown/61-math-chemistry-ce.md",
+      "title": "化学方程式的排版",
+      "categories": [
+        "math",
+        "mhchem",
+        "cjk"
+      ],
+      "language": "zh",
+      "expect": {
+        "headings": 1,
+        "tables": 0,
+        "codeBlocks": 0,
+        "math": 6,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "Four `\\ce{}` reactions and two `\\pu{}` values inside Chinese prose."
+    },
+    {
+      "file": "markdown/62-math-units-pu.md",
+      "title": "Physical Units and Quantities",
+      "categories": [
+        "math",
+        "units",
+        "pu"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 1,
+        "tables": 0,
+        "codeBlocks": 0,
+        "math": 4,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "Four `\\pu{}` unit expressions."
+    },
+    {
+      "file": "markdown/63-math-label-ref-env.md",
+      "title": "Labels and Cross References",
+      "categories": [
+        "math",
+        "numbering",
+        "references"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 1,
+        "tables": 0,
+        "codeBlocks": 0,
+        "math": 4,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "A tagged equation with label, ref and eqref references."
+    },
+    {
+      "file": "markdown/70-math-currency-20-30.md",
+      "title": "Currency Amounts That Look Like Mathematics",
+      "categories": [
+        "math-ambiguity",
+        "currency"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 1,
+        "tables": 0,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "`$20 and $30`, `$10,$20` and `$5, $10, $15` must all stay literal currency."
+    },
+    {
+      "file": "markdown/71-math-currency-prices.md",
+      "title": "价格列表与货币符号",
+      "categories": [
+        "math-ambiguity",
+        "currency"
+      ],
+      "language": "mixed",
+      "expect": {
+        "headings": 1,
+        "tables": 0,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "`Prices: $5, $10, $15` plus mixed-language prose about the same list."
+    },
+    {
+      "file": "markdown/72-math-escaped-dollar.md",
+      "title": "Escaping Dollar Signs",
+      "categories": [
+        "math-ambiguity",
+        "escaping"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 1,
+        "tables": 0,
+        "codeBlocks": 0,
+        "math": 1,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "Escaped `\\$100` stays literal while `$x+1$` is real math."
+    },
+    {
+      "file": "markdown/73-math-dollar-in-code.md",
+      "title": "Dollar Signs inside Code",
+      "categories": [
+        "math-ambiguity",
+        "code"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 1,
+        "tables": 0,
+        "codeBlocks": 2,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "`$` inside inline code spans and inside two fences."
+    },
+    {
+      "file": "markdown/74-math-paren-unclosed.md",
+      "title": "An Unclosed Parenthesis Delimiter",
+      "categories": [
+        "math-ambiguity",
+        "delimiter"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 1,
+        "tables": 0,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [
+        "math-suspicious-delimiter"
+      ],
+      "notes": "A lone `\\(` with no closer must degrade to a literal parenthesis instead of swallowing the document."
+    },
+    {
+      "file": "markdown/75-math-dollarblock-in-paragraph.md",
+      "title": "段落中的行内公式块",
+      "categories": [
+        "math-ambiguity",
+        "display-math"
+      ],
+      "language": "mixed",
+      "expect": {
+        "headings": 1,
+        "tables": 0,
+        "codeBlocks": 0,
+        "math": 2,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "Two `$$...$$` expressions mid-paragraph in mixed-language prose."
+    },
+    {
+      "file": "markdown/76-math-unclosed-display.md",
+      "title": "A Display Block That Is Never Closed",
+      "categories": [
+        "math-ambiguity",
+        "diagnostics"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 1,
+        "tables": 0,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [
+        "unclosed-math"
+      ],
+      "notes": "An unclosed `$$` opener: deliberately broken, expects the unclosed-math diagnostic."
+    },
+    {
+      "file": "markdown/80-footnotes.md",
+      "title": "Footnotes Overview",
+      "categories": [
+        "footnotes",
+        "extras"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 1,
+        "tables": 0,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 3,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "Three footnote definitions, each referenced once."
+    },
+    {
+      "file": "markdown/81-footnotes-multi-paragraph.md",
+      "title": "Footnotes With Several Paragraphs",
+      "categories": [
+        "footnotes",
+        "extras"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 1,
+        "tables": 0,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 2,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "Two multi-paragraph footnotes with indented continuation lines."
+    },
+    {
+      "file": "markdown/82-definition-lists.md",
+      "title": "术语定义列表示例",
+      "categories": [
+        "definition-lists",
+        "extras"
+      ],
+      "language": "mixed",
+      "expect": {
+        "headings": 1,
+        "tables": 0,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "Two definition lists with mixed-language terms."
+    },
+    {
+      "file": "markdown/83-sub-sup-mark.md",
+      "title": "Subscript, Superscript and Highlight",
+      "categories": [
+        "extras",
+        "sub",
+        "sup",
+        "mark"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 1,
+        "tables": 0,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "`~sub~`, `^sup^` and `==mark==` inline extensions."
+    },
+    {
+      "file": "markdown/84-hard-soft-breaks.md",
+      "title": "Hard and Soft Line Breaks",
+      "categories": [
+        "extras",
+        "line-breaks"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 1,
+        "tables": 0,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "Two-space and backslash hard breaks alongside soft wrapping."
+    },
+    {
+      "file": "markdown/85-autolinks.md",
+      "title": "自动链接的使用",
+      "categories": [
+        "links",
+        "autolinks",
+        "cjk"
+      ],
+      "language": "zh",
+      "expect": {
+        "headings": 1,
+        "tables": 0,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "Angle-bracket URL and mailto autolinks inside Chinese prose."
+    },
+    {
+      "file": "markdown/86-links-reference.md",
+      "title": "Reference Links",
+      "categories": [
+        "links",
+        "reference-links"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 1,
+        "tables": 0,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "Full, shortcut and collapsed reference links plus their definitions."
+    },
+    {
+      "file": "markdown/87-images-relative.md",
+      "title": "Relative Images",
+      "categories": [
+        "images",
+        "assets"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 1,
+        "tables": 0,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 3,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [
+        "image-missing"
+      ],
+      "notes": "Three relative images: two exist under tests/corpus/assets, one deliberately does not."
+    },
+    {
+      "file": "markdown/88-images-missing.md",
+      "title": "Missing Images",
+      "categories": [
+        "images",
+        "diagnostics"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 1,
+        "tables": 0,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 3,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [
+        "image-missing"
+      ],
+      "notes": "Three images pointing at paths that do not exist."
+    },
+    {
+      "file": "markdown/89-links-external.md",
+      "title": "外部链接示例",
+      "categories": [
+        "links",
+        "external",
+        "cjk"
+      ],
+      "language": "zh",
+      "expect": {
+        "headings": 1,
+        "tables": 0,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "Four external links to MDN, the Rust book, the Git documentation and an RFC."
+    },
+    {
+      "file": "markdown/90-html-comments.md",
+      "title": "HTML Comments",
+      "categories": [
+        "html",
+        "comments"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 1,
+        "tables": 0,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "One block HTML comment and two inline comments."
+    },
+    {
+      "file": "markdown/91-frontmatter-valid.md",
+      "title": "Document With Valid Frontmatter",
+      "categories": [
+        "frontmatter",
+        "yaml"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 1,
+        "tables": 0,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "Valid YAML frontmatter parsed into RenderResult.frontmatter."
+    },
+    {
+      "file": "markdown/92-frontmatter-invalid.md",
+      "title": "Document With Invalid Frontmatter",
+      "categories": [
+        "frontmatter",
+        "yaml",
+        "diagnostics"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 1,
+        "tables": 0,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [
+        "math-unbalanced-braces"
+      ],
+      "notes": "Broken YAML frontmatter; engine.ts currently reports the YAML failure under the math-unbalanced-braces code, which this fixture pins."
+    },
+    {
+      "file": "markdown/93-inline-html.md",
+      "title": "Inline and Block HTML",
+      "categories": [
+        "html",
+        "inline-html"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 1,
+        "tables": 0,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [
+        "html-sanitized"
+      ],
+      "notes": "br, kbd, sub, sup and a details block sanitised by DOMPurify."
+    },
+    {
+      "file": "markdown/94-emoji-shortcodes.md",
+      "title": "Emoji Shortcodes As Plain Text",
+      "categories": [
+        "extras",
+        "emoji"
+      ],
+      "language": "en",
+      "expect": {
+        "headings": 1,
+        "tables": 0,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "Emoji shortcodes that must render as plain text."
+    },
+    {
+      "file": "markdown/95-cjk-latin-typography.md",
+      "title": "中英混排与排版规范",
+      "categories": [
+        "cjk",
+        "typography",
+        "mixed-language"
+      ],
+      "language": "mixed",
+      "expect": {
+        "headings": 1,
+        "tables": 0,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 0,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "Spacing and punctuation conventions where Chinese meets Latin."
+    },
+    {
+      "file": "markdown/96-textbook-crossrefs.md",
+      "title": "教材交叉引用示例",
+      "categories": [
+        "links",
+        "anchors",
+        "footnotes",
+        "cjk"
+      ],
+      "language": "mixed",
+      "expect": {
+        "headings": 5,
+        "tables": 0,
+        "codeBlocks": 0,
+        "math": 0,
+        "images": 0,
+        "footnotes": 1,
+        "taskLists": 0
+      },
+      "diagnostics": [],
+      "notes": "Anchor cross-references and one footnote in mixed-language prose."
+    }
+  ],
+  "math": [
+    {
+      "id": "m001",
+      "tex": "\\frac{a}{b}",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "fraction"
+    },
+    {
+      "id": "m002",
+      "tex": "\\frac{a+b}{c-d}",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "fraction"
+    },
+    {
+      "id": "m003",
+      "tex": "\\dfrac{1}{2}",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [
+        "ams"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "fraction"
+    },
+    {
+      "id": "m004",
+      "tex": "\\tfrac{3}{4}",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [
+        "ams"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "fraction"
+    },
+    {
+      "id": "m005",
+      "tex": "\\cfrac{1}{1+x}",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [
+        "ams"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "fraction"
+    },
+    {
+      "id": "m006",
+      "tex": "\\frac{\\frac{a}{b}}{\\frac{c}{d}}",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "fraction"
+    },
+    {
+      "id": "m007",
+      "tex": "\\frac{1}{x+1}",
+      "display": false,
+      "delimiter": "paren-inline",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "fraction"
+    },
+    {
+      "id": "m008",
+      "tex": "\\frac{\\partial f}{\\partial x}",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "fraction"
+    },
+    {
+      "id": "m009",
+      "tex": "\\frac{n!}{k!(n-k)!}",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "fraction"
+    },
+    {
+      "id": "m010",
+      "tex": "\\frac{2}{3}\\times\\frac{5}{7}",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "fraction"
+    },
+    {
+      "id": "m011",
+      "tex": "\\sqrt{2}",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "root"
+    },
+    {
+      "id": "m012",
+      "tex": "\\sqrt[3]{x}",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "root"
+    },
+    {
+      "id": "m013",
+      "tex": "\\sqrt{x^2+y^2}",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "root"
+    },
+    {
+      "id": "m014",
+      "tex": "\\sqrt{\\frac{a}{b}}",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "root"
+    },
+    {
+      "id": "m015",
+      "tex": "\\sqrt[4]{16}",
+      "display": false,
+      "delimiter": "paren-inline",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "root"
+    },
+    {
+      "id": "m016",
+      "tex": "\\sqrt{\\sqrt{x}}",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "root"
+    },
+    {
+      "id": "m017",
+      "tex": "x^2",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "exponent"
+    },
+    {
+      "id": "m018",
+      "tex": "x^{n+1}",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "exponent"
+    },
+    {
+      "id": "m019",
+      "tex": "e^{-x^2}",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "exponent"
+    },
+    {
+      "id": "m020",
+      "tex": "2^{10}",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "exponent"
+    },
+    {
+      "id": "m021",
+      "tex": "x^{y^{z}}",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "exponent"
+    },
+    {
+      "id": "m022",
+      "tex": "\\left(e^{x}\\right)^{n}",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "exponent"
+    },
+    {
+      "id": "m023",
+      "tex": "a^{b}_{c}",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "exponent"
+    },
+    {
+      "id": "m024",
+      "tex": "10^{-3}",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "exponent"
+    },
+    {
+      "id": "m025",
+      "tex": "(x+y)^n = \\sum_{k=0}^{n}\\binom{n}{k}x^k y^{n-k}",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [
+        "ams"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "exponent"
+    },
+    {
+      "id": "m026",
+      "tex": "n^{2}",
+      "display": false,
+      "delimiter": "paren-inline",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "exponent"
+    },
+    {
+      "id": "m027",
+      "tex": "x_i",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "subscript"
+    },
+    {
+      "id": "m028",
+      "tex": "x_{i,j}",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "subscript"
+    },
+    {
+      "id": "m029",
+      "tex": "a_{n+1}",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "subscript"
+    },
+    {
+      "id": "m030",
+      "tex": "T_{\\text{max}}",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [
+        "textmacros"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "subscript"
+    },
+    {
+      "id": "m031",
+      "tex": "{}_{n}C_{k}",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "subscript"
+    },
+    {
+      "id": "m032",
+      "tex": "v_{\\text{initial}}",
+      "display": false,
+      "delimiter": "paren-inline",
+      "packages": [
+        "textmacros"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "subscript"
+    },
+    {
+      "id": "m033",
+      "tex": "f'(x)",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "prime"
+    },
+    {
+      "id": "m034",
+      "tex": "f''(x)",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "prime"
+    },
+    {
+      "id": "m035",
+      "tex": "y'''",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "prime"
+    },
+    {
+      "id": "m036",
+      "tex": "g'(t) = 2t",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "prime"
+    },
+    {
+      "id": "m037",
+      "tex": "|x|",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "absolute"
+    },
+    {
+      "id": "m038",
+      "tex": "\\lvert x \\rvert",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "absolute"
+    },
+    {
+      "id": "m039",
+      "tex": "\\left| x \\right|",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "absolute"
+    },
+    {
+      "id": "m040",
+      "tex": "\\left|\\frac{a}{b}\\right|",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "absolute"
+    },
+    {
+      "id": "m041",
+      "tex": "|x-y| \\le |x|+|y|",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "absolute"
+    },
+    {
+      "id": "m042",
+      "tex": "\\lVert v \\rVert",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "norm"
+    },
+    {
+      "id": "m043",
+      "tex": "\\|A\\|",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "norm"
+    },
+    {
+      "id": "m044",
+      "tex": "\\left\\lVert x \\right\\rVert_2",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "norm"
+    },
+    {
+      "id": "m045",
+      "tex": "\\lVert A \\rVert_F = \\sqrt{\\sum_{i,j} a_{ij}^2}",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "norm"
+    },
+    {
+      "id": "m046",
+      "tex": "\\sum_{i=1}^{n} i",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "sum"
+    },
+    {
+      "id": "m047",
+      "tex": "\\sum_{n=0}^{\\infty} \\frac{1}{n!} = e",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "sum"
+    },
+    {
+      "id": "m048",
+      "tex": "\\sum_{k} a_k",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "sum"
+    },
+    {
+      "id": "m049",
+      "tex": "\\sum_{\\substack{i<j}} x_{ij}",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [
+        "ams"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "sum"
+    },
+    {
+      "id": "m050",
+      "tex": "\\bigcup_{n=1}^{\\infty} A_n",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "sum"
+    },
+    {
+      "id": "m051",
+      "tex": "\\bigcap_{i \\in I} U_i",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "sum"
+    },
+    {
+      "id": "m052",
+      "tex": "\\sum_{i=1}^{m}\\sum_{j=1}^{n} a_{ij}",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "sum"
+    },
+    {
+      "id": "m053",
+      "tex": "\\sum_{d \\mid n} d",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "sum"
+    },
+    {
+      "id": "m054",
+      "tex": "\\prod_{k=1}^{m} k",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "product"
+    },
+    {
+      "id": "m055",
+      "tex": "\\prod_{p \\text{ prime}} \\frac{1}{1-p^{-s}}",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [
+        "textmacros"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "product"
+    },
+    {
+      "id": "m056",
+      "tex": "\\coprod_{i} X_i",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [
+        "ams"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "product"
+    },
+    {
+      "id": "m057",
+      "tex": "\\prod_{n=1}^{\\infty} a_n",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "product"
+    },
+    {
+      "id": "m058",
+      "tex": "x \\cdot y",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "product"
+    },
+    {
+      "id": "m059",
+      "tex": "\\int_a^b f(x)\\,dx",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "integral"
+    },
+    {
+      "id": "m060",
+      "tex": "\\int_0^\\infty e^{-x}\\,dx = 1",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "integral"
+    },
+    {
+      "id": "m061",
+      "tex": "\\iint_D f(x,y)\\,dA",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "integral"
+    },
+    {
+      "id": "m062",
+      "tex": "\\iiint_V \\rho\\,dV",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "integral"
+    },
+    {
+      "id": "m063",
+      "tex": "\\oint_C \\mathbf{F}\\cdot d\\mathbf{r}",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "integral"
+    },
+    {
+      "id": "m064",
+      "tex": "\\int\\limits_{0}^{1} x^2\\,dx",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "integral"
+    },
+    {
+      "id": "m065",
+      "tex": "\\int_{-\\infty}^{\\infty} e^{-x^2}\\,dx = \\sqrt{\\pi}",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "integral"
+    },
+    {
+      "id": "m066",
+      "tex": "\\int \\frac{dx}{1+x^2}",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "integral"
+    },
+    {
+      "id": "m067",
+      "tex": "\\int\\!\\!\\int_D f\\,dA",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "integral"
+    },
+    {
+      "id": "m068",
+      "tex": "\\int_0^T \\dot{q}(t)\\,dt",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "integral"
+    },
+    {
+      "id": "m069",
+      "tex": "\\lim_{x \\to 0} \\frac{\\sin x}{x} = 1",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "limit"
+    },
+    {
+      "id": "m070",
+      "tex": "\\lim_{n\\to\\infty} \\left(1+\\frac{1}{n}\\right)^n = e",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "limit"
+    },
+    {
+      "id": "m071",
+      "tex": "\\limsup_{n\\to\\infty} a_n",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "limit"
+    },
+    {
+      "id": "m072",
+      "tex": "\\liminf_{n\\to\\infty} a_n",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "limit"
+    },
+    {
+      "id": "m073",
+      "tex": "\\sup_{x \\in A} f(x)",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "limit"
+    },
+    {
+      "id": "m074",
+      "tex": "\\inf_{n \\ge 1} a_n",
+      "display": false,
+      "delimiter": "paren-inline",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "limit"
+    },
+    {
+      "id": "m075",
+      "tex": "\\lim_{h \\to 0} \\frac{f(x+h)-f(x)}{h}",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "limit"
+    },
+    {
+      "id": "m076",
+      "tex": "\\frac{d}{dx} x^2 = 2x",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "derivative"
+    },
+    {
+      "id": "m077",
+      "tex": "\\frac{d^2y}{dx^2}",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "derivative"
+    },
+    {
+      "id": "m078",
+      "tex": "\\frac{d^n}{dx^n} f(x)",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "derivative"
+    },
+    {
+      "id": "m079",
+      "tex": "\\frac{\\partial f}{\\partial t}",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "partial"
+    },
+    {
+      "id": "m080",
+      "tex": "\\frac{\\partial^2 u}{\\partial x \\partial y}",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "partial"
+    },
+    {
+      "id": "m081",
+      "tex": "\\nabla f = \\left(\\frac{\\partial f}{\\partial x}, \\frac{\\partial f}{\\partial y}\\right)",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "partial"
+    },
+    {
+      "id": "m082",
+      "tex": "\\dot{x} = f(x,t)",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "derivative"
+    },
+    {
+      "id": "m083",
+      "tex": "\\frac{\\delta S}{\\delta \\phi}",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "derivative"
+    },
+    {
+      "id": "m084",
+      "tex": "\\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix}",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [
+        "ams"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "matrix"
+    },
+    {
+      "id": "m085",
+      "tex": "\\begin{bmatrix} 1 & 0 \\\\ 0 & 1 \\end{bmatrix}",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [
+        "ams"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "matrix"
+    },
+    {
+      "id": "m086",
+      "tex": "\\begin{vmatrix} a & b \\\\ c & d \\end{vmatrix} = ad-bc",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [
+        "ams"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "matrix"
+    },
+    {
+      "id": "m087",
+      "tex": "\\begin{Vmatrix} x \\end{Vmatrix}",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [
+        "ams"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "matrix"
+    },
+    {
+      "id": "m088",
+      "tex": "\\begin{Bmatrix} 1 \\\\ 2 \\end{Bmatrix}",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [
+        "ams"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "matrix"
+    },
+    {
+      "id": "m089",
+      "tex": "\\begin{matrix} 1 & 2 \\\\ 3 & 4 \\end{matrix}",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [
+        "ams"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "matrix"
+    },
+    {
+      "id": "m090",
+      "tex": "\\begin{smallmatrix} a & b \\\\ c & d \\end{smallmatrix}",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [
+        "ams"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "matrix"
+    },
+    {
+      "id": "m091",
+      "tex": "\\begin{array}{c|c} a & b \\\\ \\hline c & d \\end{array}",
+      "display": true,
+      "delimiter": "latex-env",
+      "packages": [
+        "ams"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "matrix"
+    },
+    {
+      "id": "m092",
+      "tex": "\\begin{array}{lcr} 1 & 2 & 3 \\\\ 4 & 5 & 6 \\end{array}",
+      "display": true,
+      "delimiter": "latex-env",
+      "packages": [
+        "ams"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "matrix"
+    },
+    {
+      "id": "m093",
+      "tex": "\\mathbf{A} = \\begin{pmatrix} 1 & 2 \\\\ 3 & 4 \\end{pmatrix}",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [
+        "ams"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "matrix"
+    },
+    {
+      "id": "m094",
+      "tex": "\\begin{pmatrix} \\cos\\theta & -\\sin\\theta \\\\ \\sin\\theta & \\cos\\theta \\end{pmatrix}",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [
+        "ams"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "matrix"
+    },
+    {
+      "id": "m095",
+      "tex": "\\begin{cases} 1 & x > 0 \\\\ 0 & x = 0 \\\\ -1 & x < 0 \\end{cases}",
+      "display": true,
+      "delimiter": "latex-env",
+      "packages": [
+        "ams"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "cases"
+    },
+    {
+      "id": "m096",
+      "tex": "\\begin{dcases} x^2 & x \\ge 0 \\\\ -x & x < 0 \\end{dcases}",
+      "display": true,
+      "delimiter": "latex-env",
+      "packages": [
+        "mathtools"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "cases"
+    },
+    {
+      "id": "m097",
+      "tex": "\\begin{rcases} a \\\\ b \\end{rcases}",
+      "display": true,
+      "delimiter": "latex-env",
+      "packages": [
+        "mathtools"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "cases"
+    },
+    {
+      "id": "m098",
+      "tex": "\\begin{aligned} a &= b+c \\\\ &= d \\end{aligned}",
+      "display": true,
+      "delimiter": "latex-env",
+      "packages": [
+        "ams"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "aligned"
+    },
+    {
+      "id": "m099",
+      "tex": "\\begin{align} x &= a+b \\\\ y &= c+d \\end{align}",
+      "display": true,
+      "delimiter": "latex-env",
+      "packages": [
+        "ams"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "aligned"
+    },
+    {
+      "id": "m100",
+      "tex": "\\begin{align*} f(x) &= (x+1)^2 \\\\ &= x^2+2x+1 \\end{align*}",
+      "display": true,
+      "delimiter": "latex-env",
+      "packages": [
+        "ams"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "aligned"
+    },
+    {
+      "id": "m101",
+      "tex": "\\begin{gather} a = b \\\\ c = d \\end{gather}",
+      "display": true,
+      "delimiter": "latex-env",
+      "packages": [
+        "ams"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "aligned"
+    },
+    {
+      "id": "m102",
+      "tex": "\\begin{split} f(x) &= a \\\\ &\\quad + b \\end{split}",
+      "display": true,
+      "delimiter": "latex-env",
+      "packages": [
+        "ams"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "aligned"
+    },
+    {
+      "id": "m103",
+      "tex": "\\begin{multline} a + b + c \\\\ + d + e \\end{multline}",
+      "display": true,
+      "delimiter": "latex-env",
+      "packages": [
+        "ams"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "aligned"
+    },
+    {
+      "id": "m104",
+      "tex": "\\begin{equation} E = mc^2 \\end{equation}",
+      "display": true,
+      "delimiter": "latex-env",
+      "packages": [
+        "ams"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "environment"
+    },
+    {
+      "id": "m105",
+      "tex": "\\begin{flalign} a &= b & c &= d \\end{flalign}",
+      "display": true,
+      "delimiter": "latex-env",
+      "packages": [
+        "ams"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "environment"
+    },
+    {
+      "id": "m106",
+      "tex": "\\alpha",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "greek"
+    },
+    {
+      "id": "m107",
+      "tex": "\\beta",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "greek"
+    },
+    {
+      "id": "m108",
+      "tex": "\\gamma",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "greek"
+    },
+    {
+      "id": "m109",
+      "tex": "\\delta",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "greek"
+    },
+    {
+      "id": "m110",
+      "tex": "\\epsilon",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "greek"
+    },
+    {
+      "id": "m111",
+      "tex": "\\varepsilon",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "greek"
+    },
+    {
+      "id": "m112",
+      "tex": "\\zeta",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "greek"
+    },
+    {
+      "id": "m113",
+      "tex": "\\eta",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "greek"
+    },
+    {
+      "id": "m114",
+      "tex": "\\theta",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "greek"
+    },
+    {
+      "id": "m115",
+      "tex": "\\vartheta",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "greek"
+    },
+    {
+      "id": "m116",
+      "tex": "\\iota",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "greek"
+    },
+    {
+      "id": "m117",
+      "tex": "\\kappa",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "greek"
+    },
+    {
+      "id": "m118",
+      "tex": "\\lambda",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "greek"
+    },
+    {
+      "id": "m119",
+      "tex": "\\mu",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "greek"
+    },
+    {
+      "id": "m120",
+      "tex": "\\nu",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "greek"
+    },
+    {
+      "id": "m121",
+      "tex": "\\xi",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "greek"
+    },
+    {
+      "id": "m122",
+      "tex": "\\pi",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "greek"
+    },
+    {
+      "id": "m123",
+      "tex": "\\varpi",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "greek"
+    },
+    {
+      "id": "m124",
+      "tex": "\\rho",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "greek"
+    },
+    {
+      "id": "m125",
+      "tex": "\\varrho",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "greek"
+    },
+    {
+      "id": "m126",
+      "tex": "\\sigma",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "greek"
+    },
+    {
+      "id": "m127",
+      "tex": "\\varsigma",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "greek"
+    },
+    {
+      "id": "m128",
+      "tex": "\\tau",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "greek"
+    },
+    {
+      "id": "m129",
+      "tex": "\\upsilon",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "greek"
+    },
+    {
+      "id": "m130",
+      "tex": "\\phi",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "greek"
+    },
+    {
+      "id": "m131",
+      "tex": "\\varphi",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "greek"
+    },
+    {
+      "id": "m132",
+      "tex": "\\chi",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "greek"
+    },
+    {
+      "id": "m133",
+      "tex": "\\psi",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "greek"
+    },
+    {
+      "id": "m134",
+      "tex": "\\omega",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "greek"
+    },
+    {
+      "id": "m135",
+      "tex": "\\Gamma",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "greek"
+    },
+    {
+      "id": "m136",
+      "tex": "\\Delta",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "greek"
+    },
+    {
+      "id": "m137",
+      "tex": "\\Theta",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "greek"
+    },
+    {
+      "id": "m138",
+      "tex": "\\Lambda",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "greek"
+    },
+    {
+      "id": "m139",
+      "tex": "\\Xi",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "greek"
+    },
+    {
+      "id": "m140",
+      "tex": "\\Pi",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "greek"
+    },
+    {
+      "id": "m141",
+      "tex": "\\Sigma",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "greek"
+    },
+    {
+      "id": "m142",
+      "tex": "\\Phi",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "greek"
+    },
+    {
+      "id": "m143",
+      "tex": "\\Psi",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "greek"
+    },
+    {
+      "id": "m144",
+      "tex": "\\Omega",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "greek"
+    },
+    {
+      "id": "m145",
+      "tex": "\\alpha + \\beta = \\gamma",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "greek"
+    },
+    {
+      "id": "m146",
+      "tex": "\\Delta x \\cdot \\Delta p \\ge \\frac{\\hbar}{2}",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "greek"
+    },
+    {
+      "id": "m147",
+      "tex": "\\mu = \\frac{1}{n}\\sum_{i=1}^{n} x_i",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "greek"
+    },
+    {
+      "id": "m148",
+      "tex": "a \\pm b",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "operator"
+    },
+    {
+      "id": "m149",
+      "tex": "a \\mp b",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "operator"
+    },
+    {
+      "id": "m150",
+      "tex": "a \\times b",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "operator"
+    },
+    {
+      "id": "m151",
+      "tex": "a \\div b",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "operator"
+    },
+    {
+      "id": "m152",
+      "tex": "a \\cdot b",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "operator"
+    },
+    {
+      "id": "m153",
+      "tex": "a \\ast b",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "operator"
+    },
+    {
+      "id": "m154",
+      "tex": "a \\star b",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "operator"
+    },
+    {
+      "id": "m155",
+      "tex": "a \\circ b",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "operator"
+    },
+    {
+      "id": "m156",
+      "tex": "a \\bullet b",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "operator"
+    },
+    {
+      "id": "m157",
+      "tex": "a \\oplus b",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "operator"
+    },
+    {
+      "id": "m158",
+      "tex": "a \\otimes b",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "operator"
+    },
+    {
+      "id": "m159",
+      "tex": "a \\odot b",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "operator"
+    },
+    {
+      "id": "m160",
+      "tex": "a \\dagger b",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "operator"
+    },
+    {
+      "id": "m161",
+      "tex": "a \\wedge b",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "operator"
+    },
+    {
+      "id": "m162",
+      "tex": "\\sum_{i} a_i \\otimes b_i",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "operator"
+    },
+    {
+      "id": "m163",
+      "tex": "a \\le b",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "relation"
+    },
+    {
+      "id": "m164",
+      "tex": "a \\ge b",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "relation"
+    },
+    {
+      "id": "m165",
+      "tex": "a \\ne b",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "relation"
+    },
+    {
+      "id": "m166",
+      "tex": "a \\approx b",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "relation"
+    },
+    {
+      "id": "m167",
+      "tex": "a \\equiv b",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "relation"
+    },
+    {
+      "id": "m168",
+      "tex": "a \\sim b",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "relation"
+    },
+    {
+      "id": "m169",
+      "tex": "a \\simeq b",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "relation"
+    },
+    {
+      "id": "m170",
+      "tex": "a \\cong b",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "relation"
+    },
+    {
+      "id": "m171",
+      "tex": "a \\propto b",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "relation"
+    },
+    {
+      "id": "m172",
+      "tex": "a \\prec b",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "relation"
+    },
+    {
+      "id": "m173",
+      "tex": "a \\succ b",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "relation"
+    },
+    {
+      "id": "m174",
+      "tex": "a \\subset b",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "relation"
+    },
+    {
+      "id": "m175",
+      "tex": "a \\supseteq b",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "relation"
+    },
+    {
+      "id": "m176",
+      "tex": "a \\notin b",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "relation"
+    },
+    {
+      "id": "m177",
+      "tex": "A \\subseteq B \\Rightarrow |A| \\le |B|",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "relation"
+    },
+    {
+      "id": "m178",
+      "tex": "x \\in \\mathbb{R} \\setminus \\{0\\}",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [
+        "ams"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "relation"
+    },
+    {
+      "id": "m179",
+      "tex": "f: A \\to B",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "arrow"
+    },
+    {
+      "id": "m180",
+      "tex": "f: A \\rightarrow B",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "arrow"
+    },
+    {
+      "id": "m181",
+      "tex": "f: A \\leftarrow B",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "arrow"
+    },
+    {
+      "id": "m182",
+      "tex": "f: A \\leftrightarrow B",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "arrow"
+    },
+    {
+      "id": "m183",
+      "tex": "f: A \\Rightarrow B",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "arrow"
+    },
+    {
+      "id": "m184",
+      "tex": "f: A \\Leftrightarrow B",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "arrow"
+    },
+    {
+      "id": "m185",
+      "tex": "f: A \\mapsto B",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "arrow"
+    },
+    {
+      "id": "m186",
+      "tex": "f: A \\hookrightarrow B",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "arrow"
+    },
+    {
+      "id": "m187",
+      "tex": "f: A \\longrightarrow B",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "arrow"
+    },
+    {
+      "id": "m188",
+      "tex": "f: A \\uparrow B",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "arrow"
+    },
+    {
+      "id": "m189",
+      "tex": "f: A \\downarrow B",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "arrow"
+    },
+    {
+      "id": "m190",
+      "tex": "a \\Rightarrow b \\Rightarrow c",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "arrow"
+    },
+    {
+      "id": "m191",
+      "tex": "x \\mapsto x^2 \\quad (x \\in \\mathbb{R})",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [
+        "ams"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "arrow"
+    },
+    {
+      "id": "m192",
+      "tex": "\\mathbb{R}",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [
+        "ams"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "font"
+    },
+    {
+      "id": "m193",
+      "tex": "\\mathbb{Z}^{+}",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [
+        "ams"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "font"
+    },
+    {
+      "id": "m194",
+      "tex": "\\mathcal{L}",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [
+        "ams"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "font"
+    },
+    {
+      "id": "m195",
+      "tex": "\\mathfrak{g}",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [
+        "ams"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "font"
+    },
+    {
+      "id": "m196",
+      "tex": "\\mathbf{v} = (1,2,3)",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "font"
+    },
+    {
+      "id": "m197",
+      "tex": "\\boldsymbol{\\theta}",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [
+        "boldsymbol"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "font"
+    },
+    {
+      "id": "m198",
+      "tex": "\\bm{x}",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [
+        "boldsymbol"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "font"
+    },
+    {
+      "id": "m199",
+      "tex": "\\mathrm{d}x",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "font"
+    },
+    {
+      "id": "m200",
+      "tex": "\\mathit{Var}(X)",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "font"
+    },
+    {
+      "id": "m201",
+      "tex": "\\mathsf{A}",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "font"
+    },
+    {
+      "id": "m202",
+      "tex": "\\mathtt{code}",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "font"
+    },
+    {
+      "id": "m203",
+      "tex": "\\mathcal{O}(n \\log n)",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [
+        "ams"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "font"
+    },
+    {
+      "id": "m204",
+      "tex": "\\left( \\frac{a}{b} \\right)",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "delimiters"
+    },
+    {
+      "id": "m205",
+      "tex": "\\left[ 0, 1 \\right]",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "delimiters"
+    },
+    {
+      "id": "m206",
+      "tex": "\\left\\{ x \\mid x > 0 \\right\\}",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "delimiters"
+    },
+    {
+      "id": "m207",
+      "tex": "\\left\\langle u, v \\right\\rangle",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "delimiters"
+    },
+    {
+      "id": "m208",
+      "tex": "\\left\\lfloor x \\right\\rfloor",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "delimiters"
+    },
+    {
+      "id": "m209",
+      "tex": "\\left\\lceil x \\right\\rceil",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "delimiters"
+    },
+    {
+      "id": "m210",
+      "tex": "\\bigl( x + y \\bigr)",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "delimiters"
+    },
+    {
+      "id": "m211",
+      "tex": "\\Bigl[ \\Bigr]",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "delimiters"
+    },
+    {
+      "id": "m212",
+      "tex": "\\left( \\sum_{i=1}^{n} a_i \\right)^2",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "delimiters"
+    },
+    {
+      "id": "m213",
+      "tex": "\\left. \\frac{dy}{dx} \\right|_{x=0}",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "delimiters"
+    },
+    {
+      "id": "m214",
+      "tex": "\\overbrace{a+b+c}^{n}",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "decoration"
+    },
+    {
+      "id": "m215",
+      "tex": "\\underbrace{x_1 + x_2}_{n \\text{ terms}}",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [
+        "textmacros"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "decoration"
+    },
+    {
+      "id": "m216",
+      "tex": "\\overbrace{\\underbrace{a}_{1} + b}^{2}",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "decoration"
+    },
+    {
+      "id": "m217",
+      "tex": "a \\xrightarrow{f} b",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [
+        "ams"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "decoration"
+    },
+    {
+      "id": "m218",
+      "tex": "x \\xleftarrow{g} y",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [
+        "ams"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "decoration"
+    },
+    {
+      "id": "m219",
+      "tex": "\\overset{?}{=}",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [
+        "ams"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "decoration"
+    },
+    {
+      "id": "m220",
+      "tex": "\\underset{n \\to \\infty}{\\lim}",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [
+        "ams"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "decoration"
+    },
+    {
+      "id": "m221",
+      "tex": "\\overrightarrow{AB}",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "decoration"
+    },
+    {
+      "id": "m222",
+      "tex": "a\\,b",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "spacing"
+    },
+    {
+      "id": "m223",
+      "tex": "a\\;b",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "spacing"
+    },
+    {
+      "id": "m224",
+      "tex": "a\\quad b",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "spacing"
+    },
+    {
+      "id": "m225",
+      "tex": "a\\qquad b",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "spacing"
+    },
+    {
+      "id": "m226",
+      "tex": "a\\!b",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "spacing"
+    },
+    {
+      "id": "m227",
+      "tex": "a\\:b",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "spacing"
+    },
+    {
+      "id": "m228",
+      "tex": "\\int_0^1 f(x)\\,dx",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "spacing"
+    },
+    {
+      "id": "m229",
+      "tex": "\\forall \\varepsilon > 0 \\; \\exists \\delta > 0",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "spacing"
+    },
+    {
+      "id": "m230",
+      "tex": "\\int\\!\\!\\int f",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "spacing"
+    },
+    {
+      "id": "m231",
+      "tex": "\\text{if } x > 0",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [
+        "textmacros"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "text"
+    },
+    {
+      "id": "m232",
+      "tex": "\\text{for all } n \\in \\mathbb{N}",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [
+        "textmacros"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "text"
+    },
+    {
+      "id": "m233",
+      "tex": "\\operatorname{sgn}(x)",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "text"
+    },
+    {
+      "id": "m234",
+      "tex": "\\operatorname{arg\\,max}_x f(x)",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "text"
+    },
+    {
+      "id": "m235",
+      "tex": "\\mathrm{d}x",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "text"
+    },
+    {
+      "id": "m236",
+      "tex": "\\text{中文公式说明}",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [
+        "textmacros",
+        "unicode"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "text"
+    },
+    {
+      "id": "m237",
+      "tex": "\\textcolor{red}{x}",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [
+        "color"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "color"
+    },
+    {
+      "id": "m238",
+      "tex": "\\textcolor{blue}{\\frac{a}{b}}",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [
+        "color"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "color"
+    },
+    {
+      "id": "m239",
+      "tex": "\\color{green} y = mx + c",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [
+        "color"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "color"
+    },
+    {
+      "id": "m240",
+      "tex": "x + \\textcolor{#ff8800}{y}",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [
+        "color"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "color"
+    },
+    {
+      "id": "m241",
+      "tex": "\\textcolor{red}{a} + \\textcolor{blue}{b}",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [
+        "color"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "color"
+    },
+    {
+      "id": "m242",
+      "tex": "\\colorbox{yellow}{x}",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [
+        "color"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "color"
+    },
+    {
+      "id": "m243",
+      "tex": "\\cancel{x}",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [
+        "cancel"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "cancel"
+    },
+    {
+      "id": "m244",
+      "tex": "\\bcancel{(a+b)}",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [
+        "cancel"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "cancel"
+    },
+    {
+      "id": "m245",
+      "tex": "\\xcancel{\\frac{a}{b}}",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [
+        "cancel"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "cancel"
+    },
+    {
+      "id": "m246",
+      "tex": "\\boxed{E = mc^2}",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [
+        "ams"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "boxed"
+    },
+    {
+      "id": "m247",
+      "tex": "\\boxed{x^2 + y^2 = r^2}",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [
+        "ams"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "boxed"
+    },
+    {
+      "id": "m248",
+      "tex": "E = mc^2 \\tag{1}",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [
+        "ams"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "numbering"
+    },
+    {
+      "id": "m249",
+      "tex": "a = b \\label{eq:main}",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [
+        "ams"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "numbering"
+    },
+    {
+      "id": "m250",
+      "tex": "\\ref{eq:main}",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [
+        "ams"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "numbering"
+    },
+    {
+      "id": "m251",
+      "tex": "\\eqref{eq:main}",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [
+        "ams"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "numbering"
+    },
+    {
+      "id": "m252",
+      "tex": "x = y \\tag*{$\\ast$}",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [
+        "ams"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "numbering"
+    },
+    {
+      "id": "m253",
+      "tex": "a = b \\notag \\\\ c = d",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [
+        "ams"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "numbering"
+    },
+    {
+      "id": "m254",
+      "tex": "f = g \\nonumber",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [
+        "ams"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "numbering"
+    },
+    {
+      "id": "m255",
+      "tex": "\\begin{align} a &= b \\tag{2.1} \\\\ c &= d \\tag{2.2} \\end{align}",
+      "display": true,
+      "delimiter": "latex-env",
+      "packages": [
+        "ams"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "numbering"
+    },
+    {
+      "id": "m256",
+      "tex": "\\ce{H2O}",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [
+        "mhchem"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "mhchem"
+    },
+    {
+      "id": "m257",
+      "tex": "\\ce{CO2 + H2O -> H2CO3}",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [
+        "mhchem"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "mhchem"
+    },
+    {
+      "id": "m258",
+      "tex": "\\ce{2H2 + O2 -> 2H2O}",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [
+        "mhchem"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "mhchem"
+    },
+    {
+      "id": "m259",
+      "tex": "\\ce{CH4 + 2O2 -> CO2 + 2H2O}",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [
+        "mhchem"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "mhchem"
+    },
+    {
+      "id": "m260",
+      "tex": "\\ce{N2 + 3H2 <=> 2NH3}",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [
+        "mhchem"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "mhchem"
+    },
+    {
+      "id": "m261",
+      "tex": "\\ce{A <- B}",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [
+        "mhchem"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "mhchem"
+    },
+    {
+      "id": "m262",
+      "tex": "\\ce{A <-> B}",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [
+        "mhchem"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "mhchem"
+    },
+    {
+      "id": "m263",
+      "tex": "\\ce{NaCl(s) -> Na+(aq) + Cl-(aq)}",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [
+        "mhchem"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "mhchem"
+    },
+    {
+      "id": "m264",
+      "tex": "\\ce{H2O(l)}",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [
+        "mhchem"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "mhchem"
+    },
+    {
+      "id": "m265",
+      "tex": "\\ce{CO2(g)}",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [
+        "mhchem"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "mhchem"
+    },
+    {
+      "id": "m266",
+      "tex": "\\ce{Fe(s)}",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [
+        "mhchem"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "mhchem"
+    },
+    {
+      "id": "m267",
+      "tex": "\\ce{CaCO3(s) <=> CaO(s) + CO2(g)}",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [
+        "mhchem"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "mhchem"
+    },
+    {
+      "id": "m268",
+      "tex": "\\ce{SO4^2-}",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [
+        "mhchem"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "mhchem"
+    },
+    {
+      "id": "m269",
+      "tex": "\\ce{Fe^3+}",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [
+        "mhchem"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "mhchem"
+    },
+    {
+      "id": "m270",
+      "tex": "\\ce{PO4^3-}",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [
+        "mhchem"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "mhchem"
+    },
+    {
+      "id": "m271",
+      "tex": "\\ce{^{14}C}",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [
+        "mhchem"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "mhchem"
+    },
+    {
+      "id": "m272",
+      "tex": "\\ce{^{238}_{92}U}",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [
+        "mhchem"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "mhchem"
+    },
+    {
+      "id": "m273",
+      "tex": "\\ce{^1H}",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [
+        "mhchem"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "mhchem"
+    },
+    {
+      "id": "m274",
+      "tex": "\\ce{CuSO4 * 5H2O}",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [
+        "mhchem"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "mhchem"
+    },
+    {
+      "id": "m275",
+      "tex": "\\ce{Na2CO3 * 10H2O}",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [
+        "mhchem"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "mhchem"
+    },
+    {
+      "id": "m276",
+      "tex": "\\ce{[Ag(NH3)2]+}",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [
+        "mhchem"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "mhchem"
+    },
+    {
+      "id": "m277",
+      "tex": "\\ce{[Fe(CN)6]^4-}",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [
+        "mhchem"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "mhchem"
+    },
+    {
+      "id": "m278",
+      "tex": "\\ce{Ca(OH)2}",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [
+        "mhchem"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "mhchem"
+    },
+    {
+      "id": "m279",
+      "tex": "\\ce{H2SO4}",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [
+        "mhchem"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "mhchem"
+    },
+    {
+      "id": "m280",
+      "tex": "\\ce{KMnO4}",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [
+        "mhchem"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "mhchem"
+    },
+    {
+      "id": "m281",
+      "tex": "\\ce{CH3COOH + NaOH -> CH3COONa + H2O}",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [
+        "mhchem"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "mhchem"
+    },
+    {
+      "id": "m282",
+      "tex": "\\ce{C6H12O6 ->[酶] 2C2H5OH + 2CO2}",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [
+        "mhchem",
+        "unicode"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "mhchem"
+    },
+    {
+      "id": "m283",
+      "tex": "\\ce{Ca^{2+} + 2 OH- -> Ca(OH)2 v}",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [
+        "mhchem"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "mhchem"
+    },
+    {
+      "id": "m284",
+      "tex": "\\ce{NH4+ + OH- -> NH3 ^ + H2O}",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [
+        "mhchem"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "mhchem"
+    },
+    {
+      "id": "m285",
+      "tex": "\\ce{3 Fe + 4 H2O -> Fe3O4 + 4 H2}",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [
+        "mhchem"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "mhchem"
+    },
+    {
+      "id": "m286",
+      "tex": "\\ce{2 Na + Cl2 -> 2 NaCl}",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [
+        "mhchem"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "mhchem"
+    },
+    {
+      "id": "m287",
+      "tex": "\\ce{H+ + OH- -> H2O}",
+      "display": false,
+      "delimiter": "paren-inline",
+      "packages": [
+        "mhchem"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "mhchem"
+    },
+    {
+      "id": "m288",
+      "tex": "\\pu{5 m}",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [
+        "mhchem"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "units"
+    },
+    {
+      "id": "m289",
+      "tex": "\\pu{9.81 m/s2}",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [
+        "mhchem"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "units"
+    },
+    {
+      "id": "m290",
+      "tex": "\\pu{1.5e-3 mol}",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [
+        "mhchem"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "units"
+    },
+    {
+      "id": "m291",
+      "tex": "\\pu{2.5 kg m2/s2}",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [
+        "mhchem"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "units"
+    },
+    {
+      "id": "m292",
+      "tex": "\\pu{100 km/h}",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [
+        "mhchem"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "units"
+    },
+    {
+      "id": "m293",
+      "tex": "\\pu{298 K}",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [
+        "mhchem"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "units"
+    },
+    {
+      "id": "m294",
+      "tex": "\\pu{1.6e-19 C}",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [
+        "mhchem"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "units"
+    },
+    {
+      "id": "m295",
+      "tex": "\\pu{6.022e23 mol-1}",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [
+        "mhchem"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "units"
+    },
+    {
+      "id": "m296",
+      "tex": "\\pu{3.0e8 m/s}",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [
+        "mhchem"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "units"
+    },
+    {
+      "id": "m297",
+      "tex": "\\pu{12.5 mL} \\text{ of solution}",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [
+        "mhchem",
+        "textmacros"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "units"
+    },
+    {
+      "id": "m298",
+      "tex": "\\ce{H2O} \\quad \\pu{18.02 g/mol}",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [
+        "mhchem"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "units"
+    },
+    {
+      "id": "m299",
+      "tex": "E = \\pu{1.2e3 J}",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [
+        "mhchem"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "units"
+    },
+    {
+      "id": "m300",
+      "tex": "\\thisIsNotAMacro{}",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "error",
+      "reason": "Unknown control sequence: MathJax reports `Undefined control sequence \\thisIsNotAMacro`.",
+      "category": "error"
+    },
+    {
+      "id": "m301",
+      "tex": "\\notacommand",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "error",
+      "reason": "Bare unknown control sequence must be reported as math-unknown-macro, not silently dropped.",
+      "category": "error"
+    },
+    {
+      "id": "m302",
+      "tex": "\\frac{a}",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [],
+      "expect": "error",
+      "reason": "`\\frac` needs two arguments; only one was supplied.",
+      "category": "error"
+    },
+    {
+      "id": "m303",
+      "tex": "\\frac",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [],
+      "expect": "error",
+      "reason": "`\\frac` with no arguments is an error.",
+      "category": "error"
+    },
+    {
+      "id": "m304",
+      "tex": "\\sqrt[3{x}",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "error",
+      "reason": "`\\sqrt` bracket and brace do not pair: the optional argument is unterminated.",
+      "category": "error"
+    },
+    {
+      "id": "m305",
+      "tex": "\\frac{1}{",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "error",
+      "reason": "Unclosed `{` after the second argument — math-unbalanced-braces.",
+      "category": "error"
+    },
+    {
+      "id": "m306",
+      "tex": "{a+b",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "error",
+      "reason": "Unclosed group `{` must be reported as math-unbalanced-braces.",
+      "category": "error"
+    },
+    {
+      "id": "m307",
+      "tex": "a}b",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "error",
+      "reason": "Unmatched closing brace must be reported as math-unbalanced-braces.",
+      "category": "error"
+    },
+    {
+      "id": "m308",
+      "tex": "\\begin{align} a &= b",
+      "display": true,
+      "delimiter": "latex-env",
+      "packages": [
+        "ams"
+      ],
+      "expect": "error",
+      "reason": "`\\begin{align}` without `\\end{align}` — math-unbalanced-environment.",
+      "category": "error"
+    },
+    {
+      "id": "m309",
+      "tex": "\\begin{align*} x &= 1",
+      "display": true,
+      "delimiter": "latex-env",
+      "packages": [
+        "ams"
+      ],
+      "expect": "error",
+      "reason": "Unclosed `align*` environment.",
+      "category": "error"
+    },
+    {
+      "id": "m310",
+      "tex": "\\begin{cases} 1 & x>0",
+      "display": true,
+      "delimiter": "latex-env",
+      "packages": [
+        "ams"
+      ],
+      "expect": "error",
+      "reason": "Unclosed `cases` environment.",
+      "category": "error"
+    },
+    {
+      "id": "m311",
+      "tex": "\\end{align}",
+      "display": true,
+      "delimiter": "latex-env",
+      "packages": [
+        "ams"
+      ],
+      "expect": "error",
+      "reason": "`\\end{align}` with no matching `\\begin{align}`.",
+      "category": "error"
+    },
+    {
+      "id": "m312",
+      "tex": "\\begin{matrix} 1 & 2 \\\\ 3 & 4 \\end{matrix}",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [
+        "ams"
+      ],
+      "expect": "error",
+      "reason": "A bare `matrix` environment outside a math delimiter: the matrix environment is only valid inside math mode, so this must be reported rather than rendered as a paragraph.",
+      "category": "error"
+    },
+    {
+      "id": "m313",
+      "tex": "\\begin{foobar} x \\end{foobar}",
+      "display": true,
+      "delimiter": "latex-env",
+      "packages": [],
+      "expect": "error",
+      "reason": "`foobar` is not in MATH_ENVIRONMENTS — math-unsupported-environment.",
+      "category": "error"
+    },
+    {
+      "id": "m314",
+      "tex": "\\begin{equation} x",
+      "display": true,
+      "delimiter": "latex-env",
+      "packages": [
+        "ams"
+      ],
+      "expect": "error",
+      "reason": "Unclosed `equation` environment.",
+      "category": "error"
+    },
+    {
+      "id": "m315",
+      "tex": "\\left( x + y",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [],
+      "expect": "error",
+      "reason": "`\\left(` has no matching `\\right)`: MathJax reports a missing `\\right`.",
+      "category": "error"
+    },
+    {
+      "id": "m316",
+      "tex": "x + y \\right)",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [],
+      "expect": "error",
+      "reason": "`\\right)` with no preceding `\\left(`.",
+      "category": "error"
+    },
+    {
+      "id": "m317",
+      "tex": "\\left\\{ x \\right]",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [],
+      "expect": "error",
+      "reason": "`\\left\\{` closed by `\\right]` — mismatched delimiter pair.",
+      "category": "error"
+    },
+    {
+      "id": "m318",
+      "tex": "a & b",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "error",
+      "reason": "Alignment tab `&` outside an alignment environment inside inline math.",
+      "category": "error"
+    },
+    {
+      "id": "m319",
+      "tex": "x = y \\end{cases}",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [],
+      "expect": "error",
+      "reason": "`\\end{cases}` with no matching `\\begin{cases}` — unbalanced environment.",
+      "category": "error"
+    },
+    {
+      "id": "m320",
+      "tex": "\\ce{H2O",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [
+        "mhchem"
+      ],
+      "expect": "error",
+      "reason": "Unclosed brace inside `\\ce{}`.",
+      "category": "error"
+    },
+    {
+      "id": "m321",
+      "tex": "\\ce{}",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [
+        "mhchem"
+      ],
+      "expect": "error",
+      "reason": "Empty `\\ce{}` has nothing to parse.",
+      "category": "error"
+    },
+    {
+      "id": "m322",
+      "tex": "\\ce{2H2 + O2 ->}",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [
+        "mhchem"
+      ],
+      "expect": "error",
+      "reason": "Reaction arrow with no right-hand side.",
+      "category": "error"
+    },
+    {
+      "id": "m323",
+      "tex": "\\ce{H2O -> }",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [
+        "mhchem"
+      ],
+      "expect": "error",
+      "reason": "Reaction arrow with no product.",
+      "category": "error"
+    },
+    {
+      "id": "m324",
+      "tex": "\\ce{H2O_{(}}",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [
+        "mhchem"
+      ],
+      "expect": "error",
+      "reason": "Malformed state annotation inside `\\ce{}`.",
+      "category": "error"
+    },
+    {
+      "id": "m325",
+      "tex": "\\ce{A -> B",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [
+        "mhchem"
+      ],
+      "expect": "error",
+      "reason": "Unclosed `\\ce{}` argument.",
+      "category": "error"
+    },
+    {
+      "id": "m326",
+      "tex": "\\pu{abc}",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [
+        "mhchem"
+      ],
+      "expect": "error",
+      "reason": "`\\pu` with no parseable unit.",
+      "category": "error"
+    },
+    {
+      "id": "m327",
+      "tex": "\\pu{5 }",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [
+        "mhchem"
+      ],
+      "expect": "error",
+      "reason": "`\\pu` with a value but no unit.",
+      "category": "error"
+    },
+    {
+      "id": "m328",
+      "tex": "\\pu{}",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [
+        "mhchem"
+      ],
+      "expect": "error",
+      "reason": "Empty `\\pu{}`.",
+      "category": "error"
+    },
+    {
+      "id": "m329",
+      "tex": "\\xrightarrow",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [
+        "ams"
+      ],
+      "expect": "error",
+      "reason": "`\\xrightarrow` requires an argument.",
+      "category": "error"
+    },
+    {
+      "id": "m330",
+      "tex": "\\boxed",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [
+        "ams"
+      ],
+      "expect": "error",
+      "reason": "`\\boxed` requires an argument.",
+      "category": "error"
+    },
+    {
+      "id": "m331",
+      "tex": "\\textcolor{}",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [
+        "color"
+      ],
+      "expect": "error",
+      "reason": "`\\textcolor` needs a colour and a body.",
+      "category": "error"
+    },
+    {
+      "id": "m332",
+      "tex": "\\operatorname",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "error",
+      "reason": "`\\operatorname` requires an argument.",
+      "category": "error"
+    },
+    {
+      "id": "m333",
+      "tex": "\\tag",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [
+        "ams"
+      ],
+      "expect": "error",
+      "reason": "`\\tag` requires an argument.",
+      "category": "error"
+    },
+    {
+      "id": "m334",
+      "tex": "\\ref",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [
+        "ams"
+      ],
+      "expect": "error",
+      "reason": "`\\ref` requires a label argument.",
+      "category": "error"
+    },
+    {
+      "id": "m335",
+      "tex": "\\substack{a",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [
+        "ams"
+      ],
+      "expect": "error",
+      "reason": "Unclosed brace in `\\substack`.",
+      "category": "error"
+    },
+    {
+      "id": "m336",
+      "tex": "\\overbrace{x",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [],
+      "expect": "error",
+      "reason": "Unclosed brace in `\\overbrace`.",
+      "category": "error"
+    },
+    {
+      "id": "m337",
+      "tex": "\\begin{array}{c} a & b",
+      "display": true,
+      "delimiter": "latex-env",
+      "packages": [
+        "ams"
+      ],
+      "expect": "error",
+      "reason": "Unclosed `array` environment.",
+      "category": "error"
+    },
+    {
+      "id": "m338",
+      "tex": "\\begin{cases} 1 & x>0 \\end{cases*}",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [
+        "ams"
+      ],
+      "expect": "error",
+      "reason": "`\\begin{cases}` closed by `\\end{cases*}` — environment name mismatch, must be reported as math-unbalanced-environment.",
+      "category": "error"
+    },
+    {
+      "id": "m339",
+      "tex": "x \\overbrace",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [],
+      "expect": "error",
+      "reason": "`\\overbrace` with no argument.",
+      "category": "error"
+    },
+    {
+      "id": "m340",
+      "tex": "a^2+b^2=c^2",
+      "display": false,
+      "delimiter": "math-fence",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "delimiter"
+    },
+    {
+      "id": "m341",
+      "tex": "\\int_0^1 x\\,dx = \\frac{1}{2}",
+      "display": true,
+      "delimiter": "math-fence",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "delimiter"
+    },
+    {
+      "id": "m342",
+      "tex": "E = mc^2",
+      "display": true,
+      "delimiter": "paren-block",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "delimiter"
+    },
+    {
+      "id": "m343",
+      "tex": "x \\ne 0",
+      "display": false,
+      "delimiter": "paren-inline",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "delimiter"
+    },
+    {
+      "id": "m344",
+      "tex": "e^{i\\pi} + 1 = 0",
+      "display": true,
+      "delimiter": "dollar-block",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "delimiter"
+    },
+    {
+      "id": "m345",
+      "tex": "n! = \\prod_{k=1}^{n} k",
+      "display": false,
+      "delimiter": "dollar",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "delimiter"
+    },
+    {
+      "id": "m346",
+      "tex": "\\int_{-\\infty}^{\\infty} e^{-t^{2}}\\,dt = \\sqrt{\\pi}",
+      "display": true,
+      "delimiter": "paren-block",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "delimiter"
+    },
+    {
+      "id": "m347",
+      "tex": "\\begin{pmatrix} 1 & 0 \\\\ 0 & 1 \\end{pmatrix}",
+      "display": true,
+      "delimiter": "paren-block",
+      "packages": [
+        "ams"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "matrix"
+    },
+    {
+      "id": "m348",
+      "tex": "\\sum_{n=1}^{\\infty} \\frac{1}{n^{2}} = \\frac{\\pi^{2}}{6}",
+      "display": true,
+      "delimiter": "paren-block",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "sum"
+    },
+    {
+      "id": "m349",
+      "tex": "x^{2} + y^{2} = r^{2}",
+      "display": true,
+      "delimiter": "math-fence",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "delimiter"
+    },
+    {
+      "id": "m350",
+      "tex": "\\frac{d}{dx} e^{x} = e^{x}",
+      "display": true,
+      "delimiter": "math-fence",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "derivative"
+    },
+    {
+      "id": "m351",
+      "tex": "\\lim_{n \\to \\infty} \\frac{1}{n} = 0",
+      "display": true,
+      "delimiter": "math-fence",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "limit"
+    },
+    {
+      "id": "m352",
+      "tex": "\\ce{4 Fe + 3 O2 -> 2 Fe2O3}",
+      "display": true,
+      "delimiter": "math-fence",
+      "packages": [
+        "mhchem"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "mhchem"
+    },
+    {
+      "id": "m353",
+      "tex": "\\log_{2} n",
+      "display": false,
+      "delimiter": "paren-inline",
+      "packages": [],
+      "expect": "render",
+      "reason": null,
+      "category": "text"
+    },
+    {
+      "id": "m354",
+      "tex": "\\binom{n}{k}",
+      "display": false,
+      "delimiter": "paren-inline",
+      "packages": [
+        "ams"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "text"
+    },
+    {
+      "id": "m355",
+      "tex": "\\begin{alignat}{2} a &= b &\\quad c &= d \\end{alignat}",
+      "display": true,
+      "delimiter": "latex-env",
+      "packages": [
+        "ams"
+      ],
+      "expect": "render",
+      "reason": null,
+      "category": "aligned"
+    }
+  ],
+  "stress": [
+    {
+      "file": "stress/huge-textbook.md",
+      "generator": "scripts/gen-corpus-stress.mjs",
+      "approxBytes": 3101066,
+      "contains": {
+        "headings": 400,
+        "math": 300,
+        "tables": 100
+      }
+    },
+    {
+      "file": "stress/math-dense.md",
+      "generator": "scripts/gen-corpus-stress.mjs",
+      "approxBytes": 562357,
+      "contains": {
+        "math": 2000
+      }
+    },
+    {
+      "file": "stress/deep-nesting.md",
+      "generator": "scripts/gen-corpus-stress.mjs",
+      "approxBytes": 195888,
+      "contains": {
+        "listDepth": 30,
+        "blockquoteDepth": 30
+      }
+    },
+    {
+      "file": "stress/many-small-blocks.md",
+      "generator": "scripts/gen-corpus-stress.mjs",
+      "approxBytes": 1120038,
+      "contains": {
+        "paragraphs": 20000
+      }
+    },
+    {
+      "file": "stress/wide-tables.md",
+      "generator": "scripts/gen-corpus-stress.mjs",
+      "approxBytes": 650788,
+      "contains": {
+        "columns": 40,
+        "rows": 2000
+      }
+    }
+  ]
+}

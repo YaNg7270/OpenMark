@@ -1,0 +1,136 @@
+[
+  {
+    "id": "m192",
+    "tex": "\\mathbb{R}",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [
+      "ams"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "font"
+  },
+  {
+    "id": "m193",
+    "tex": "\\mathbb{Z}^{+}",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [
+      "ams"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "font"
+  },
+  {
+    "id": "m194",
+    "tex": "\\mathcal{L}",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [
+      "ams"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "font"
+  },
+  {
+    "id": "m195",
+    "tex": "\\mathfrak{g}",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [
+      "ams"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "font"
+  },
+  {
+    "id": "m196",
+    "tex": "\\mathbf{v} = (1,2,3)",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "font"
+  },
+  {
+    "id": "m197",
+    "tex": "\\boldsymbol{\\theta}",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [
+      "boldsymbol"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "font"
+  },
+  {
+    "id": "m198",
+    "tex": "\\bm{x}",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [
+      "boldsymbol"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "font"
+  },
+  {
+    "id": "m199",
+    "tex": "\\mathrm{d}x",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "font"
+  },
+  {
+    "id": "m200",
+    "tex": "\\mathit{Var}(X)",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "font"
+  },
+  {
+    "id": "m201",
+    "tex": "\\mathsf{A}",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "font"
+  },
+  {
+    "id": "m202",
+    "tex": "\\mathtt{code}",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "font"
+  },
+  {
+    "id": "m203",
+    "tex": "\\mathcal{O}(n \\log n)",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [
+      "ams"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "font"
+  }
+]

@@ -1,0 +1,66 @@
+[
+  {
+    "id": "m027",
+    "tex": "x_i",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "subscript"
+  },
+  {
+    "id": "m028",
+    "tex": "x_{i,j}",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "subscript"
+  },
+  {
+    "id": "m029",
+    "tex": "a_{n+1}",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "subscript"
+  },
+  {
+    "id": "m030",
+    "tex": "T_{\\text{max}}",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [
+      "textmacros"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "subscript"
+  },
+  {
+    "id": "m031",
+    "tex": "{}_{n}C_{k}",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "subscript"
+  },
+  {
+    "id": "m032",
+    "tex": "v_{\\text{initial}}",
+    "display": false,
+    "delimiter": "paren-inline",
+    "packages": [
+      "textmacros"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "subscript"
+  }
+]

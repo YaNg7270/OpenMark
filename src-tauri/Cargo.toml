@@ -1,0 +1,66 @@
+[package]
+name = "openmark"
+version = "0.1.0"
+description = "OpenMark — a Windows 11 desktop Markdown reader & editor with instant rendering, high-fidelity LaTeX/mhchem and immersive long-document reading."
+authors = ["OpenMark"]
+license = "MIT"
+edition = "2021"
+rust-version = "1.77.2"
+
+# The desktop host for the React frontend in ../src.
+# `openmark_lib` is the real crate; `main.rs` is a thin launcher.
+[lib]
+name = "openmark_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2.7.3", features = [] }
+
+[dependencies]
+# `protocol-asset` powers `convertFileSrc` for images living next to the opened
+# document; `devtools` keeps the WebView2 inspector available in dev builds.
+tauri = { version = "2.12.4", features = ["protocol-asset", "devtools"] }
+
+tauri-plugin-dialog = "2.8.3"
+tauri-plugin-fs = "2.7.1"
+tauri-plugin-opener = "2.7.2"
+tauri-plugin-store = "2.5.0"
+tauri-plugin-window-state = "2.5.0"
+tauri-plugin-single-instance = "2.5.4"
+tauri-plugin-process = "2.4.0"
+tauri-plugin-os = "2.4.0"
+# Remembers the folders the user granted through the dialog / asset protocol so
+# "reopen last document" keeps working after a restart. Rust-only crate.
+tauri-plugin-persisted-scope = "2.4.2"
+# Used by the WebDriverIO desktop E2E suite. The dependency is always present so
+# the ACL stays valid in every profile, but the plugin is only *registered* in
+# debug builds (see `lib.rs`), so it is linked into release binaries neither as
+# behaviour nor as code.
+tauri-plugin-wdio = "1.5.0"
+
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.154"
+thiserror = "2.0.21"
+chrono = { version = "0.4.45", default-features = false, features = ["clock", "std"] }
+
+# Reserved for the WebView2 PDF export path (`ICoreWebView2_7::PrintToPdf`,
+# reached through `Webview::with_webview`). Nothing references them yet — the
+# implementation lands with the export feature and is unlocked by the
+# `pdf-export` feature below.
+[target.'cfg(windows)'.dependencies]
+webview2-com = { version = "0.39.1", optional = true }
+windows = { version = "0.62.2", optional = true, features = [
+  "Win32_Foundation",
+  "Win32_System_Com",
+] }
+
+[features]
+# Opt-in switch for the WebView2 COM interop used by PDF export.
+pdf-export = ["dep:webview2-com", "dep:windows"]
+
+[profile.release]
+# Thin LTO keeps startup snappy without the multi-minute full-LTO link.
+lto = "thin"
+codegen-units = 16
+strip = "symbols"
+panic = "abort"

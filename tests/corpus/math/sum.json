@@ -1,0 +1,94 @@
+[
+  {
+    "id": "m046",
+    "tex": "\\sum_{i=1}^{n} i",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "sum"
+  },
+  {
+    "id": "m047",
+    "tex": "\\sum_{n=0}^{\\infty} \\frac{1}{n!} = e",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "sum"
+  },
+  {
+    "id": "m048",
+    "tex": "\\sum_{k} a_k",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "sum"
+  },
+  {
+    "id": "m049",
+    "tex": "\\sum_{\\substack{i<j}} x_{ij}",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [
+      "ams"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "sum"
+  },
+  {
+    "id": "m050",
+    "tex": "\\bigcup_{n=1}^{\\infty} A_n",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "sum"
+  },
+  {
+    "id": "m051",
+    "tex": "\\bigcap_{i \\in I} U_i",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "sum"
+  },
+  {
+    "id": "m052",
+    "tex": "\\sum_{i=1}^{m}\\sum_{j=1}^{n} a_{ij}",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "sum"
+  },
+  {
+    "id": "m053",
+    "tex": "\\sum_{d \\mid n} d",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "sum"
+  },
+  {
+    "id": "m348",
+    "tex": "\\sum_{n=1}^{\\infty} \\frac{1}{n^{2}} = \\frac{\\pi^{2}}{6}",
+    "display": true,
+    "delimiter": "paren-block",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "sum"
+  }
+]

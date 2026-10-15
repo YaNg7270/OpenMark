@@ -1,0 +1,422 @@
+[
+  {
+    "id": "m106",
+    "tex": "\\alpha",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "greek"
+  },
+  {
+    "id": "m107",
+    "tex": "\\beta",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "greek"
+  },
+  {
+    "id": "m108",
+    "tex": "\\gamma",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "greek"
+  },
+  {
+    "id": "m109",
+    "tex": "\\delta",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "greek"
+  },
+  {
+    "id": "m110",
+    "tex": "\\epsilon",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "greek"
+  },
+  {
+    "id": "m111",
+    "tex": "\\varepsilon",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "greek"
+  },
+  {
+    "id": "m112",
+    "tex": "\\zeta",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "greek"
+  },
+  {
+    "id": "m113",
+    "tex": "\\eta",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "greek"
+  },
+  {
+    "id": "m114",
+    "tex": "\\theta",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "greek"
+  },
+  {
+    "id": "m115",
+    "tex": "\\vartheta",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "greek"
+  },
+  {
+    "id": "m116",
+    "tex": "\\iota",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "greek"
+  },
+  {
+    "id": "m117",
+    "tex": "\\kappa",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "greek"
+  },
+  {
+    "id": "m118",
+    "tex": "\\lambda",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "greek"
+  },
+  {
+    "id": "m119",
+    "tex": "\\mu",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "greek"
+  },
+  {
+    "id": "m120",
+    "tex": "\\nu",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "greek"
+  },
+  {
+    "id": "m121",
+    "tex": "\\xi",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "greek"
+  },
+  {
+    "id": "m122",
+    "tex": "\\pi",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "greek"
+  },
+  {
+    "id": "m123",
+    "tex": "\\varpi",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "greek"
+  },
+  {
+    "id": "m124",
+    "tex": "\\rho",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "greek"
+  },
+  {
+    "id": "m125",
+    "tex": "\\varrho",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "greek"
+  },
+  {
+    "id": "m126",
+    "tex": "\\sigma",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "greek"
+  },
+  {
+    "id": "m127",
+    "tex": "\\varsigma",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "greek"
+  },
+  {
+    "id": "m128",
+    "tex": "\\tau",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "greek"
+  },
+  {
+    "id": "m129",
+    "tex": "\\upsilon",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "greek"
+  },
+  {
+    "id": "m130",
+    "tex": "\\phi",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "greek"
+  },
+  {
+    "id": "m131",
+    "tex": "\\varphi",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "greek"
+  },
+  {
+    "id": "m132",
+    "tex": "\\chi",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "greek"
+  },
+  {
+    "id": "m133",
+    "tex": "\\psi",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "greek"
+  },
+  {
+    "id": "m134",
+    "tex": "\\omega",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "greek"
+  },
+  {
+    "id": "m135",
+    "tex": "\\Gamma",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "greek"
+  },
+  {
+    "id": "m136",
+    "tex": "\\Delta",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "greek"
+  },
+  {
+    "id": "m137",
+    "tex": "\\Theta",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "greek"
+  },
+  {
+    "id": "m138",
+    "tex": "\\Lambda",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "greek"
+  },
+  {
+    "id": "m139",
+    "tex": "\\Xi",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "greek"
+  },
+  {
+    "id": "m140",
+    "tex": "\\Pi",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "greek"
+  },
+  {
+    "id": "m141",
+    "tex": "\\Sigma",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "greek"
+  },
+  {
+    "id": "m142",
+    "tex": "\\Phi",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "greek"
+  },
+  {
+    "id": "m143",
+    "tex": "\\Psi",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "greek"
+  },
+  {
+    "id": "m144",
+    "tex": "\\Omega",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "greek"
+  },
+  {
+    "id": "m145",
+    "tex": "\\alpha + \\beta = \\gamma",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "greek"
+  },
+  {
+    "id": "m146",
+    "tex": "\\Delta x \\cdot \\Delta p \\ge \\frac{\\hbar}{2}",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "greek"
+  },
+  {
+    "id": "m147",
+    "tex": "\\mu = \\frac{1}{n}\\sum_{i=1}^{n} x_i",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "greek"
+  }
+]

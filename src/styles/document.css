@@ -1,0 +1,602 @@
+/* ============================================================================
+   The document itself.
+
+   This file is the product. Everything here is tuned for a long reading session on a
+   desktop display: a measured column, a calm vertical rhythm, Chinese/Latin mixed
+   typography, and print-quality maths.
+   ========================================================================== */
+
+.om-doc-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  /* Long documents scroll smoothly without jank on a trackpad or wheel. */
+  scroll-behavior: smooth;
+  background: var(--om-bg);
+}
+
+.om-doc {
+  max-width: var(--om-content-width);
+  margin: 0 auto;
+  padding: calc(var(--om-content-padding) * 0.6) var(--om-content-padding) 40vh;
+  font-family: var(--om-content-font, var(--om-font-ui));
+  font-size: var(--om-font-size);
+  line-height: var(--om-line-height);
+  letter-spacing: var(--om-letter-spacing);
+  color: var(--om-text);
+  /* The document is text: allow selection even though the chrome is not. */
+  user-select: text;
+  cursor: auto;
+  overflow-wrap: break-word;
+}
+
+html[data-om-justify='on'] .om-doc p,
+html[data-om-justify='on'] .om-doc li {
+  text-align: justify;
+  text-justify: inter-ideograph; /* correct spacing for CJK–Latin boundaries */
+}
+
+html[data-om-hyphenate='on'] .om-doc p {
+  hyphens: auto;
+}
+
+.om-doc--message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  text-align: center;
+  color: var(--om-text-muted);
+}
+
+.om-doc--message h2 {
+  border: none;
+  color: var(--om-text);
+}
+
+.om-doc__hint {
+  font-size: 0.9em;
+  color: var(--om-text-faint);
+}
+
+/* ---- reading progress ---------------------------------------------------- */
+
+.om-progress {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  z-index: 20;
+  pointer-events: none;
+}
+
+.om-progress__bar {
+  height: 100%;
+  background: var(--om-accent);
+  transform-origin: 0 50%;
+  transform: scaleX(0);
+  /* 100 ms is under the threshold where a progress bar feels laggy. */
+  transition: transform 100ms linear;
+}
+
+/* ---- headings ------------------------------------------------------------ */
+
+.om-doc h1,
+.om-doc h2,
+.om-doc h3,
+.om-doc h4,
+.om-doc h5,
+.om-doc h6 {
+  font-family: var(--om-font-ui);
+  font-weight: 650;
+  line-height: 1.3;
+  /* Headings never sit flush against the previous block. */
+  margin: calc(1.6em * var(--om-density)) 0 calc(0.6em * var(--om-density));
+  scroll-margin-top: 20px;
+}
+
+.om-doc h1 {
+  font-size: 1.9em;
+  margin-top: 0;
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid var(--om-border);
+}
+
+.om-doc h2 {
+  font-size: 1.5em;
+  padding-bottom: 0.24em;
+  border-bottom: 1px solid var(--om-border);
+}
+
+.om-doc h3 {
+  font-size: 1.25em;
+}
+
+.om-doc h4 {
+  font-size: 1.08em;
+}
+
+.om-doc h5,
+.om-doc h6 {
+  font-size: 1em;
+  color: var(--om-text-muted);
+}
+
+/* Optional automatic heading numbering, driven purely by CSS counters so that turning it
+   on or off never re-parses or re-renders the document. */
+html[data-om-numbered='on'] .om-doc {
+  counter-reset: om-h1 om-h2 om-h3 om-h4 om-h5 om-h6;
+}
+
+html[data-om-numbered='on'] .om-doc h1 {
+  counter-increment: om-h1;
+  counter-reset: om-h2 om-h3 om-h4 om-h5 om-h6;
+}
+html[data-om-numbered='on'] .om-doc h1::before {
+  content: counter(om-h1) '. ';
+}
+
+html[data-om-numbered='on'] .om-doc h2 {
+  counter-increment: om-h2;
+  counter-reset: om-h3 om-h4 om-h5 om-h6;
+}
+html[data-om-numbered='on'] .om-doc h2::before {
+  content: counter(om-h1) '.' counter(om-h2) ' ';
+}
+
+html[data-om-numbered='on'] .om-doc h3 {
+  counter-increment: om-h3;
+  counter-reset: om-h4 om-h5 om-h6;
+}
+html[data-om-numbered='on'] .om-doc h3::before {
+  content: counter(om-h1) '.' counter(om-h2) '.' counter(om-h3) ' ';
+}
+
+html[data-om-numbered='on'] .om-doc h4 {
+  counter-increment: om-h4;
+}
+html[data-om-numbered='on'] .om-doc h4::before {
+  content: counter(om-h1) '.' counter(om-h2) '.' counter(om-h3) '.' counter(om-h4) ' ';
+}
+
+/* ---- blocks -------------------------------------------------------------- */
+
+.om-doc p,
+.om-doc ul,
+.om-doc ol,
+.om-doc dl,
+.om-doc table,
+.om-doc blockquote,
+.om-doc figure {
+  margin: 0 0 calc(1em * var(--om-density));
+}
+
+.om-doc a {
+  color: var(--om-accent);
+  text-decoration: none;
+  border-bottom: 1px solid color-mix(in srgb, var(--om-accent) 35%, transparent);
+}
+
+.om-doc a:hover {
+  border-bottom-color: var(--om-accent);
+}
+
+.om-doc strong {
+  font-weight: 680;
+}
+
+.om-doc mark {
+  background: var(--om-mark-bg);
+  color: inherit;
+  padding: 0 2px;
+  border-radius: 2px;
+}
+
+.om-doc hr {
+  border: none;
+  border-top: 1px solid var(--om-border);
+  margin: calc(2em * var(--om-density)) 0;
+}
+
+/* ---- lists --------------------------------------------------------------- */
+
+.om-doc ul,
+.om-doc ol {
+  padding-inline-start: 1.9em;
+}
+
+.om-doc li {
+  margin-bottom: calc(0.28em * var(--om-density));
+}
+
+.om-doc li > ul,
+.om-doc li > ol {
+  margin-top: calc(0.28em * var(--om-density));
+  margin-bottom: 0;
+}
+
+/* Task lists: the checkbox is rendered by markdown-it-task-lists. */
+.om-doc li.task-list-item {
+  list-style: none;
+  margin-inline-start: -1.5em;
+}
+
+.om-doc li.task-list-item input[type='checkbox'] {
+  margin-inline-end: 0.5em;
+  vertical-align: 0.05em;
+  accent-color: var(--om-accent);
+}
+
+/* Definition lists (markdown-it-deflist). */
+.om-doc dt {
+  font-weight: 650;
+  margin-top: calc(0.6em * var(--om-density));
+}
+
+.om-doc dd {
+  margin-inline-start: 1.6em;
+  color: var(--om-text-muted);
+}
+
+/* ---- blockquote ---------------------------------------------------------- */
+
+.om-doc blockquote {
+  padding: 0.2em 0 0.2em 1.1em;
+  border-inline-start: 3px solid var(--om-border-strong);
+  color: var(--om-text-muted);
+}
+
+.om-doc blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+/* ---- tables -------------------------------------------------------------- */
+
+.om-doc table {
+  border-collapse: collapse;
+  display: block;
+  max-width: 100%;
+  /* Wide tables scroll horizontally rather than overflowing the reading column. */
+  overflow-x: auto;
+  font-size: 0.94em;
+}
+
+.om-doc th,
+.om-doc td {
+  padding: 0.42em 0.85em;
+  border: 1px solid var(--om-border);
+  text-align: start;
+  vertical-align: top;
+}
+
+.om-doc thead th {
+  background: var(--om-bg-subtle);
+  font-weight: 650;
+  /* Header text should not wrap mid-word for narrow CJK columns. */
+  white-space: nowrap;
+}
+
+.om-doc tbody tr:nth-child(even) {
+  background: color-mix(in srgb, var(--om-bg-subtle) 55%, transparent);
+}
+
+/* ---- footnotes ----------------------------------------------------------- */
+
+.om-doc .footnotes {
+  margin-top: calc(2.4em * var(--om-density));
+  padding-top: 1em;
+  border-top: 1px solid var(--om-border);
+  font-size: 0.9em;
+  color: var(--om-text-muted);
+}
+
+.om-doc .footnotes-sep {
+  display: none;
+}
+
+.om-doc .footnote-backref {
+  margin-inline-start: 0.35em;
+  border: none;
+}
+
+/* ---- inline code --------------------------------------------------------- */
+
+.om-doc code {
+  font-family: var(--om-font-mono);
+  font-size: 0.88em;
+  padding: 0.14em 0.36em;
+  border-radius: var(--om-radius-sm);
+  background: var(--om-code-bg);
+}
+
+/* ---- images -------------------------------------------------------------- */
+
+.om-doc img {
+  max-width: 100%;
+  height: auto;
+  /* imageScale lets a reader enlarge small diagrams without a zoom control. */
+  zoom: var(--om-image-scale);
+  border-radius: var(--om-radius-sm);
+  background: var(--om-bg-subtle);
+  /* Images that have not loaded yet must not collapse the layout. */
+  min-height: 1em;
+}
+
+.om-doc img[data-om-missing='true'] {
+  display: inline-block;
+  min-width: 200px;
+  min-height: 60px;
+  border: 1px dashed var(--om-error);
+  background: var(--om-error-soft);
+}
+
+/* ---- preserved source ---------------------------------------------------- */
+
+.om-preserved--comment {
+  display: none;
+}
+
+.om-preserved__pre {
+  font-family: var(--om-font-mono);
+  font-size: 0.8em;
+  color: var(--om-text-faint);
+  white-space: pre-wrap;
+  margin: 0;
+}
+
+/* ---- frontmatter --------------------------------------------------------- */
+
+.om-frontmatter {
+  display: none;
+}
+
+/* ---- code blocks --------------------------------------------------------- */
+
+.om-code {
+  position: relative;
+  margin: 0 0 calc(1.1em * var(--om-density));
+  border: 1px solid var(--om-border);
+  border-radius: var(--om-radius);
+  background: var(--om-code-bg);
+  overflow: hidden;
+}
+
+.om-code__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 0;
+}
+
+.om-code__toolbar:not(:empty) {
+  min-height: 26px;
+  padding: 0 10px;
+  border-bottom: 1px solid var(--om-border);
+  font-size: 11px;
+  color: var(--om-text-faint);
+}
+
+.om-code__pre {
+  margin: 0;
+  padding: 12px 14px;
+  overflow-x: auto;
+  font-size: 0.86em;
+  line-height: 1.6;
+}
+
+.om-code__pre[data-om-lang-label]::before {
+  content: attr(data-om-lang-label);
+  display: block;
+  margin-bottom: 6px;
+  font-family: var(--om-font-ui);
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--om-text-faint);
+}
+
+.om-code__code {
+  font-family: var(--om-font-mono);
+  background: none;
+  padding: 0;
+  display: block;
+  white-space: pre;
+}
+
+/* Shiki dual-theme output: one tokenisation carries both palettes, so switching theme
+   is a CSS variable change with no re-highlight and no flash. */
+.om-doc .shiki,
+.om-doc .shiki span {
+  color: var(--shiki-light);
+  background-color: var(--shiki-light-bg);
+}
+
+html[data-om-theme='dark'] .om-doc .shiki,
+html[data-om-theme='dark'] .om-doc .shiki span {
+  color: var(--shiki-dark);
+  background-color: var(--shiki-dark-bg);
+}
+
+.om-code__pre .shiki {
+  background: none !important;
+}
+
+.om-code__toolbar:empty {
+  display: none;
+}
+
+.om-code__copy {
+  font: inherit;
+  font-size: 11px;
+  padding: 1px 7px;
+  border: 1px solid var(--om-border);
+  border-radius: var(--om-radius-sm);
+  background: var(--om-bg-elevated);
+  color: var(--om-text-muted);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity var(--om-transition);
+}
+
+.om-code:hover .om-code__copy,
+.om-code__copy:focus-visible {
+  opacity: 1;
+}
+
+.om-code__copy:hover {
+  color: var(--om-text);
+  border-color: var(--om-border-strong);
+}
+
+/* ---- math ---------------------------------------------------------------- */
+
+.om-math {
+  /* Reserve vertical space so a display formula does not shove the page when it lands. */
+  display: inline-block;
+  max-width: 100%;
+  font-size: calc(1em * var(--om-math-scale));
+  vertical-align: baseline;
+}
+
+.om-math--display {
+  display: block;
+  text-align: center;
+  margin: calc(1em * var(--om-density)) 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.om-math mjx-container {
+  display: inline-block;
+  outline: none;
+}
+
+.om-math--display mjx-container {
+  display: block;
+}
+
+.om-math mjx-container[display='true'] {
+  /* Long derivations scroll rather than widen the reading column. */
+  max-width: 100%;
+}
+
+/* A failed formula keeps its LaTeX visible and marked — never blank, never gone. */
+.om-math--error {
+  display: block;
+  padding: 6px 10px;
+  border-inline-start: 3px solid var(--om-error);
+  background: var(--om-error-soft);
+  border-radius: var(--om-radius-sm);
+  text-align: start;
+}
+
+.om-math--error merror {
+  color: var(--om-error);
+  font-family: var(--om-font-mono);
+  font-size: 0.9em;
+}
+
+.om-math__source {
+  font-family: var(--om-font-mono);
+  font-size: 0.88em;
+  color: var(--om-error);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* Flash used when jumping to a diagnostic. */
+.om-flash {
+  animation: om-flash 1.2s ease-out;
+}
+
+@keyframes om-flash {
+  0% {
+    background: color-mix(in srgb, var(--om-accent) 30%, transparent);
+  }
+  100% {
+    background: transparent;
+  }
+}
+
+/* ---- mermaid ------------------------------------------------------------- */
+
+.om-mermaid {
+  margin: calc(1.2em * var(--om-density)) 0;
+  padding: 10px;
+  border: 1px solid var(--om-border);
+  border-radius: var(--om-radius);
+  background: var(--om-bg-subtle);
+  text-align: center;
+  overflow-x: auto;
+}
+
+.om-mermaid__canvas svg {
+  max-width: 100%;
+  height: auto;
+}
+
+.om-mermaid--error {
+  border-color: var(--om-error);
+  background: var(--om-error-soft);
+  text-align: start;
+}
+
+.om-mermaid__source {
+  margin: 0;
+  font-family: var(--om-font-mono);
+  font-size: 0.82em;
+  white-space: pre-wrap;
+  color: var(--om-error);
+}
+
+/* ---- print --------------------------------------------------------------- */
+
+@media print {
+  .om-toolbar,
+  .om-sidebar,
+  .om-statusbar,
+  .om-progress,
+  .om-toast,
+  .om-banner {
+    display: none !important;
+  }
+
+  .om-doc-scroll {
+    overflow: visible;
+  }
+
+  .om-doc {
+    max-width: none;
+    padding: 0;
+    font-size: 11pt;
+  }
+
+  /* Keep a heading with the content it introduces. */
+  .om-doc h1,
+  .om-doc h2,
+  .om-doc h3,
+  .om-doc h4 {
+    break-after: avoid;
+  }
+
+  .om-doc pre,
+  .om-doc table,
+  .om-doc .om-math--display,
+  .om-doc .om-mermaid {
+    break-inside: avoid;
+  }
+
+  .om-doc a {
+    border: none;
+    color: inherit;
+  }
+
+  @page {
+    size: A4;
+    margin: 18mm 16mm;
+  }
+}

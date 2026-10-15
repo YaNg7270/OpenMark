@@ -1,0 +1,46 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build output
+dist/
+dist-ssr/
+build/
+*.local
+
+# Vendored third-party runtime assets.
+# Generated deterministically by `scripts/prepare-mathjax.mjs` from node_modules on every
+# `predev`/`prebuild`, so committing ~20 MB of copied package files would only create a
+# second source of truth that can silently drift from package.json.
+public/mathjax/
+public/mathjax-fonts/
+
+# Project-local Rust toolchain, installed by the bootstrap steps in SESSION_HANDOFF.md.
+# Kept out of git: the toolchain is ~2 GB and machine-specific.
+.tools/
+
+# Rust / Tauri build artifacts
+src-tauri/target/
+src-tauri/gen/
+
+# Test artifacts
+# The stress corpus is generated on demand (~7 MB of pure volume):
+#   node scripts/gen-corpus-stress.mjs
+tests/corpus/stress/
+coverage/
+test-results/
+playwright-report/
+tests/e2e/**/__screenshots__/**/*.actual.png
+tests/e2e/**/__screenshots__/**/*.diff.png
+tests/desktop/.wdio-logs/
+
+# Editors
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Local scratch
+*.log
+.tmp/

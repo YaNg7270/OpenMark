@@ -1,0 +1,134 @@
+[
+  {
+    "id": "m179",
+    "tex": "f: A \\to B",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "arrow"
+  },
+  {
+    "id": "m180",
+    "tex": "f: A \\rightarrow B",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "arrow"
+  },
+  {
+    "id": "m181",
+    "tex": "f: A \\leftarrow B",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "arrow"
+  },
+  {
+    "id": "m182",
+    "tex": "f: A \\leftrightarrow B",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "arrow"
+  },
+  {
+    "id": "m183",
+    "tex": "f: A \\Rightarrow B",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "arrow"
+  },
+  {
+    "id": "m184",
+    "tex": "f: A \\Leftrightarrow B",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "arrow"
+  },
+  {
+    "id": "m185",
+    "tex": "f: A \\mapsto B",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "arrow"
+  },
+  {
+    "id": "m186",
+    "tex": "f: A \\hookrightarrow B",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "arrow"
+  },
+  {
+    "id": "m187",
+    "tex": "f: A \\longrightarrow B",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "arrow"
+  },
+  {
+    "id": "m188",
+    "tex": "f: A \\uparrow B",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "arrow"
+  },
+  {
+    "id": "m189",
+    "tex": "f: A \\downarrow B",
+    "display": false,
+    "delimiter": "dollar",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "arrow"
+  },
+  {
+    "id": "m190",
+    "tex": "a \\Rightarrow b \\Rightarrow c",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "arrow"
+  },
+  {
+    "id": "m191",
+    "tex": "x \\mapsto x^2 \\quad (x \\in \\mathbb{R})",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [
+      "ams"
+    ],
+    "expect": "render",
+    "reason": null,
+    "category": "arrow"
+  }
+]

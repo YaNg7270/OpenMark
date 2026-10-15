@@ -1,0 +1,62 @@
+[
+  {
+    "id": "m076",
+    "tex": "\\frac{d}{dx} x^2 = 2x",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "derivative"
+  },
+  {
+    "id": "m077",
+    "tex": "\\frac{d^2y}{dx^2}",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "derivative"
+  },
+  {
+    "id": "m078",
+    "tex": "\\frac{d^n}{dx^n} f(x)",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "derivative"
+  },
+  {
+    "id": "m082",
+    "tex": "\\dot{x} = f(x,t)",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "derivative"
+  },
+  {
+    "id": "m083",
+    "tex": "\\frac{\\delta S}{\\delta \\phi}",
+    "display": true,
+    "delimiter": "dollar-block",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "derivative"
+  },
+  {
+    "id": "m350",
+    "tex": "\\frac{d}{dx} e^{x} = e^{x}",
+    "display": true,
+    "delimiter": "math-fence",
+    "packages": [],
+    "expect": "render",
+    "reason": null,
+    "category": "derivative"
+  }
+]

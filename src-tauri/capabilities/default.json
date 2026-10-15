@@ -1,0 +1,37 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Permissions the OpenMark frontend needs: its own file commands are app-local, so this covers only the plugin surface (dialogs, fs, opener, store, window state, os, process).",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+
+    "dialog:allow-open",
+    "dialog:allow-save",
+
+    "fs:default",
+    "fs:allow-read-file",
+    "fs:allow-write-file",
+    "fs:allow-stat",
+    "fs:allow-exists",
+    "fs:allow-mkdir",
+    {
+      "identifier": "fs:scope",
+      "allow": ["**"]
+    },
+
+    {
+      "identifier": "opener:allow-open-url",
+      "allow": [
+        { "url": "https://*" },
+        { "url": "http://*" },
+        { "url": "mailto:*" }
+      ]
+    },
+
+    "store:default",
+    "window-state:default",
+    "os:default",
+    "process:default"
+  ]
+}

@@ -1,0 +1,32 @@
+allowBuilds:
+  # esbuild ships a platform binary via a postinstall step; Vite/Vitest need it.
+  esbuild: true
+  # WebdriverIO's driver packages download msedgedriver/geckodriver on install.
+  # msedgedriver is required by tauri-driver for real-desktop E2E on Windows.
+  edgedriver: true
+  geckodriver: true
+minimumReleaseAgeExclude:
+  - '@asamuzakjp/dom-selector@10.0.3'
+  - '@tauri-apps/api@2.12.4'
+  - '@tauri-apps/cli-darwin-arm64@2.12.3'
+  - '@tauri-apps/cli-darwin-x64@2.12.3'
+  - '@tauri-apps/cli-linux-arm-gnueabihf@2.12.3'
+  - '@tauri-apps/cli-linux-arm64-gnu@2.12.3'
+  - '@tauri-apps/cli-linux-arm64-musl@2.12.3'
+  - '@tauri-apps/cli-linux-riscv64-gnu@2.12.3'
+  - '@tauri-apps/cli-linux-x64-gnu@2.12.3'
+  - '@tauri-apps/cli-linux-x64-musl@2.12.3'
+  - '@tauri-apps/cli-win32-arm64-msvc@2.12.3'
+  - '@tauri-apps/cli-win32-ia32-msvc@2.12.3'
+  - '@tauri-apps/cli-win32-x64-msvc@2.12.3'
+  - '@tauri-apps/cli@2.12.3'
+  - '@tauri-apps/plugin-dialog@2.8.3'
+  - '@tauri-apps/plugin-fs@2.7.1'
+  - '@tauri-apps/plugin-opener@2.7.2'
+  - '@vitest/coverage-v8@5.0.5'
+  - '@vitest/mocker@5.0.5'
+  - '@vitest/spy@5.0.5'
+  - jsdom@30.1.3
+  - react-dom@19.3.1
+  - react@19.3.1
+  - vitest@5.0.5
