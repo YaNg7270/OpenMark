@@ -4,6 +4,7 @@
 //! the plugin set and the filesystem commands the UI calls over IPC.
 
 mod commands;
+mod export;
 
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
@@ -14,13 +15,6 @@ use tauri::{AppHandle, Emitter, Manager};
 ///
 /// Payload is a plain `string`: the absolute path of the file to open.
 pub const OPEN_FILE_EVENT: &str = "openmark://open-file";
-
-// PDF export: WebView2's silent print-to-PDF (`ICoreWebView2_7::PrintToPdf`) is
-// only reachable through COM interop via `Webview::with_webview`; Tauri's own
-// `WebviewWindow::print()` degrades to `window.print()` on Windows, which opens
-// the browser print dialog. The `pdf-export` feature in Cargo.toml pulls in
-// `webview2-com` + `windows` for that implementation; no command is exported
-// until it actually calls PrintToPdf.
 
 /// Files handed to us by Windows ("Open with", "Send to", a shortcut) that the
 /// webview could not possibly have been listening for yet: the process starts,
@@ -151,6 +145,8 @@ pub fn run() {
             commands::path_exists,
             commands::default_documents_dir,
             commands::app_version,
+            export::read_export_asset,
+            export::export_pdf,
             frontend_ready,
             show_main_window,
         ])

@@ -145,6 +145,13 @@ export function App() {
   // --- keyboard shortcuts --------------------------------------------------------
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
+      /*
+       * When the source editor has focus it owns the keyboard, including Ctrl+F for its own
+       * find/replace panel and Ctrl+Z for its own undo stack. Intercepting those here would
+       * make the editor feel broken, so the global handler stands down.
+       */
+      if (event.target instanceof Element && event.target.closest('[data-om-editor]')) return;
+
       const mod = event.ctrlKey || event.metaKey;
       if (mod && event.key.toLowerCase() === 'o') {
         event.preventDefault();

@@ -239,24 +239,20 @@
   position: relative;
 }
 
-.om-source__area {
+.om-source__host {
   flex: 1;
   min-height: 0;
-  width: 100%;
-  resize: none;
-  border: none;
-  outline: none;
-  padding: 14px 16px 24px;
-  background: transparent;
-  color: var(--om-text);
-  font-family: var(--om-font-mono);
-  font-size: 13px;
-  line-height: 1.65;
-  tab-size: 4;
-  white-space: pre;
-  overflow: auto;
+  overflow: hidden;
   /* The editor is genuinely text-selectable, unlike the app chrome. */
   user-select: text;
+}
+
+.om-source__host .cm-editor {
+  height: 100%;
+}
+
+.om-source__host .cm-editor.cm-focused {
+  outline: none;
 }
 
 .om-source__caret {

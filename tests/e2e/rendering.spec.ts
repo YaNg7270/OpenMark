@@ -371,12 +371,14 @@ test.describe('instant rendering', () => {
     await openFixture(page, 'source-crlf.md', '# 标题\r\n\r\n正文。\r\n');
     await page.getByTestId('mode-source').click();
 
-    const area = page.locator('.om-source__area');
-    await expect(area).toBeVisible();
-    // Focus places the caret at offset 0, so `End` lands at the end of the first line.
-    await area.focus();
-    await area.press('End');
-    await area.pressSequentially('追加');
+    // The editor is CodeMirror 6, so content is edited through its contenteditable surface.
+    const content = page.locator('.om-source__host .cm-content');
+    await expect(content).toBeVisible();
+    // Clicking places the caret; Ctrl+Home then End lands at the end of the first line.
+    await content.click();
+    await page.keyboard.press('Control+Home');
+    await page.keyboard.press('End');
+    await page.keyboard.type('追加');
 
     const source = await page.evaluate(() => window.__openmark__!.getSource());
     expect(source).toContain('追加');
@@ -412,5 +414,68 @@ test.describe('instant rendering', () => {
 
     await page.locator('.om-block__rendered').first().click();
     await expect(page.locator('.om-block__editor')).toHaveCount(0);
+  });
+});
+
+test.describe('source editor', () => {
+  const DOC = ['# 标题', '', '正文 with **bold** and `code`.', '', '```js', 'const x = 1;', '```', ''].join('\n');
+
+  test('supports undo and redo with the keyboard', async ({ page }) => {
+    await openFixture(page, 'editor-undo.md', DOC);
+    await page.getByTestId('mode-source').click();
+
+    const content = page.locator('.om-source__host .cm-content');
+    await content.click();
+    await page.keyboard.press('Control+Home');
+    await page.keyboard.type('XYZ');
+    expect(await page.evaluate(() => window.__openmark__!.getSource())).toContain('XYZ');
+
+    await page.keyboard.press('Control+z');
+    const undone = await page.evaluate(() => window.__openmark__!.getSource());
+    expect(undone.startsWith('XYZ'), 'undo did not remove the typed text').toBe(false);
+
+    await page.keyboard.press('Control+y');
+    expect(await page.evaluate(() => window.__openmark__!.getSource())).toContain('XYZ');
+  });
+
+  test('undo history does not cross into another document', async ({ page }) => {
+    /*
+     * Undoing past the start of a document must not resurrect the previous file's text,
+     * which would look to the user like their file had been overwritten.
+     */
+    await openFixture(page, 'editor-a.md', '# 文件 A\n\nA 的内容。\n');
+    await openFixture(page, 'editor-b.md', '# 文件 B\n\nB 的内容。\n');
+    await page.getByTestId('mode-source').click();
+
+    const content = page.locator('.om-source__host .cm-content');
+    await content.click();
+    await page.keyboard.press('Control+Home');
+    await page.keyboard.type('EDIT');
+
+    for (let i = 0; i < 10; i++) await page.keyboard.press('Control+z');
+    const source = await page.evaluate(() => window.__openmark__!.getSource());
+    expect(source).not.toContain('文件 A');
+    expect(source).toContain('文件 B');
+  });
+
+  test('highlights markdown syntax', async ({ page }) => {
+    await openFixture(page, 'editor-highlight.md', DOC);
+    await page.getByTestId('mode-source').click();
+
+    const content = page.locator('.om-source__host .cm-content');
+    await expect(content).toBeVisible();
+    // The markdown grammar must actually colourise, not merely render plain text.
+    const spans = await content.locator('span[class*="ͼ"], span[class*="cm-"]').count();
+    expect(spans, 'no syntax-highlighted spans were produced').toBeGreaterThan(3);
+
+    const headingColour = await content.locator('span').first().evaluate((el) => getComputedStyle(el).color);
+    expect(headingColour).not.toBe('rgb(0, 0, 0)');
+  });
+
+  test('line numbers are shown', async ({ page }) => {
+    await openFixture(page, 'editor-gutter.md', DOC);
+    await page.getByTestId('mode-source').click();
+    await expect(page.locator('.om-source__host .cm-gutters')).toBeVisible();
+    await expect(page.locator('.om-source__host .cm-lineNumbers')).toBeVisible();
   });
 });

@@ -43,20 +43,17 @@ serde_json = "1.0.154"
 thiserror = "2.0.21"
 chrono = { version = "0.4.45", default-features = false, features = ["clock", "std"] }
 
-# Reserved for the WebView2 PDF export path (`ICoreWebView2_7::PrintToPdf`,
-# reached through `Webview::with_webview`). Nothing references them yet — the
-# implementation lands with the export feature and is unlocked by the
-# `pdf-export` feature below.
+# The WebView2 COM interop behind PDF export
+# (`src-tauri/src/export.rs`, `ICoreWebView2_7::PrintToPdf` reached through
+# `Webview::with_webview`). Pinned to exactly the versions Tauri 2.12's own
+# WebView2 layer is built against: `with_webview` hands the closure those very
+# interface types, so a second copy of the crate would be a type error.
 [target.'cfg(windows)'.dependencies]
-webview2-com = { version = "0.39.1", optional = true }
-windows = { version = "0.62.2", optional = true, features = [
+webview2-com = "0.39.1"
+windows = { version = "0.62.2", features = [
   "Win32_Foundation",
   "Win32_System_Com",
 ] }
-
-[features]
-# Opt-in switch for the WebView2 COM interop used by PDF export.
-pdf-export = ["dep:webview2-com", "dep:windows"]
 
 [profile.release]
 # Thin LTO keeps startup snappy without the multi-minute full-LTO link.
