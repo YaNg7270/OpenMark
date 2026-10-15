@@ -14,12 +14,17 @@ Baseline 2026-10-16. Typora reference: **1.14.10** (Windows), from `local://rese
 
 **Honesty statement.** This table was re-audited against the tree on 2026-10-16, after the editing,
 multi-tab, export, packaging and test work landed. Every row was checked against the file named in its
-Evidence column; a row is not marked Implemented merely because a file exists. Where behaviour could not be
-confirmed end-to-end (relative image loading, split-pane scroll sync, clobber protection at the IPC boundary),
-the row says so rather than rounding up. The test layers are real: 427 Vitest tests in 8 files, 48 Playwright
-tests (`tests/e2e/rendering.spec.ts`, `tests/e2e/visual.spec.ts`) including 6 screenshot baselines, 6
-WebdriverIO tests driving the compiled binary (`tests/desktop/openmark.spec.ts`), and a 148-fixture corpus
-(`tests/corpus/`, validator `scripts/verify-corpus.mjs`).
+Evidence column; a row is not marked Implemented merely because a file exists.
+
+That audit found three rows where the code existed but did nothing, and they are now fixed and covered by
+tests: relative images never loaded because nothing called the resolver, New and Save As had no UI caller,
+and the write command ignored the caller's expected mtime so the documented clobber guard was not enforced.
+Split-pane scroll sync is still missing and is marked as such rather than rounded up.
+
+The test layers are real: 434 Vitest tests in 9 files, 52 Playwright tests (`tests/e2e/rendering.spec.ts`,
+`tests/e2e/visual.spec.ts`) including 7 screenshot baselines, 6 WebdriverIO tests driving the compiled
+binary (`tests/desktop/openmark.spec.ts`), and a 148-fixture corpus (`tests/corpus/`, validator
+`scripts/verify-corpus.mjs`).
 
 **Code-signing, MSI install testing, auto-update and an accessibility audit are not done.** They are the
 remaining Known Issues (`docs/KNOWN_ISSUES.md`), not hidden scope.
@@ -64,7 +69,7 @@ Counted from the rows below. Every row carries exactly one status, so the four c
 | `` ```mermaid `` diagrams | yes (opt-in; mermaid 11.13.0) | **Implemented** | `src/core/render/mermaid.ts` (`securityLevel:'strict'`, cache by theme+source); `src/core/render/typesetter.ts` fills placeholders; `tests/e2e/rendering.spec.ts` "renders a Mermaid diagram to SVG" |
 | `$…$`, `$$…$$`, `\(…\)`, `\[…\]`, `` ```math `` | yes | **Implemented** | `src/core/markdown/math-plugin.ts`, `MATH_FENCES` in `engine.ts`; `tests/unit/corpus.test.ts` math layer |
 | KaTeX as an alternative engine | no (MathJax only) | **Out-of-scope** | single-engine decision, RESEARCH §10 D4 |
-| Images with relative paths | yes (`typora-root-url`, drag&drop, resize) | **Implemented (core only)** | Health check + asset resolution exist (`fileService.resolveAssetStatus` → `resolve_asset_url` → `classifyRelativePath`) and emit `image-missing`/`image-path-escapes-root`. **Missing half:** the reading view never rewrites `<img src>` through the asset protocol — `fileService.resolveAssetUrl` is dead code and no component calls `convertFileSrc` — so a `![](./img/x.png)` reference does not actually load in `read`/`instant` (PRD R-A-8/R-D-3 not met). Resize is also absent. |
+| Images with relative paths | yes (`typora-root-url`, drag&drop, resize) | **Implemented** | `core/render/images.ts` rewrites every relative `<img src>` to an `asset://` URL after typesetting, so `![](./img/x.png)` loads in `read` and `instant`; absolute URLs and `data:` URIs are left alone. Health check in `core/diagnostics/assets.ts` emits `image-missing`/`image-path-escapes-root`, and an unresolvable image is marked `data-om-missing` so the reading surface shows a placeholder rather than a blank. Covered by `tests/unit/dom/images.test.ts`. Drag-and-drop resize is not implemented. |
 | Image alignment control | not supported (CSS `<center>` workaround) | **Planned** | PRD R-E-6 settings surface |
 | Footnotes (incl. multi-paragraph) | yes (MultiMarkdown) | **Implemented** | `engine.ts` `md.use(footnote)`; `tests/e2e/rendering.spec.ts` asserts the footnote block |
 | Definition lists | not documented as a supported extension | **Implemented** | `engine.ts` `md.use(deflist)` (OpenMark is a superset here) |
@@ -132,7 +137,7 @@ Counted from the rows below. Every row carries exactly one status, so the four c
 | Multi-tab editing | no | **Implemented** | `store.ts` tab actions + `src/components/TabBar.tsx`; dirty state survives a switch; `tests/e2e/rendering.spec.ts` tab group |
 | Autosave (interval configurable) | opt-in, default 5 min, drafts only on Win/Linux | **Implemented** | `App.tsx` autosave effect (debounced `editor.autoSaveDelayMs`, off by default, skips read-only/unpathed docs); `editor.autoSave`/`autoSaveDelayMs` in `settings.ts`; toggle in `SettingsPanel.tsx` |
 | External-change detection + conflict prompt | file tree auto-refresh only | **Implemented** | `store.checkExternalChange()` (2.5 s poll in `App.tsx`) sets `doc.externalChange` and the reload / keep-mine banner renders in `App.tsx` |
-| Clobber protection at the IPC boundary | n/a | **Planned — gap** | `fileService.writeFile` sends `expectedMtimeMs`, but `src-tauri/src/commands.rs::write_text_file_atomic` reads only `makeBackup`/`make_backup` and ignores the mtime, so the guard is not enforced (ARCHITECTURE §3 S5) |
+| Clobber protection at the IPC boundary | n/a | **Implemented** | `commands.rs::write_text_file_atomic` reads `expectedMtimeMs` from the request body and refuses the write when the file's mtime no longer matches, so a change made between two polls of the frontend's external-change watcher cannot be overwritten. A conflict raises the same banner as a detected external change, giving the reader the reload-or-overwrite choice (ARCHITECTURE §3 S5) |
 | Caret/scroll stability across mode switches and re-render | yes (scroll preserved source↔hybrid since 1.13) | **Planned** | PRD R-C-10; reading position is remembered per document, but panes unmount on a mode switch and each starts at its own top |
 | Never silently drop unrecognised extensions / comments / frontmatter / macros | **no** — extension renamed to `.md` on save (#6324); "export" reformats reference links | **Implemented** | Range-splice editing means only the touched block changes (`store.applyBlockEdit`, `tests/unit/markdown-blocks.test.ts`, `tests/unit/roundtrip.test.ts` byte-identical no-op); frontmatter/comments/raw-HTML preserved by `rules.ts`/`engine.ts`; CRLF preserved (`tests/e2e/rendering.spec.ts`) |
 | Authoritative source + non-destructive model | text edited in place | **Implemented** | `doc.source` is the only write target (`store.ts`, `fileService.ts`); `normalizeEol` never touches the file (ARCHITECTURE §3 S1/S2) |
@@ -150,7 +155,7 @@ Counted from the rows below. Every row carries exactly one status, so the four c
 | UTF-16 files | not documented | **Implemented** | `decodeText` handles UTF-16 LE/BE with BOM; `tests/unit/encoding.test.ts` |
 | LF / CRLF / CR detection and exact restoration | "Default Line Ending" preference; behaviour on a CRLF file is undocumented | **Implemented** | `decodeText` (`eol`, `mixedEol`) + `applyEol`/`encodeText`; `tests/unit/roundtrip.test.ts`; CRLF survives an instant and a source-mode edit in `tests/e2e/rendering.spec.ts` |
 | Invalid-UTF-8 reporting | not documented | **Implemented** | `decodeText` sets `lossy`; `core/diagnostics/encoding.ts` emits `invalid-utf8` (error) plus `bom-detected`/`mixed-line-endings`; corpus `107-`…/`113-`… and `tests/unit/encoding.test.ts` |
-| Missing images / broken relative paths | silently broken | **Implemented (core only)** | `core/diagnostics/assets.ts` emits `image-missing`/`image-path-escapes-root`; corpus `110-health-missing-images.md`, `111-health-broken-relative.md`. **Missing half:** no in-place placeholder marks the broken image in the reading surface (PRD R-A-8 "never a broken-image icon alone") — same root cause as the relative-image row above. |
+| Missing images / broken relative paths | silently broken | **Implemented** | `core/diagnostics/assets.ts` emits `image-missing`/`image-path-escapes-root` at parse time from both markdown syntax and raw HTML; corpus `110-health-missing-images.md`, `111-health-broken-relative.md`, `107-security-path-traversal-image.md`. The reading surface marks an unresolvable image with a visible placeholder and uses the path as alt text (PRD R-A-8) |
 | Atomic save | no documented guarantee; autosave drafts only | **Implemented** | `commands.rs::write_text_file_atomic` (same-dir temp → `write_all`/`sync_all` → `rename`) |
 | Rotating backups | no version control on Win/Linux | **Implemented** | `create_backup` + `prune_backups` (`.openmark-backups/`); wired via `safety.keepBackups` |
 | Crash recovery | "Recover Unsaved Drafts" (`{date}-{filename}.md`) | **Planned** | backups exist; the recovery UI is Planned (PRD R-C-13) |
@@ -236,4 +241,6 @@ Counted from the rows below. Every row carries exactly one status, so the four c
 
 **Deliberate gaps** (documented, not to be mistaken for completeness): code signing, MSI install testing,
 auto-update and an accessibility audit are not done (`docs/KNOWN_ISSUES.md`); relative-image loading in the
-reading surface and clobber protection at the IPC boundary are the two in-scope gaps called out above.
+reading surface was a gap when this table was first audited; both were fixed and are covered by tests, and
+the table has been corrected. Split-pane scroll sync (§1 row 130) is the one genuinely open item from that
+audit.
