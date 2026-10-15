@@ -948,3 +948,27 @@ html[data-om-focus='on'] .om-statusbar {
   background: var(--om-accent);
   border-color: var(--om-accent);
 }
+
+/* The read-only flag carries its own escape hatch, so the restriction is a default rather
+   than a dead end. */
+.om-statusbar__flag--readonly {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.om-statusbar__unlock {
+  font: inherit;
+  font-size: 11px;
+  padding: 0 6px;
+  border: 1px solid color-mix(in srgb, var(--om-warning) 55%, transparent);
+  border-radius: var(--om-radius-sm);
+  background: transparent;
+  color: var(--accent, var(--om-warning));
+  cursor: pointer;
+}
+
+.om-statusbar__unlock:hover {
+  background: var(--om-warning-soft);
+  color: var(--om-text);
+}

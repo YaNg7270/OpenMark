@@ -130,11 +130,35 @@ async function vendorMathjax() {
 async function vendorFont(packageName) {
   const src = await realpath(path.join(NODE_MODULES, '@mathjax', packageName));
   const dest = path.join(ROOT, 'public', 'mathjax-fonts', packageName);
-  return copyTree(
+  const result = await copyTree(
     src,
     dest,
     (name) => EXCLUDE_FILES[name] === true || !(FONT_ROOT_ALLOWLIST[name] === true || name === 'package.json' || name === 'LICENSE'),
   );
+
+  /*
+   * Both font packages declare Apache-2.0 but ship no licence file of their own, so the
+   * vendored copy would otherwise be redistributed with no attribution at all. Apache-2.0
+   * requires the licence to travel with the work, so one is written here from the canonical
+   * text; the note records where the declaration comes from.
+   */
+  if (!existsSync(path.join(dest, 'LICENSE'))) {
+    const canonical = path.join(ROOT, 'THIRD_PARTY_LICENSES', 'Apache-2.0.txt');
+    if (existsSync(canonical)) {
+      const note =
+        `${packageName} declares "license": "Apache-2.0" in its package.json but ships no ` +
+        `licence file. This is the canonical Apache-2.0 text, redistributed here to satisfy ` +
+        `section 4 of that licence.\n\n` +
+        `Upstream: https://www.npmjs.com/package/@mathjax/${packageName}\n` +
+        '----------------------------------------------------------------\n\n';
+      await writeFile(path.join(dest, 'LICENSE'), note + (await readFile(canonical, 'utf8')));
+      result.files += 1;
+      result.bytes += (await stat(path.join(dest, 'LICENSE'))).size;
+    } else {
+      console.warn(`[prepare-mathjax] ${canonical} is missing; ${packageName} ships unlicensed`);
+    }
+  }
+  return result;
 }
 
 async function main() {

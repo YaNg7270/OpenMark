@@ -9,6 +9,7 @@ import { t } from '@/i18n';
  */
 export function StatusBar() {
   const doc = useStore((s) => s.doc);
+  const unlockEditing = useStore((s) => s.unlockEditing);
   const stats = doc.render?.stats;
   const readOnly = doc.readOnly;
   const dirty = isDirty(doc);
@@ -19,8 +20,15 @@ export function StatusBar() {
         {doc.externalChange ? (
           <span className="om-statusbar__flag om-statusbar__flag--warn">{t('notice.externalChange')}</span>
         ) : readOnly ? (
-          <span className="om-statusbar__flag" title={doc.readOnlyReason ?? ''}>
+          <span className="om-statusbar__flag om-statusbar__flag--readonly" title={doc.readOnlyReason ?? ''}>
             {t('toolbar.readOnly')}
+            {/*
+              The restriction is a default, not a lock. Without this the mode would be a dead
+              end, and the only way to edit such a document would be to use another program.
+            */}
+            <button type="button" className="om-statusbar__unlock" data-om-testid="unlock-editing" onClick={unlockEditing}>
+              {t('status.allowEditing')}
+            </button>
           </span>
         ) : (
           <span className="om-statusbar__flag" data-dirty={dirty ? 'true' : undefined}>

@@ -181,7 +181,14 @@ async function fillMath(node: HTMLElement, expr: MathExpression, options: Typese
   node.title = outcome.error.message;
   options.onMathError?.(expr, outcome.error);
   options.onDiagnostic?.({
-    code: 'math-render-error',
+    /*
+     * An undefined macro gets its own code because it is the one maths failure with an
+     * obvious fix: the message names the macro and the remedy is almost always to correct a
+     * spelling or load the package that defines it. Everything else stays generic.
+     */
+    code: /undefined control sequence|undefined macro/i.test(outcome.error.message)
+      ? 'math-unknown-macro'
+      : 'math-render-error',
     severity: 'error',
     message: outcome.error.message,
     detail: `公式源码：${expr.tex}`,

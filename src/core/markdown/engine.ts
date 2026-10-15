@@ -400,6 +400,7 @@ function tryParseYaml(
  */
 function checkMathSource(om: RenderCollector, mathId: string, tex: string, range: DocRange): void {
   unsupportedEnvironmentDiagnostic(om, mathId, tex, range);
+  unbalancedEnvironmentDiagnostic(om, mathId, tex, range);
   let depth = 0;
   for (let i = 0; i < tex.length; i++) {
     const c = tex[i]!;
@@ -624,6 +625,142 @@ function blankFencedCode(source: string): string {
     if (fence !== null) lines[i] = ' '.repeat(line.length);
   }
   return lines.join('\n');
+}
+
+/**
+ * Reports an HTML comment that is opened and never closed.
+ *
+ * markdown-it treats the unterminated `<!--` as ordinary text, so the author's intent — to
+ * hide a section — silently fails and their notes render as prose. That is worth saying out
+ * loud, and it is cheap to detect.
+ */
+function unclosedCommentDiagnostics(source: string, om: RenderCollector, index: LineIndex): void {
+  const text = blankFencedCode(source);
+  const open = text.indexOf('<!--');
+  if (open < 0) return;
+  // A comment may only be closed by the next `-->`; anything after a second `<!--` belongs to
+  // that one, so only the last unmatched opener matters.
+  let cursor = open;
+  let unmatched = -1;
+  while (cursor >= 0) {
+    const close = text.indexOf('-->', cursor + 4);
+    if (close < 0) {
+      unmatched = cursor;
+      break;
+    }
+    cursor = text.indexOf('<!--', close + 3);
+  }
+  if (unmatched < 0) return;
+
+  om.report('unclosed-html-comment', 'warning', 'HTML comment is never closed', index.range(unmatched, unmatched + 4), {
+    source: 'markdown',
+    excerpt: excerpt(source.slice(unmatched, unmatched + 60)),
+    detail: '缺少 `-->`，因此注释内容会按普通文本渲染，而不是被隐藏。',
+  });
+}
+
+/**
+ * Reports footnote labels that are defined more than once.
+ *
+ * markdown-it keeps the last definition and drops the earlier one without a word, so a
+ * document can lose content that the author believes is present.
+ */
+function duplicateFootnoteDiagnostics(source: string, om: RenderCollector, index: LineIndex): void {
+  const text = blankFencedCode(source);
+  const pattern = /^ {0,3}\[\^([^\]]+)\]:/gm;
+  const seen = new Map<string, number>();
+  let match = pattern.exec(text);
+  let reported = 0;
+
+  while (match && reported < 3) {
+    const label = match[1]!;
+    const offset = match.index;
+    const previous = seen.get(label);
+    if (previous === undefined) {
+      seen.set(label, offset);
+    } else {
+      reported++;
+      om.report('duplicate-footnote', 'warning', `Footnote \`${label}\` is defined more than once`, index.range(offset, offset + match[0].length), {
+        source: 'markdown',
+        excerpt: excerpt(match[0] + source.slice(offset + match[0].length, offset + match[0].length + 40), 70),
+        detail: `同一标签在第 ${index.lineAt(previous)} 行已经定义过；渲染时只保留最后一次定义，前面的内容会丢失。`,
+      });
+    }
+    match = pattern.exec(text);
+  }
+}
+
+/**
+ * Reports a setext underline under a line far too long to be a heading.
+ *
+ * `text\n---` is a level-two heading by specification. When the "text" is a paragraph-length
+ * sentence, the author almost certainly meant a thematic break and typed one newline too few,
+ * and the result is a giant bold line instead of a separator.
+ */
+function setextAmbiguityDiagnostics(source: string, om: RenderCollector, index: LineIndex): void {
+  const lines = blankFencedCode(source).split('\n');
+  const original = source.split('\n');
+  let offset = 0;
+  let reported = 0;
+
+  for (let i = 1; i < lines.length && reported < 3; i++) {
+    const lineStart = offset;
+    offset += lines[i - 1]!.length + 1;
+
+    const underline = /^ {0,3}(=+|-+)\s*$/.exec(lines[i]!);
+    if (!underline) continue;
+    // `---` after a blank line is a thematic break, not an underline; only a directly
+    // adjacent line can become a heading.
+    if (lines[i - 1]!.trim() === '') continue;
+    if (original[i - 1]!.length <= 80) continue;
+
+    reported++;
+    om.report('setext-heading-ambiguity', 'info', 'Long line followed by an underline becomes a heading', index.range(lineStart, lineStart + lines[i - 1]!.length), {
+      source: 'markdown',
+      excerpt: excerpt(original[i - 1]!, 80),
+      detail: '该行与下一行的下划线会被解析为一个二级标题。若本意是分隔线，请在两者之间保留一个空行。',
+    });
+  }
+}
+
+/**
+ * Reports `\begin{env}` / `\end{env}` pairs that do not match inside one formula.
+ *
+ * Distinct from `math-unsupported-environment`, which flags an environment we do not
+ * recognise at all: this is about a *pair* being malformed, which MathJax reports only as a
+ * generic parse failure at render time.
+ */
+function unbalancedEnvironmentDiagnostic(om: RenderCollector, mathId: string, tex: string, range: DocRange): void {
+  const begins = new Map<string, number>();
+  const ends = new Map<string, number>();
+  for (const match of tex.matchAll(/\\begin\{([a-zA-Z*]+)\}/g)) {
+    begins.set(match[1]!, (begins.get(match[1]!) ?? 0) + 1);
+  }
+  for (const match of tex.matchAll(/\\end\{([a-zA-Z*]+)\}/g)) {
+    ends.set(match[1]!, (ends.get(match[1]!) ?? 0) + 1);
+  }
+
+  for (const [env, count] of begins) {
+    const closed = ends.get(env) ?? 0;
+    if (closed === count) continue;
+    om.report('math-unbalanced-environment', 'error', `Environment \`${env}\` is opened ${count} time(s) but closed ${closed}`, range, {
+      source: 'math',
+      mathId,
+      excerpt: excerpt(tex),
+      detail: '每个 `\\begin{...}` 都需要一个同名的 `\\end{...}`，否则整个公式无法渲染。',
+    });
+    return;
+  }
+  for (const [env, count] of ends) {
+    if ((begins.get(env) ?? 0) === count) continue;
+    om.report('math-unbalanced-environment', 'error', `Environment \`${env}\` is closed without being opened`, range, {
+      source: 'math',
+      mathId,
+      excerpt: excerpt(tex),
+      detail: '存在多余的 `\\end{...}`。',
+    });
+    return;
+  }
 }
 
 /**
@@ -1117,6 +1254,9 @@ export function parseDocument(source: string, engine: MarkdownItInstance, hooks:
   };
 
   structuralDiagnostics(normalized, collector, index);
+  unclosedCommentDiagnostics(normalized, collector, index);
+  duplicateFootnoteDiagnostics(normalized, collector, index);
+  setextAmbiguityDiagnostics(normalized, collector, index);
   inconsistentListMarkerDiagnostics(normalized, collector, index);
   unmatchedParenDelimiterDiagnostics(normalized, collector, index);
   suspiciousDollarDiagnostics(normalized, collector, index);

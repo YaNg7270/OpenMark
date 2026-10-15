@@ -5,6 +5,7 @@ import { createEngine, parseDocument } from '@/core/markdown/engine';
 import { rebuildMathSource } from '@/core/markdown/math-source';
 import { tryExportStandaloneHtml, tryExportPdf } from '@/core/export';
 import { assetDiagnostics, type AssetStatus } from '@/core/diagnostics/assets';
+import { encodingDiagnostics } from '@/core/diagnostics/encoding';
 import type { ImageReference } from '@/core/markdown/types';
 import { sanitizeHtml } from '@/core/markdown/sanitize';
 import * as files from '@/core/fs/fileService';
@@ -151,6 +152,15 @@ interface AppStore {
   saveAs: () => Promise<void>;
   checkExternalChange: () => Promise<void>;
   /**
+   * Lifts the safe read-only restriction on the current document.
+   *
+   * The restriction exists so that opening a file can never modify it. It is a default, not a
+   * lock: the reader may know the file is theirs and simply want to edit it, and a mode with
+   * no way out would be a dead end rather than a safety feature. Unlocking is always explicit
+   * and never automatic.
+   */
+  unlockEditing: () => void;
+  /**
    * Records how far the reader has got in the current document. Called on a debounce while
    * scrolling, so it must stay cheap.
    */
@@ -248,6 +258,9 @@ export const useStore = create<AppStore>((set, get) => ({
       const file = await files.readFile(path);
       const parsed = parse(file.text);
       const gate = evaluateReadOnly(file.text, file.size, parsed.diagnostics, get().settings);
+      // Encoding facts are known only here, not by the parser: it receives text, not bytes.
+      const encodingIssues = encodingDiagnostics(file);
+
       const nextSession = withRecentFile(get().session, { path: file.path, name: file.name });
       saveSession(nextSession);
 
@@ -267,7 +280,7 @@ export const useStore = create<AppStore>((set, get) => ({
           readOnly: gate.readOnly,
           readOnlyReason: gate.reason,
         },
-        diagnostics: parsed.diagnostics,
+        diagnostics: [...encodingIssues, ...parsed.diagnostics],
         ui: { ...s.ui, notice: null, activeHeadingId: null, progress: 0 },
       }));
 
@@ -509,6 +522,11 @@ export const useStore = create<AppStore>((set, get) => ({
     const next = forgetFile(get().session, path);
     saveSession(next);
     set({ session: next });
+  },
+
+  unlockEditing: () => {
+    set((s) => ({ doc: { ...s.doc, readOnly: false, readOnlyReason: null } }));
+    get().notify('info', '已解除只读限制，保存将写入源文件。');
   },
 
   setMode: (mode) => set((s) => ({ ui: { ...s.ui, mode } })),

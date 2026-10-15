@@ -63,7 +63,6 @@ export type DiagnosticCode =
   | 'math-unbalanced-braces'
   | 'math-unbalanced-environment'
   | 'math-unsupported-environment'
-  | 'math-display-in-inline'
   | 'math-suspicious-delimiter'
   // --- assets ---
   | 'image-missing'
@@ -77,10 +76,8 @@ export type DiagnosticCode =
   | 'mermaid-parse-error'
   // --- encoding ---
   | 'bom-detected'
-  | 'crlf-detected'
   | 'mixed-line-endings'
-  | 'invalid-utf8'
-  | 'non-utf8-encoding';
+  | 'invalid-utf8';
 
 export type MathDelimiter =
   | 'dollar' //        $...$
