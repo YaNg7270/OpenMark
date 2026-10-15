@@ -847,3 +847,97 @@ test.describe('table editor', () => {
     expect(source).toContain('5');
   });
 });
+
+test.describe('tabs', () => {
+  test('opens a second document in its own tab and switches between them', async ({ page }) => {
+    await page.addInitScript(() => {
+      window.__OPENMARK_TEST_FILES__ = {
+        'first.md': '# 第一篇\n\n甲的内容。\n',
+        'second.md': '# 第二篇\n\n乙的内容。\n',
+      };
+    });
+    await page.goto('/');
+    await page.waitForFunction(() => Boolean(window.__openmark__));
+
+    // A single document shows no tab bar: it would be chrome that says nothing.
+    await page.evaluate(() => window.__openmark__!.openPath('first.md'));
+    await expect(page.getByTestId('document-name')).toHaveText('first.md');
+    await expect(page.getByTestId('tab-bar')).toHaveCount(0);
+
+    await page.evaluate(() => window.__openmark__!.openPath('second.md'));
+    await expect(page.getByTestId('document-name')).toHaveText('second.md');
+    await expect(page.getByTestId('tab-bar')).toBeVisible();
+    await expect(page.locator('.om-tab')).toHaveCount(2);
+    await expect(page.locator('.om-doc')).toContainText('第二篇');
+
+    // Switching back must restore the first document, not just its name.
+    await page.locator('.om-tab').first().locator('.om-tab__label').click();
+    await expect(page.getByTestId('document-name')).toHaveText('first.md');
+    await expect(page.locator('.om-doc')).toContainText('第一篇');
+  });
+
+  test('keeps unsaved edits in a tab when the reader switches away and back', async ({ page }) => {
+    await page.addInitScript(() => {
+      window.__OPENMARK_TEST_FILES__ = {
+        'alpha.md': '# Alpha\n\n原始内容。\n',
+        'beta.md': '# Beta\n\n内容。\n',
+      };
+    });
+    await page.goto('/');
+    await page.waitForFunction(() => Boolean(window.__openmark__));
+
+    await page.evaluate(() => window.__openmark__!.openPath('alpha.md'));
+    await page.evaluate(() => window.__openmark__!.openPath('beta.md'));
+
+    // Edit the parked tab by switching to it first, then park it again.
+    await page.locator('.om-tab').first().locator('.om-tab__label').click();
+    await page.getByTestId('mode-instant').click();
+    const paragraph = page.locator('.om-block[data-om-kind="paragraph"]').first();
+    await paragraph.locator('.om-block__rendered').click();
+    await paragraph.locator('.om-block__editor').fill('已修改的内容。');
+    await paragraph.locator('.om-block__editor').blur();
+
+    // The dirty marker follows the tab, not the window.
+    await expect(page.locator('.om-tab').first().locator('.om-tab__dirty')).toBeVisible();
+
+    await page.locator('.om-tab').nth(1).locator('.om-tab__label').click();
+    await expect(page.getByTestId('document-name')).toHaveText('beta.md');
+
+    await page.locator('.om-tab').first().locator('.om-tab__label').click();
+    expect(await page.evaluate(() => window.__openmark__!.getSource())).toContain('已修改的内容。');
+  });
+
+  test('activating an already-open file brings its tab forward instead of duplicating it', async ({ page }) => {
+    await page.addInitScript(() => {
+      window.__OPENMARK_TEST_FILES__ = { 'one.md': '# 一\n\n内容。\n', 'two.md': '# 二\n\n内容。\n' };
+    });
+    await page.goto('/');
+    await page.waitForFunction(() => Boolean(window.__openmark__));
+
+    await page.evaluate(() => window.__openmark__!.openPath('one.md'));
+    await page.evaluate(() => window.__openmark__!.openPath('two.md'));
+    await expect(page.locator('.om-tab')).toHaveCount(2);
+
+    await page.evaluate(() => window.__openmark__!.openPath('one.md'));
+    await expect(page.locator('.om-tab')).toHaveCount(2);
+    await expect(page.getByTestId('document-name')).toHaveText('one.md');
+  });
+
+  test('closing a tab activates its neighbour and leaves an empty document for the last one', async ({ page }) => {
+    await page.addInitScript(() => {
+      window.__OPENMARK_TEST_FILES__ = { 'keep.md': '# 保留\n\n内容。\n', 'drop.md': '# 关闭\n\n内容。\n' };
+    });
+    await page.goto('/');
+    await page.waitForFunction(() => Boolean(window.__openmark__));
+
+    await page.evaluate(() => window.__openmark__!.openPath('keep.md'));
+    await page.evaluate(() => window.__openmark__!.openPath('drop.md'));
+    await expect(page.locator('.om-tab')).toHaveCount(2);
+
+    // Close the active tab; the remaining one must come forward.
+    await page.locator('.om-tab').nth(1).locator('.om-tab__close').click();
+    await expect(page.locator('.om-tab')).toHaveCount(0); // one tab left, so the bar hides
+    await expect(page.getByTestId('document-name')).toHaveText('keep.md');
+    await expect(page.locator('.om-doc')).toContainText('保留');
+  });
+});

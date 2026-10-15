@@ -47,8 +47,16 @@ export function InstantView({ doc, onNavigate }: InstantViewProps) {
   const [editingTable, setEditingTable] = useState<SourceBlock | null>(null);
   const [revision, setRevision] = useState(0);
 
+  const activeTabId = useStore((s) => s.activeTabId);
   const blocks = doc.render?.blocks ?? NO_BLOCKS;
-  const signature = `${doc.path ?? ''}:${doc.hash}`;
+  /*
+   * Covers the tab, the file identity and the content.
+   *
+   * The tab has to be in here: bringing a parked tab forward replaces the rendered DOM while
+   * the path and hash stay the same, so without it the typesetter would leave the previous
+   * document's output on screen and the reading position would not be restored.
+   */
+  const signature = `${activeTabId}:${doc.path ?? ''}:${doc.hash}`;
 
   useTypesetting(hostRef, scrollRef, doc.render, signature, revision);
   useReadingProgress(scrollRef, hostRef, { path: doc.path, hash: doc.hash }, signature);

@@ -95,8 +95,15 @@ export function useReadingProgress(
     const stored = useStore.getState().session.positions[target.path];
     if (!stored) return;
 
+    /*
+     * Restored instantly, against the element's `scroll-behavior: smooth`.
+     *
+     * Smooth scrolling is right for a link the reader just clicked and wrong for a restore:
+     * the document would visibly animate down from the top every time a file is reopened,
+     * which reads as a glitch and leaves the position mid-flight if anything interrupts it.
+     */
     if (stored.hash === target.hash && stored.scrollTop > 0) {
-      scroller.scrollTop = stored.scrollTop;
+      scroller.scrollTo({ top: stored.scrollTop, behavior: 'instant' });
       return;
     }
     if (stored.headingId) {
@@ -108,7 +115,7 @@ export function useReadingProgress(
     }
     if (stored.progress > 0) {
       const max = scroller.scrollHeight - scroller.clientHeight;
-      if (max > 0) scroller.scrollTop = stored.progress * max;
+      if (max > 0) scroller.scrollTo({ top: stored.progress * max, behavior: 'instant' });
     }
     // Runs on document identity only: re-running on every store update would fight the
     // reader's own scrolling.
@@ -122,16 +129,30 @@ export function useReadingProgress(
     let frame = 0;
     let saveTimer = 0;
 
-    const commit = () => {
-      const max = scroller.scrollHeight - scroller.clientHeight;
-      rememberPosition({
-        scrollTop: scroller.scrollTop,
-        progress: max <= 0 ? 1 : scroller.scrollTop / max,
+    /*
+     * The position is tracked continuously rather than read at save time.
+     *
+     * When the active document changes, React mutates the DOM *before* running this effect's
+     * cleanup. Reading `scroller.scrollTop` in the cleanup would therefore record the incoming
+     * document's offset under the outgoing document's path, destroying the position the reader
+     * had actually reached. The ref holds the last value observed while this document was on
+     * screen, which is the value worth keeping.
+     */
+    let lastScrollTop = scroller.scrollTop;
+
+    const commit = (scrollTop: number, max: number) => {
+      if (!target.path) return;
+      // The path is captured from this effect, not resolved at save time: see
+      // `rememberPosition` for why that distinction matters.
+      rememberPosition(target.path, {
+        scrollTop,
+        progress: max <= 0 ? 1 : scrollTop / max,
         headingId: useStore.getState().ui.activeHeadingId,
       });
     };
 
     const onScroll = () => {
+      lastScrollTop = scroller.scrollTop;
       if (frame === 0) {
         frame = requestAnimationFrame(() => {
           frame = 0;
@@ -140,7 +161,9 @@ export function useReadingProgress(
         });
       }
       window.clearTimeout(saveTimer);
-      saveTimer = window.setTimeout(commit, POSITION_SAVE_DELAY_MS);
+      saveTimer = window.setTimeout(() => {
+        commit(lastScrollTop, scroller.scrollHeight - scroller.clientHeight);
+      }, POSITION_SAVE_DELAY_MS);
     };
 
     scroller.addEventListener('scroll', onScroll, { passive: true });
@@ -152,7 +175,8 @@ export function useReadingProgress(
       scroller.removeEventListener('scroll', onScroll);
       window.clearTimeout(saveTimer);
       if (frame) cancelAnimationFrame(frame);
-      commit();
+      // Saves the last position observed for THIS document, not the one now on screen.
+      commit(lastScrollTop, scroller.scrollHeight - scroller.clientHeight);
     };
   }, [scrollRef, setProgress, rememberPosition, signature, target]);
 

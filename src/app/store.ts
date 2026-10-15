@@ -100,6 +100,18 @@ const EMPTY_DOC: DocumentState = {
 interface AppStore {
   settings: AppSettings;
   doc: DocumentState;
+  /**
+   * Tab ids in display order.
+   *
+   * The *inactive* documents live in `parkedTabs`; the active one is `doc`, which is what every
+   * component already reads. Switching tabs swaps `doc` and nothing downstream has to know that
+   * tabs exist.
+   */
+  tabOrder: string[];
+  activeTabId: string;
+  parkedTabs: Record<string, DocumentState>;
+  /** Each parked tab's diagnostics, restored when it is brought forward. */
+  parkedDiagnostics: Record<string, Diagnostic[]>;
   ui: UiState;
   /** Recently opened files and where the reader had got to in each. Persisted. */
   session: SessionState;
@@ -108,6 +120,12 @@ interface AppStore {
 
   openViaDialog: () => Promise<void>;
   openPath: (path: string) => Promise<void>;
+  /** Opens a path in its own tab, regardless of what the current tab holds. */
+  openPathInNewTab: (path: string) => Promise<void>;
+  /** Brings a tab to the front. A no-op for the tab already showing. */
+  activateTab: (id: string) => void;
+  /** Closes a tab, activating a neighbour when the closed one was on screen. */
+  closeTab: (id: string) => void;
   newDocument: () => void;
   setSource: (source: string) => void;
   /**
@@ -161,10 +179,18 @@ interface AppStore {
    */
   unlockEditing: () => void;
   /**
-   * Records how far the reader has got in the current document. Called on a debounce while
-   * scrolling, so it must stay cheap.
+   * Records how far the reader has got in a document. Called on a debounce while scrolling, so
+   * it must stay cheap.
+   *
+   * `path` is passed in rather than read from the current document. A tab switch mutates the
+   * DOM *before* running the outgoing view's effect cleanup, so resolving the path at save time
+   * would file the position under whichever document had just arrived — losing the reader's
+   * place in the one they left.
    */
-  rememberPosition: (position: { scrollTop: number; progress: number; headingId: string | null }) => void;
+  rememberPosition: (
+    path: string,
+    position: { scrollTop: number; progress: number; headingId: string | null },
+  ) => void;
   /** Removes a file from the recent list, along with its saved position. */
   forgetRecent: (path: string) => void;
 
@@ -228,13 +254,98 @@ function evaluateReadOnly(
   return { readOnly: false, reason: null };
 }
 
+/**
+ * Loads a path into the tab that is currently on screen.
+ *
+ * Shared by `openPath` and `openPathInNewTab`: the only difference between them is which tab is
+ * active by the time it runs, and duplicating this would mean two places to keep encoding
+ * detection, read-only gating and the asset check consistent.
+ */
+async function loadIntoActiveTab(
+  path: string,
+  set: (partial: Partial<AppStore> | ((state: AppStore) => Partial<AppStore>)) => void,
+  get: () => AppStore,
+): Promise<void> {
+  set((s) => ({ doc: { ...s.doc, loading: true, error: null } }));
+  try {
+    const file = await files.readFile(path);
+    const parsed = parse(file.text);
+    const gate = evaluateReadOnly(file.text, file.size, parsed.diagnostics, get().settings);
+    // Encoding facts are known only here, not by the parser: it receives text, not bytes.
+    const encodingIssues = encodingDiagnostics(file);
+
+    const nextSession = withRecentFile(get().session, { path: file.path, name: file.name });
+    saveSession(nextSession);
+
+    set((s) => ({
+      session: nextSession,
+      doc: {
+        ...EMPTY_DOC,
+        path: file.path,
+        name: file.name,
+        source: file.text,
+        savedSource: file.text,
+        hash: file.hash,
+        render: parsed,
+        encoding: { bom: file.bom, eol: file.eol },
+        mtimeMs: file.mtimeMs,
+        size: file.size,
+        readOnly: gate.readOnly,
+        readOnlyReason: gate.reason,
+      },
+      diagnostics: [...encodingIssues, ...parsed.diagnostics],
+      ui: { ...s.ui, notice: null, activeHeadingId: null, progress: 0 },
+    }));
+
+    void checkAssets(parsed.images, file.path).then((assetIssues) => {
+      // Ignore the result if another document has been opened in the meantime.
+      if (get().doc.path === file.path) get().addRuntimeDiagnostics(assetIssues);
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    set((s) => ({ doc: { ...s.doc, loading: false, error: message } }));
+  }
+}
+
 const initialSettings = loadSettings();
 applySettingsToDocument(initialSettings);
 const initialSession = loadSession();
 
+/**
+ * A tab that has never held anything is safe to reuse rather than opening another.
+ * An empty untitled buffer is not something a user expects to have to close.
+ */
+function isPristineTab(doc: DocumentState): boolean {
+  return doc.path === null && doc.source === '' && doc.savedSource === '';
+}
+
+/** The id of the tab already holding `path`, or null. */
+function findTabByPath(state: AppStore, path: string): string | null {
+  for (const id of state.tabOrder) {
+    const tabDoc = id === state.activeTabId ? state.doc : state.parkedTabs[id];
+    if (tabDoc?.path === path) return id;
+  }
+  return null;
+}
+
+/** Monotonic, so a closed tab's id is never handed to a later one. */
+let nextTabId = 1;
+function newTabId(): string {
+  return `tab-${++nextTabId}`;
+}
+
 export const useStore = create<AppStore>((set, get) => ({
   settings: initialSettings,
   doc: EMPTY_DOC,
+  /*
+   * Multi-tab support keeps the *active* document in `doc`, where every component already
+   * reads it, and parks the others here. Switching tabs swaps `doc`, so the entire reading and
+   * editing pipeline is untouched by tabs — nothing downstream has to know they exist.
+   */
+  tabOrder: ['tab-1'],
+  activeTabId: 'tab-1',
+  parkedTabs: {},
+  parkedDiagnostics: {},
   ui: {
     mode: 'read',
     sidebar: 'outline',
@@ -253,45 +364,101 @@ export const useStore = create<AppStore>((set, get) => ({
   },
 
   openPath: async (path) => {
-    set((s) => ({ doc: { ...s.doc, loading: true, error: null } }));
-    try {
-      const file = await files.readFile(path);
-      const parsed = parse(file.text);
-      const gate = evaluateReadOnly(file.text, file.size, parsed.diagnostics, get().settings);
-      // Encoding facts are known only here, not by the parser: it receives text, not bytes.
-      const encodingIssues = encodingDiagnostics(file);
-
-      const nextSession = withRecentFile(get().session, { path: file.path, name: file.name });
-      saveSession(nextSession);
-
-      set((s) => ({
-        session: nextSession,
-        doc: {
-          ...EMPTY_DOC,
-          path: file.path,
-          name: file.name,
-          source: file.text,
-          savedSource: file.text,
-          hash: file.hash,
-          render: parsed,
-          encoding: { bom: file.bom, eol: file.eol },
-          mtimeMs: file.mtimeMs,
-          size: file.size,
-          readOnly: gate.readOnly,
-          readOnlyReason: gate.reason,
-        },
-        diagnostics: [...encodingIssues, ...parsed.diagnostics],
-        ui: { ...s.ui, notice: null, activeHeadingId: null, progress: 0 },
-      }));
-
-      void checkAssets(parsed.images, file.path).then((assetIssues) => {
-        // Ignore the result if another document has been opened in the meantime.
-        if (get().doc.path === file.path) get().addRuntimeDiagnostics(assetIssues);
-      });
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      set((s) => ({ doc: { ...s.doc, loading: false, error: message } }));
+    const state = get();
+    // Opening a file that is already open brings its tab forward instead of duplicating it.
+    const existing = findTabByPath(state, path);
+    if (existing) {
+      get().activateTab(existing);
+      return;
     }
+    if (isPristineTab(state.doc)) {
+      await loadIntoActiveTab(path, set, get);
+      return;
+    }
+    await get().openPathInNewTab(path);
+  },
+
+  openPathInNewTab: async (path) => {
+    const state = get();
+    const existing = findTabByPath(state, path);
+    if (existing) {
+      get().activateTab(existing);
+      return;
+    }
+    const id = newTabId();
+    set((s) => ({
+      tabOrder: [...s.tabOrder, id],
+      activeTabId: id,
+      parkedTabs: { ...s.parkedTabs, [s.activeTabId]: s.doc },
+      parkedDiagnostics: { ...s.parkedDiagnostics, [s.activeTabId]: s.diagnostics },
+      doc: { ...EMPTY_DOC, loading: true },
+      diagnostics: [],
+    }));
+    await loadIntoActiveTab(path, set, get);
+  },
+
+  activateTab: (id) => {
+    const { activeTabId, parkedTabs, parkedDiagnostics, doc, diagnostics } = get();
+    if (id === activeTabId) return;
+    const target = parkedTabs[id];
+    if (!target) return;
+
+    const nextParked = { ...parkedTabs, [activeTabId]: doc };
+    delete nextParked[id];
+    const nextParkedDiagnostics = { ...parkedDiagnostics, [activeTabId]: diagnostics };
+    const restored = nextParkedDiagnostics[id] ?? [];
+    delete nextParkedDiagnostics[id];
+
+    set({
+      doc: target,
+      diagnostics: restored,
+      activeTabId: id,
+      parkedTabs: nextParked,
+      parkedDiagnostics: nextParkedDiagnostics,
+      ui: { ...get().ui, notice: null, activeHeadingId: null, progress: 0 },
+    });
+  },
+
+  closeTab: (id) => {
+    const { tabOrder, activeTabId, parkedTabs, parkedDiagnostics } = get();
+    const index = tabOrder.indexOf(id);
+    if (index < 0) return;
+    if (tabOrder.length <= 1) {
+      // Closing the last tab leaves an empty document rather than an empty window.
+      get().newDocument();
+      return;
+    }
+
+    const nextOrder = tabOrder.filter((tabId) => tabId !== id);
+    const nextParked = { ...parkedTabs };
+    const nextParkedDiagnostics = { ...parkedDiagnostics };
+    delete nextParked[id];
+    delete nextParkedDiagnostics[id];
+
+    if (id !== activeTabId) {
+      set({ tabOrder: nextOrder, parkedTabs: nextParked, parkedDiagnostics: nextParkedDiagnostics });
+      return;
+    }
+
+    // Prefer the tab to the left, which is what every editor does.
+    const neighbour = nextOrder[Math.max(0, index - 1)]!;
+    const target = nextParked[neighbour];
+    if (!target) {
+      set({ tabOrder: nextOrder, parkedTabs: nextParked, parkedDiagnostics: nextParkedDiagnostics });
+      return;
+    }
+    delete nextParked[neighbour];
+    const restored = nextParkedDiagnostics[neighbour] ?? [];
+    delete nextParkedDiagnostics[neighbour];
+    set({
+      tabOrder: nextOrder,
+      parkedTabs: nextParked,
+      parkedDiagnostics: nextParkedDiagnostics,
+      activeTabId: neighbour,
+      doc: target,
+      diagnostics: restored,
+      ui: { ...get().ui, notice: null, activeHeadingId: null, progress: 0 },
+    });
   },
 
   newDocument: () => {
@@ -506,12 +673,15 @@ export const useStore = create<AppStore>((set, get) => ({
     set((s) => ({ doc: { ...s.doc, externalChange: { mtimeMs: stat.mtimeMs } } }));
   },
 
-  rememberPosition: (position) => {
-    const { doc, session } = get();
-    if (!doc.path) return;
-    const next = withReadingPosition(session, doc.path, {
+  rememberPosition: (path, position) => {
+    const { doc, session, parkedTabs } = get();
+    if (!path) return;
+    // The hash comes from the document that owns the path, which may be a parked tab.
+    const owner = doc.path === path ? doc : Object.values(parkedTabs).find((tab) => tab.path === path);
+    if (!owner) return;
+    const next = withReadingPosition(session, path, {
       ...position,
-      hash: doc.hash,
+      hash: owner.hash,
       updatedAt: Date.now(),
     });
     saveSession(next);

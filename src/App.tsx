@@ -7,6 +7,7 @@ import { Sidebar } from './components/Sidebar';
 import { SourceEditor } from './components/SourceEditor';
 import { StatusBar } from './components/StatusBar';
 import { Toolbar, AVAILABLE_MODES } from './components/Toolbar';
+import { TabBar } from './components/TabBar';
 import { isDirty, useStore, type ViewMode } from './app/store';
 import { isDesktop, openExternal } from './core/fs/fileService';
 import { imageMarkdown, saveImageAsset } from './core/fs/assets';
@@ -341,6 +342,7 @@ export function App() {
           })
         }
       />
+      <TabBar />
       {body}
       <StatusBar />
 

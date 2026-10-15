@@ -31,11 +31,17 @@ export function DocumentView({ doc, onNavigate }: DocumentViewProps) {
   const showProgress = useStore((s) => s.settings.reading.showReadingProgress);
   const hasRecent = useStore((s) => s.session.recent.length > 0);
   const mode = useStore((s) => s.ui.mode);
+  const activeTabId = useStore((s) => s.activeTabId);
   const progress = useStore((s) => s.ui.progress);
 
-  // Covers file identity *and* content, so a re-parse re-typesets while an appearance
-  // change (same signature) does not.
-  const signature = `${doc.path ?? ''}:${doc.hash}`;
+  /*
+   * Covers the tab, the file identity and the content.
+   *
+   * The tab has to be in here: bringing a parked tab forward replaces the rendered DOM while
+   * the path and hash stay the same, so without it the typesetter would leave the previous
+   * document's output on screen and the reading position would not be restored.
+   */
+  const signature = `${activeTabId}:${doc.path ?? ''}:${doc.hash}`;
 
   useTypesetting(hostRef, scrollRef, doc.render, signature, 0);
   useReadingProgress(scrollRef, hostRef, { path: doc.path, hash: doc.hash }, signature);
