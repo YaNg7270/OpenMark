@@ -37,7 +37,7 @@ install-tested.
 | Desktop E2E | `pnpm test:desktop` | **6 passed** (release binary, WebView2 149) |
 | Rust unit | `cargo test --lib` | **3 passed** |
 | Unit + DOM tests | `vitest run` | **434 passed** (incl. 300 corpus-conformance assertions) |
-| Windows installers | `pnpm desktop:build` | NSIS 9,523,804 B, MSI 10,383,360 B; portable zip 10,061,105 B via `desktop:build:portable` |
+| Windows installers | `pnpm desktop:build` | NSIS 9,523,529 B, MSI 10,383,360 B; portable zip 10,061,228 B via `desktop:build:portable` |
 | Desktop binary | direct launch | debug build boots and stays alive; release build verified |
 | Corpus validation | `node scripts/verify-corpus.mjs` | OK — manifest matches disk |
 | Corpus diagnostics | `vitest run corpus.test.ts` | **148/148 fixtures emit every declared diagnostic** |
