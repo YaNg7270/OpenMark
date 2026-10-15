@@ -16,9 +16,11 @@ import { bracketMatching, HighlightStyle, indentOnInput, syntaxHighlighting } fr
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
 import { languages } from '@codemirror/language-data';
 import { highlightSelectionMatches, search, searchKeymap } from '@codemirror/search';
-import { tags as t } from '@lezer/highlight';
+import { tags } from '@lezer/highlight';
 import { normalizeEol } from '@/core/fs/encoding';
-import type { DocumentState } from '@/app/store';
+import { useStore, type DocumentState } from '@/app/store';
+import { imageMarkdown, saveImageAsset } from '@/core/fs/assets';
+import { t } from '@/i18n';
 
 /**
  * Markdown source editor built on CodeMirror 6.
@@ -104,30 +106,101 @@ const theme = EditorView.theme({
  * light/dark theme without a second palette to maintain.
  */
 const highlightStyle = HighlightStyle.define([
-  { tag: t.heading, color: 'var(--om-accent)', fontWeight: '650' },
-  { tag: t.strong, fontWeight: '700' },
-  { tag: t.emphasis, fontStyle: 'italic' },
-  { tag: t.strikethrough, textDecoration: 'line-through' },
-  { tag: t.link, color: 'var(--om-accent)' },
-  { tag: t.url, color: 'var(--om-text-muted)', textDecoration: 'underline' },
-  { tag: t.monospace, color: 'var(--om-success)' },
-  { tag: t.quote, color: 'var(--om-text-muted)', fontStyle: 'italic' },
-  { tag: t.list, color: 'var(--om-accent)' },
-  { tag: t.contentSeparator, color: 'var(--om-border-strong)' },
-  { tag: t.comment, color: 'var(--om-text-faint)' },
-  { tag: t.processingInstruction, color: 'var(--om-text-faint)' },
-  { tag: t.keyword, color: 'var(--om-error)' },
-  { tag: t.string, color: 'var(--om-success)' },
-  { tag: t.number, color: 'var(--om-warning)' },
-  { tag: t.typeName, color: 'var(--om-accent)' },
-  { tag: t.invalid, color: 'var(--om-error)' },
+  { tag: tags.heading, color: 'var(--om-accent)', fontWeight: '650' },
+  { tag: tags.strong, fontWeight: '700' },
+  { tag: tags.emphasis, fontStyle: 'italic' },
+  { tag: tags.strikethrough, textDecoration: 'line-through' },
+  { tag: tags.link, color: 'var(--om-accent)' },
+  { tag: tags.url, color: 'var(--om-text-muted)', textDecoration: 'underline' },
+  { tag: tags.monospace, color: 'var(--om-success)' },
+  { tag: tags.quote, color: 'var(--om-text-muted)', fontStyle: 'italic' },
+  { tag: tags.list, color: 'var(--om-accent)' },
+  { tag: tags.contentSeparator, color: 'var(--om-border-strong)' },
+  { tag: tags.comment, color: 'var(--om-text-faint)' },
+  { tag: tags.processingInstruction, color: 'var(--om-text-faint)' },
+  { tag: tags.keyword, color: 'var(--om-error)' },
+  { tag: tags.string, color: 'var(--om-success)' },
+  { tag: tags.number, color: 'var(--om-warning)' },
+  { tag: tags.typeName, color: 'var(--om-accent)' },
+  { tag: tags.invalid, color: 'var(--om-error)' },
 ]);
+
+/**
+ * Keeps the caret line at a fixed height in the viewport.
+ *
+ * This is what "typewriter mode" means for an editor: the text moves under a stationary
+ * insertion point instead of the insertion point travelling down the screen. Only typing and
+ * deliberate caret movement recentre — recentring on a scroll would make the document
+ * impossible to read ahead in, which is the opposite of useful.
+ *
+ * The adjustment nudges `scrollTop` by the measured distance rather than calling
+ * `scrollIntoView`, so it never fights CodeMirror's own scrolling and never animates.
+ */
+function centreCaret(view: EditorView): void {
+  const head = view.state.selection.main.head;
+  const caret = view.coordsAtPos(head);
+  if (!caret) return;
+
+  const scroller = view.scrollDOM;
+  const bounds = scroller.getBoundingClientRect();
+  // 40% from the top leaves more of the paragraph being written visible than the one just
+  // finished.
+  const target = bounds.top + bounds.height * 0.4;
+  const delta = caret.top - target;
+  if (Math.abs(delta) > 2) scroller.scrollTop += delta;
+}
+
+/**
+ * Returns the first image on a clipboard or drag payload, if any.
+ *
+ * Copying a picture out of a browser or a screenshot tool puts the bytes in `items` rather
+ * than `files`, so both are checked; a plain file drag only populates `files`.
+ */
+function findImage(data: DataTransfer | null): File | null {
+  if (!data) return null;
+  for (const item of data.items) {
+    if (item.kind !== 'file' || !item.type.startsWith('image/')) continue;
+    const file = item.getAsFile();
+    if (file) return file;
+  }
+  for (const file of data.files) {
+    if (file.type.startsWith('image/')) return file;
+  }
+  return null;
+}
 
 interface SourceEditorProps {
   doc: DocumentState;
   /** Receives LF-normalised text; the store restores the document's line-ending style. */
   onChange: (normalizedSource: string) => void;
   readOnly: boolean;
+}
+
+/** Saves an image next to the document and inserts the markdown that references it. */
+async function insertImageAtCaret(
+  view: EditorView,
+  file: File,
+  documentPath: string | null,
+  at?: number,
+): Promise<void> {
+  if (!documentPath) {
+    useStore.getState().notify('warning', t('image.saveFirst'));
+    return;
+  }
+  const notify = useStore.getState().notify;
+  try {
+    const asset = await saveImageAsset(documentPath, file);
+    const position = at ?? view.state.selection.main.head;
+    const insertion = imageMarkdown(asset);
+    view.dispatch({
+      changes: { from: position, insert: insertion },
+      selection: { anchor: position + insertion.length },
+      scrollIntoView: true,
+    });
+    notify(asset.absolutePath ? 'info' : 'warning', t('image.inserted', { path: asset.relativePath }));
+  } catch (error) {
+    notify('error', `${t('image.failed')}: ${error instanceof Error ? error.message : String(error)}`);
+  }
 }
 
 export function SourceEditor({ doc, onChange, readOnly }: SourceEditorProps) {
@@ -138,6 +211,10 @@ export function SourceEditor({ doc, onChange, readOnly }: SourceEditorProps) {
   // Callbacks are read through refs so a new `onChange` identity does not rebuild the view.
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
+
+  // Read through a ref so the paste handler installed once always sees the current document.
+  const documentPathRef = useRef(doc.path);
+  documentPathRef.current = doc.path;
 
   const readOnlyCompartment = useRef(new Compartment());
   const wrapCompartment = useRef(new Compartment());
@@ -172,10 +249,37 @@ export function SourceEditor({ doc, onChange, readOnly }: SourceEditorProps) {
           keymap.of([...defaultKeymap, ...historyKeymap, ...searchKeymap, indentWithTab]),
           markdown({ base: markdownLanguage, codeLanguages: languages, addKeymap: true }),
           syntaxHighlighting(highlightStyle),
+          EditorView.domEventHandlers({
+            paste: (event, view) => {
+              const file = findImage(event.clipboardData);
+              if (!file) return false;
+              // Handled here rather than by the browser, which would do nothing with it.
+              event.preventDefault();
+              void insertImageAtCaret(view, file, documentPathRef.current);
+              return true;
+            },
+            drop: (event, view) => {
+              const file = findImage(event.dataTransfer);
+              if (!file) return false;
+              event.preventDefault();
+              const position = view.posAtCoords({ x: event.clientX, y: event.clientY });
+              void insertImageAtCaret(view, file, documentPathRef.current, position ?? undefined);
+              return true;
+            },
+          }),
           wrapCompartment.current.of(EditorView.lineWrapping),
           readOnlyCompartment.current.of(EditorState.readOnly.of(readOnly)),
           theme,
           EditorView.updateListener.of((update) => {
+            // Read the setting at update time rather than reconfiguring the extension: a
+            // compartment adds a rebuild for something that is one boolean per keystroke.
+            if (
+              update.docChanged &&
+              useStore.getState().settings.reading.typewriterMode &&
+              !update.view.composing
+            ) {
+              centreCaret(update.view);
+            }
             if (update.docChanged) {
               // Only the edit is forwarded; the view keeps ownership of its own state.
               onChangeRef.current(update.state.doc.toString());

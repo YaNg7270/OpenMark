@@ -50,6 +50,7 @@ export function Toolbar({ onOpen, onSave, onToggleTheme, onExportHtml, onExportP
   const sidebar = useStore((s) => s.ui.sidebar);
   const theme = useStore((s) => s.settings.reading.theme);
   const focusMode = useStore((s) => s.settings.reading.focusMode);
+  const typewriterMode = useStore((s) => s.settings.reading.typewriterMode);
   const doc = useStore((s) => s.doc);
   const diagnostics = useStore((s) => s.diagnostics);
   const setMode = useStore((s) => s.setMode);
@@ -139,6 +140,21 @@ export function Toolbar({ onOpen, onSave, onToggleTheme, onExportHtml, onExportP
           onClick={() => updateSettings((draft) => ({ ...draft, reading: { ...draft.reading, focusMode: !focusMode } }))}
         >
           ◱
+        </button>
+        <button
+          type="button"
+          className="om-icon-button"
+          title={t('toolbar.typewriter')}
+          data-active={typewriterMode ? 'true' : undefined}
+          data-om-testid="typewriter-toggle"
+          onClick={() =>
+            updateSettings((draft) => ({
+              ...draft,
+              reading: { ...draft.reading, typewriterMode: !typewriterMode },
+            }))
+          }
+        >
+          ⇕
         </button>
         <button
           type="button"

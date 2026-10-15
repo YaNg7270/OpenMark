@@ -685,3 +685,86 @@ test.describe('export', () => {
     await expect(page.getByTestId('export-pdf')).toBeDisabled();
   });
 });
+
+test.describe('writing modes and images', () => {
+  test('typewriter mode toggles and keeps the caret line in view', async ({ page }) => {
+    // A document long enough that the caret would otherwise travel off-screen.
+    const long = Array.from({ length: 120 }, (_, i) => `第 ${i + 1} 行内容。`).join('\n\n');
+    await openFixture(page, 'typewriter.md', `${long}\n`);
+
+    await expect(page.getByTestId('typewriter-toggle')).not.toHaveAttribute('data-active', 'true');
+    await page.getByTestId('mode-source').click();
+
+    const content = page.locator('.om-source__host .cm-content');
+    await content.click();
+
+    await page.getByTestId('typewriter-toggle').click();
+    await expect(page.getByTestId('typewriter-toggle')).toHaveAttribute('data-active', 'true');
+
+    // The toggle took focus, so the editor has to be re-focused before typing reaches it.
+    await content.click();
+
+    // Typing at the end of a long document must pull the caret back toward the middle of the
+    // view instead of letting it walk down to the bottom edge.
+    await page.keyboard.press('Control+End');
+    await page.keyboard.type('追加一行。');
+    const ratio = await page.locator('.om-source__host .cm-scroller').evaluate((el) => {
+      const caret = el.querySelector('.cm-cursor') as HTMLElement | null;
+      if (!caret) return -1;
+      const caretBox = caret.getBoundingClientRect();
+      const box = el.getBoundingClientRect();
+      return (caretBox.top - box.top) / box.height;
+    });
+    expect(ratio, 'caret was not kept in the viewport').toBeGreaterThan(0);
+    expect(ratio, `caret sat at ${(ratio * 100).toFixed(0)}% of the viewport`).toBeLessThan(0.75);
+  });
+
+  test('dropping an image inserts a reference instead of opening it as a document', async ({ page }) => {
+    await openFixture(page, 'drop-target.md', '# 目标文档\n\n正文。\n');
+
+    // A synthetic drop carrying a real PNG, built in the page so the handler sees a genuine
+    // DataTransfer rather than a mock.
+    await page.evaluate(async () => {
+      const png = Uint8Array.from(
+        atob('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=='),
+        (c) => c.charCodeAt(0),
+      );
+      const file = new File([png], 'dropped.png', { type: 'image/png' });
+      const data = new DataTransfer();
+      data.items.add(file);
+      const shell = document.querySelector('.om-shell')!;
+      shell.dispatchEvent(new DragEvent('drop', { dataTransfer: data, bubbles: true, cancelable: true }));
+    });
+
+    // The document name must be unchanged: an image is content, not something to open.
+    await expect(page.getByTestId('document-name')).toHaveText('drop-target.md');
+    await expect
+      .poll(async () => page.evaluate(() => window.__openmark__!.getSource()), { timeout: 5_000 })
+      .toContain('![](');
+  });
+
+  test('pasting an image into the source editor inserts a reference', async ({ page }) => {
+    await openFixture(page, 'paste-target.md', '# 粘贴\n\n');
+    await page.getByTestId('mode-source').click();
+
+    const content = page.locator('.om-source__host .cm-content');
+    await content.click();
+    await page.keyboard.press('Control+End');
+
+    await page.evaluate(() => {
+      const png = Uint8Array.from(
+        atob('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=='),
+        (c) => c.charCodeAt(0),
+      );
+      const file = new File([png], 'clip.png', { type: 'image/png' });
+      const data = new DataTransfer();
+      data.items.add(file);
+      const target = document.querySelector('.om-source__host .cm-content')!;
+      target.dispatchEvent(new ClipboardEvent('paste', { clipboardData: data, bubbles: true, cancelable: true }));
+    });
+
+    await expect
+      .poll(async () => page.evaluate(() => window.__openmark__!.getSource()), { timeout: 5_000 })
+      .toContain('data:image/png;base64,');
+  });
+});

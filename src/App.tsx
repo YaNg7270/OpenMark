@@ -9,6 +9,7 @@ import { StatusBar } from './components/StatusBar';
 import { Toolbar, AVAILABLE_MODES } from './components/Toolbar';
 import { isDirty, useStore, type ViewMode } from './app/store';
 import { isDesktop, openExternal } from './core/fs/fileService';
+import { imageMarkdown, saveImageAsset } from './core/fs/assets';
 import { setLanguage, t } from '@/i18n';
 import type { Diagnostic, OutlineEntry } from '@/core/markdown/types';
 
@@ -210,10 +211,45 @@ export function App() {
   // --- drag and drop -------------------------------------------------------------
   const onDrop = useCallback(
     async (event: React.DragEvent) => {
+      /*
+       * The `defaultPrevented` check must come BEFORE this handler calls `preventDefault()`.
+       * Calling it first sets the flag itself, so the guard below would always fire and the
+       * handler would silently do nothing for every drop — which is exactly what happened
+       * until a test caught it.
+       *
+       * An editor that already handled the drop (an image pasted into CodeMirror, say) marks
+       * the event, and the window must not then open it as a document on top of that.
+       */
+      if (event.defaultPrevented) return;
       event.preventDefault();
       setDragging(false);
+
       const file = event.dataTransfer.files[0];
       if (!file) return;
+
+      /*
+       * An image dropped anywhere else in the window is still an insertion, not a document to
+       * open. There is no caret here, so it goes at the end of the document — the visible end
+       * is less surprising than an invisible position the reader cannot predict.
+       */
+      if (file.type.startsWith('image/')) {
+        const current = useStore.getState().doc;
+        if (!current.path) {
+          notify('warning', t('image.saveFirst'));
+          return;
+        }
+        try {
+          const asset = await saveImageAsset(current.path, file);
+          const markdown = imageMarkdown(asset);
+          const base = current.source.endsWith('\n') ? current.source : `${current.source}\n`;
+          setSource(`${base}\n${markdown}\n`);
+          notify('info', t('image.inserted', { path: asset.relativePath }));
+        } catch (error) {
+          notify('error', `${t('image.failed')}: ${error instanceof Error ? error.message : String(error)}`);
+        }
+        return;
+      }
+
       // The webview cannot read a dropped file's path for security reasons; only the
       // desktop shell can, and it reports it through `path` on the Tauri file object.
       const path = (file as File & { path?: string }).path;

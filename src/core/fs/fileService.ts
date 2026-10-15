@@ -205,6 +205,39 @@ export async function writeFile(
   });
 }
 
+/**
+ * Writes raw bytes, without any text handling.
+ *
+ * `writeFile` exists to preserve a document's BOM and line-ending style, and applying that to
+ * an image would rewrite every `\r\n` byte pair inside it — corrupting the file. Binary
+ * payloads therefore take this path, which hands the bytes to the same atomic-replace command
+ * unchanged.
+ *
+ * Outside the desktop shell the bytes become a download, matching `writeFile`.
+ */
+export async function writeBinaryFile(path: string, bytes: Uint8Array): Promise<WriteResult> {
+  const invoke = tauriInvoke();
+  if (!invoke) {
+    const blob = new Blob([bytes as BlobPart], { type: 'application/octet-stream' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = baseName(path);
+    anchor.rel = 'noopener';
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 0);
+    return { path, size: bytes.length, mtimeMs: Date.now(), backupPath: null };
+  }
+  return invoke<WriteResult>('write_text_file_atomic', {
+    path,
+    bytes: Array.from(bytes),
+    makeBackup: false,
+    expectedMtimeMs: null,
+  });
+}
+
 export async function statFile(path: string): Promise<FileStat | null> {
   const invoke = tauriInvoke();
   if (!invoke) return null;

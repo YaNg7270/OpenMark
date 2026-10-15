@@ -3,6 +3,8 @@ import type { SourceBlock } from '@/core/markdown/types';
 import { useStore, type DocumentState } from '@/app/store';
 import { useReadingProgress, useTypesetting } from './useTypesetting';
 import { MathTools } from './MathTools';
+import { imageMarkdown, saveImageAsset } from '@/core/fs/assets';
+import { t } from '@/i18n';
 
 /**
  * Instant-rendering view — the Typora-style mode.
@@ -90,6 +92,7 @@ export function InstantView({ doc, onNavigate }: InstantViewProps) {
               block={block}
               active={editingIndex === block.index}
               readOnly={doc.readOnly}
+              documentPath={doc.path}
               onActivate={() => {
                 if (doc.readOnly) return;
                 setEditingIndex(block.index);
@@ -108,6 +111,7 @@ export function InstantView({ doc, onNavigate }: InstantViewProps) {
 
 interface BlockProps {
   block: SourceBlock;
+  documentPath: string | null;
   active: boolean;
   readOnly: boolean;
   onActivate: () => void;
@@ -116,7 +120,7 @@ interface BlockProps {
   onNavigate: (href: string) => void;
 }
 
-function Block({ block, active, readOnly, onActivate, onCommit, onExit, onNavigate }: BlockProps) {
+function Block({ block, active, readOnly, documentPath, onActivate, onCommit, onExit, onNavigate }: BlockProps) {
   const timer = useRef(0);
   const latest = useRef(block.source);
 
@@ -174,6 +178,37 @@ function Block({ block, active, readOnly, onActivate, onCommit, onExit, onNaviga
             timer.current = window.setTimeout(flush, COMMIT_DELAY_MS);
           }}
           onBlur={flush}
+          onPaste={(event) => {
+            /*
+             * A pasted image cannot become part of a markdown block, so it is stored beside the
+             * document and the reference is inserted as text. Nothing is written to disk until
+             * the paste is committed like any other edit.
+             */
+            const file = Array.from(event.clipboardData.items)
+              .find((item) => item.kind === 'file' && item.type.startsWith('image/'))
+              ?.getAsFile();
+            if (!file || !documentPath) return;
+            event.preventDefault();
+
+            const area = event.currentTarget;
+            void saveImageAsset(documentPath, file)
+              .then((asset) => {
+                const at = area.selectionStart;
+                const text = imageMarkdown(asset);
+                const next = `${area.value.slice(0, at)}${text}${area.value.slice(area.selectionEnd)}`;
+                latest.current = next;
+                area.value = next;
+                area.selectionStart = at + text.length;
+                area.selectionEnd = at + text.length;
+                flush();
+                useStore.getState().notify('info', t('image.inserted', { path: asset.relativePath }));
+              })
+              .catch((error: unknown) => {
+                useStore
+                  .getState()
+                  .notify('error', `${t('image.failed')}: ${error instanceof Error ? error.message : String(error)}`);
+              });
+          }}
           onKeyDown={(event) => {
             if (event.key === 'Escape') {
               event.preventDefault();
