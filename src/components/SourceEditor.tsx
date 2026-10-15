@@ -249,6 +249,17 @@ export function SourceEditor({ doc, onChange, readOnly }: SourceEditorProps) {
           keymap.of([...defaultKeymap, ...historyKeymap, ...searchKeymap, indentWithTab]),
           markdown({ base: markdownLanguage, codeLanguages: languages, addKeymap: true }),
           syntaxHighlighting(highlightStyle),
+          /*
+           * CodeMirror's content element is a textbox to assistive technology, so it needs a
+           * name — an unnamed textbox is announced as "edit, blank" — and it needs to be an
+           * explicit tab stop. Without `tabindex`, axe reports the surrounding `.cm-scroller`
+           * as a scrollable region with no keyboard access, which is accurate: a keyboard user
+           * could not reach the text at all.
+           */
+          EditorView.contentAttributes.of({
+            'aria-label': t('editor.label'),
+            tabindex: '0',
+          }),
           EditorView.domEventHandlers({
             paste: (event, view) => {
               const file = findImage(event.clipboardData);

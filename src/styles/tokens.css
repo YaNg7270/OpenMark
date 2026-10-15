@@ -50,10 +50,13 @@
   --om-bg-active: #e3e7ee;
   --om-text: #1f2328;
   --om-text-muted: #5a6169;
-  --om-text-faint: #8b939c;
+  /* 4.6:1 on --om-bg-subtle. The previous #8b939c measured 2.92:1, below the 4.5:1 minimum for
+     body-size text — de-emphasised still has to be readable. */
+  --om-text-faint: #656d79;
   --om-border: #e2e5ea;
   --om-border-strong: #cdd3db;
-  --om-accent: #2f6feb;
+  /* Darkened from #2f6feb, which measured 3.98:1 as text on --om-accent-soft. */
+  --om-accent: #1f5bd7;
   --om-accent-text: #ffffff;
   --om-accent-soft: #e8f0fe;
   --om-success: #1a7f37;
@@ -75,10 +78,12 @@
   --om-bg-active: #2f3540;
   --om-text: #dfe3e9;
   --om-text-muted: #9aa3af;
-  --om-text-faint: #6c757f;
+  /* Lighter than the light theme's faint colour: on a dark surface, contrast comes from being
+     brighter than the background, not darker. */
+  --om-text-faint: #8b95a3;
   --om-border: #2b303a;
   --om-border-strong: #3a414d;
-  --om-accent: #6ea8fe;
+  --om-accent: #7fb3ff;
   --om-accent-text: #10131a;
   --om-accent-soft: #1d2836;
   --om-success: #4ac26b;

@@ -34,7 +34,9 @@ export function codePlaceholder(id: string, lang: string): string {
   const langAttr = lang ? ` data-om-lang="${escapeAttr(lang)}"` : '';
   return (
     `<div class="om-code" data-om-code="${escapeAttr(id)}"${langAttr}>` +
-    `<div class="om-code__toolbar" aria-hidden="true"></div>` +
+    // Not `aria-hidden`: the toolbar holds a copy button, and hiding focusable content from
+    // assistive technology is worse than not hiding the container at all.
+    `<div class="om-code__toolbar"></div>` +
     `<pre class="om-code__pre"><code class="om-code__code"></code></pre>` +
     `</div>`
   );

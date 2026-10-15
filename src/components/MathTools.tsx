@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { MathExpression, ParsedDocument } from '@/core/markdown/types';
 import { renderExpression } from '@/core/math/mathjax';
+import { nameFormula } from '@/core/render/accessible';
 import { useStore } from '@/app/store';
 import { t } from '@/i18n';
 
@@ -161,6 +162,7 @@ function MathEditDialog({ expression, onClose, onSaved }: MathEditDialogProps) {
   const [tex, setTex] = useState(expression.tex);
   const [preview, setPreview] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const previewRef = useRef<HTMLDivElement | null>(null);
   const applyMathEdit = useStore((s) => s.applyMathEdit);
   const readOnly = useStore((s) => s.doc.readOnly);
 
@@ -179,6 +181,16 @@ function MathEditDialog({ expression, onClose, onSaved }: MathEditDialogProps) {
       window.clearTimeout(timer);
     };
   }, [tex, expression.display]);
+
+  /*
+   * The preview renders through `renderExpression` directly rather than through the typesetter,
+   * so it never received the accessible name the document's formulas get. Labelling it here is
+   * what keeps an image role from being announced as an unlabelled graphic.
+   */
+  useEffect(() => {
+    const node = previewRef.current;
+    if (node) nameFormula(node, tex);
+  }, [preview, tex]);
 
   const save = useCallback(() => {
     if (readOnly) return;
@@ -228,6 +240,7 @@ function MathEditDialog({ expression, onClose, onSaved }: MathEditDialogProps) {
 
         <label className="om-modal__label">{t('math.preview')}</label>
         <div
+          ref={previewRef}
           className="om-modal__preview"
           data-om-testid="math-dialog-preview"
           data-om-state={error ? 'error' : 'ok'}

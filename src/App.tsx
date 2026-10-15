@@ -391,6 +391,12 @@ export function App() {
         document is open — so as a sibling it would claim a track when visible and shift every
         other child down one when it appeared, which put the sidebar on top of it.
       */}
+      {/*
+        A visually hidden level-one heading naming the open document.
+        A screen-reader user arriving in the window otherwise has no statement of what is open;
+        the visible file name is chrome, and without this the page has no h1 at all.
+      */}
+      <h1 className="om-visually-hidden">{doc.name}</h1>
       <div className="om-shell__top">
       <Toolbar
         onOpen={() => void openViaDialog()}

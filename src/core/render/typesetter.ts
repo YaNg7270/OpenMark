@@ -2,6 +2,7 @@ import type { CodeBlock, Diagnostic, MathExpression, MathRenderError, MermaidDia
 import { renderExpression, resetMathDocument, setEquationNumbering, needsNumbering } from '../math/mathjax';
 import { renderDiagram } from './mermaid';
 import { highlightCode } from './highlighter';
+import { describeDiagram, nameFormula } from './accessible';
 
 /**
  * Fills the parser's placeholders with real content.
@@ -170,6 +171,13 @@ async function fillMath(node: HTMLElement, expr: MathExpression, options: Typese
   if (outcome.ok) {
     node.innerHTML = outcome.html;
     node.dataset['omState'] = 'ok';
+    /*
+     * MathJax's SVG carries `role="img"`, and an image role with no name is announced as an
+     * unlabelled graphic — worse than the raw source, because the reader is told nothing.
+     * The LaTeX is the honest label: it is not spoken mathematics, but it is information the
+     * reader can act on, and it matches what the edit dialog shows for the same expression.
+     */
+    nameFormula(node, expr.tex);
     return;
   }
 
@@ -207,7 +215,11 @@ async function fillMermaid(node: HTMLElement, diagram: MermaidDiagram, options: 
   const outcome = await renderDiagram(diagram, options.dark);
   if (outcome.ok) {
     canvas.innerHTML = outcome.svg;
-    canvas.querySelector('svg')?.setAttribute('role', 'img');
+    const svg = canvas.querySelector('svg');
+    if (svg) {
+      svg.setAttribute('role', 'img');
+      svg.setAttribute('aria-label', describeDiagram(diagram));
+    }
     return;
   }
 
