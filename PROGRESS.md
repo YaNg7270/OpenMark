@@ -34,10 +34,10 @@ install-tested.
 | Windows binary | `tauri build` | `src-tauri/target/release/openmark.exe`, 14,473,216 bytes, boots |
 | Rust check | `cargo check` | zero warnings |
 | Browser E2E | `playwright test` | **39 passed** |
-| Desktop E2E | `pnpm test:desktop` | **6 passed** (real binary, WebView2 149) |
+| Desktop E2E | `pnpm test:desktop` | **6 passed** (release binary, WebView2 149) |
 | Rust unit | `cargo test --lib` | **3 passed** |
 | Unit + DOM tests | `vitest run` | **427 passed** (incl. 300 corpus-conformance assertions) |
-| Windows installers | `tauri build` | NSIS 8,911,640 B, MSI 9,777,152 B, portable zip 10,039,070 B |
+| Windows installers | `pnpm desktop:build` | NSIS 9,520,826 B, MSI 10,387,456 B, portable zip 10,062,412 B |
 | Desktop binary | direct launch | debug build boots and stays alive; release build verified |
 | Corpus validation | `node scripts/verify-corpus.mjs` | OK — manifest matches disk |
 | Corpus diagnostics | `vitest run corpus.test.ts` | **148/148 fixtures emit every declared diagnostic** |

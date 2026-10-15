@@ -23,8 +23,8 @@ estimated.
 | Corpus conformance | part of `pnpm test` | **300 assertions, 148/148 fixtures emit every declared diagnostic** |
 | Type check | `pnpm typecheck` | clean |
 | Frontend build | `pnpm build` | exit 0 |
-| Installers | `tauri build` | NSIS **8,911,640 B**, MSI **9,777,152 B** |
-| Portable | `tauri build --no-bundle -c src-tauri/tauri.portable.conf.json` | **10,039,070 B** zip, verified to keep app data in `./data` |
+| Installers | `pnpm desktop:build` | NSIS **9,520,826 B**, MSI **10,387,456 B** |
+| Portable | `pnpm desktop:build:portable` | **10,062,412 B** zip, verified to keep app data in `./data` |
 
 All four test layers are green against the shipping artefacts, not against mocks: Playwright
 drives the minified production bundle in the same engine family as the app runtime, and
@@ -91,10 +91,14 @@ WebView2.
 
 ## 4. Desktop E2E — 6
 
-Drives `src-tauri/target/debug/openmark.exe` over WebDriver via `tauri-driver` and
-`msedgedriver`, attaching to WebView2 149.0.4022.62.
+Drives the compiled `openmark.exe` over WebDriver via `tauri-driver` and `msedgedriver`,
+attaching to WebView2 149.0.4022.62. Run against the **debug** build by default (that is the
+profile in which the wdio plugin is registered) and against the **release** binary with
+`OPENMARK_BINARY` set — both pass as of this report, so the shipped artefact is exercised
+directly rather than only a development build.
 
 ```
+Running against src-tauri/target/release/openmark.exe:
 ✓ launches the real binary and renders the application shell
 ✓ renders the toolbar with its document name element
 ✓ opens the fixture through the shell open-file event
