@@ -145,7 +145,6 @@ node node_modules/.bin/tauri.CMD build
 | `pnpm build` | Vite 生产构建，输出到 `dist/` |
 | `pnpm preview` | 预览生产构建（端口 4173） |
 | `pnpm typecheck` | `tsc --noEmit -p tsconfig.json`，覆盖 app、tests 与 scripts |
-| `pnpm typecheck:node` | 对 `tsconfig.node.json` 做类型检查——**该文件在仓库中不存在，此脚本当前无法运行**，详见 KNOWN_ISSUES |
 | `pnpm lint` | ESLint，`--max-warnings 0` |
 | `pnpm format` | Prettier 写入 `src/**` 与 `tests/**` |
 | `pnpm test` | Vitest 全量：`unit`（Node）与 `dom`（jsdom）两个 project |
@@ -155,7 +154,12 @@ node node_modules/.bin/tauri.CMD build
 | `pnpm test:e2e` | Playwright，跑在已构建的生产包上，Edge 通道 |
 | `pnpm test:e2e:update` | 更新 Playwright 截图基线（开发者主动行为） |
 | `pnpm test:desktop` | 经 `scripts/run-desktop-e2e.mjs` 启动 WebdriverIO，驱动**真实 Windows 二进制**（该包装脚本把项目本地 Rust 工具链放进子进程 PATH） |
-| `pnpm typecheck:desktop` | 用 `tsconfig.desktop.json` 检查 `tests/desktop` 的类型 |
+| `pnpm typecheck:desktop` | 用 `tsconfig.desktop.json` 检查 `tests/desktop` 的类型（WebdriverIO 的全局类型不属于应用的类型环境，因此单独一份配置） |
+| `pnpm desktop:dev` | Tauri 开发模式（热重载的桌面窗口） |
+| `pnpm desktop:build` | 构建发布版 Windows 安装包（NSIS + MSI）；经 `scripts/build-release.mjs` 把项目本地 Rust 工具链放进子进程环境 |
+| `pnpm desktop:build:portable` | 构建便携版并自动打包为 zip（Tauri 没有便携目标，包由构建脚本组装） |
+| `pnpm perf` | 解析性能基准，输出到压力语料上（见 `docs/TEST_REPORT.md` §5） |
+| `pnpm verify` | `typecheck` + `lint` + `test` 的组合，提交前跑这个 |
 | `pnpm corpus:verify` | 校验 `tests/corpus/manifest.json` 与磁盘文件一致 |
 | `pnpm tauri` | 透传 Tauri CLI（`pnpm tauri <子命令>`） |
 | `pnpm desktop:dev` | `tauri dev`，开发态桌面窗口 |
