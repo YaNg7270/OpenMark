@@ -80,10 +80,57 @@ const child = spawn(process.execPath, [tauri, ...args], {
   },
 });
 
-child.on('exit', (code, signal) => {
+child.on('exit', async (code, signal) => {
   if (signal) {
     console.error(`[build-release] terminated by ${signal}`);
     process.exit(1);
   }
-  process.exit(code ?? 1);
+  if (code !== 0) process.exit(code ?? 1);
+
+  /*
+   * The portable profile produces only the executable — Tauri has no portable bundle target — so
+   * the package is assembled around it here rather than by hand. Doing it in the build script is
+   * what makes `pnpm desktop:build:portable` reproduce the same artefact every time; assembling
+   * it manually once meant the README shipped in the zip drifted from the one in the repository.
+   */
+  if (portable) {
+    try {
+      await assemblePortable();
+    } catch (error) {
+      console.error('[build-release] could not assemble the portable package:', error);
+      process.exit(1);
+    }
+  }
+  process.exit(0);
 });
+
+const APP_NAME = 'OpenMark-0.1.0-portable';
+
+/** Copies the executable and the versioned README into a folder and zips it. */
+async function assemblePortable() {
+  const { cp, mkdir, rm } = await import('node:fs/promises');
+  const releaseDir = path.join(ROOT, 'src-tauri', 'target', 'release');
+  const stage = path.join(releaseDir, 'portable', APP_NAME);
+  const readme = path.join(ROOT, 'src-tauri', 'portable-README.txt');
+
+  await rm(path.join(releaseDir, 'portable'), { recursive: true, force: true });
+  await mkdir(stage, { recursive: true });
+  await cp(path.join(releaseDir, 'openmark.exe'), path.join(stage, 'openmark.exe'));
+  await cp(readme, path.join(stage, 'README.txt'));
+
+  // Compress-Archive is present on every supported Windows and needs no dependency.
+  const zip = path.join(releaseDir, 'portable', `${APP_NAME}.zip`);
+  await new Promise((resolve, reject) => {
+    const zipProcess = spawn(
+      'powershell',
+      ['-NoProfile', '-Command', `Compress-Archive -Path '${stage}\\*' -DestinationPath '${zip}' -Force`],
+      { stdio: 'inherit' },
+    );
+    zipProcess.on('error', reject);
+    zipProcess.on('exit', (code) =>
+      code === 0 ? resolve() : reject(new Error(`Compress-Archive exited ${code}`)),
+    );
+  });
+
+  console.log(`[build-release] portable package: ${zip}`);
+}
