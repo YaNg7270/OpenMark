@@ -33,7 +33,7 @@ install-tested.
 | Frontend build | `vite build` | exit 0 |
 | Windows binary | `tauri build` | `src-tauri/target/release/openmark.exe`, 14,473,216 bytes, boots |
 | Rust check | `cargo check` | zero warnings |
-| Browser E2E | `playwright test` | **52 passed** (incl. 7 screenshot baselines) |
+| Browser E2E | `playwright test` | **53 passed** (incl. 7 screenshot baselines) |
 | Desktop E2E | `pnpm test:desktop` | **6 passed** (release binary, WebView2 149) |
 | Rust unit | `cargo test --lib` | **3 passed** |
 | Unit + DOM tests | `vitest run` | **434 passed** (incl. 300 corpus-conformance assertions) |
@@ -162,7 +162,9 @@ Each of these was found by a test, not by inspection. All have regression covera
 1. **The MSI installer is not install-tested**, and neither installer is code-signed. This is an
    environment limitation (elevation), not a defect.
 2. **No accessibility audit**, and MathJax's semantic enrichment is off by default.
-3. **Typewriter mode centres on typing only**, not on caret movement from arrow keys. Instant mode edits whole blocks, so a
+3. **Typewriter mode centres on typing only**, not on caret movement from arrow keys.
+4. **Find and replace steps through one match at a time only in source mode.** A per-match
+   control in the reading view needs a source offset for a DOM match, which is not reliable. Instant mode edits whole blocks, so a
    table can be edited as text, but there is no grid editor and no paste/drag image handling.
 
 

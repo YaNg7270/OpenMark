@@ -25,6 +25,50 @@ import type { Diagnostic, OutlineEntry } from '@/core/markdown/types';
 
 const MODE_ORDER: ViewMode[] = ['read', 'instant', 'source', 'split'];
 
+/**
+ * Keeps the two panes of split view on the same part of the document.
+ *
+ * Synchronised **proportionally**, not by pixel offset. The source and the rendered document
+ * have different heights for the same content — a table is one long line in the source and a
+ * tall block on screen — so matching offsets would drift apart within a screenful. Proportion
+ * keeps the two panes showing the same region, which is the point of having them side by side.
+ *
+ * A re-entrancy lock stops the two listeners driving each other: scrolling one pane would
+ * otherwise fire the other's handler and fight it forever.
+ */
+function useSplitScrollSync(enabled: boolean, sourcePane: React.RefObject<HTMLElement | null>, readerPane: React.RefObject<HTMLElement | null>): void {
+  useEffect(() => {
+    if (!enabled) return;
+    // CodeMirror owns its own scroller, so it has to be found rather than assumed.
+    const source = sourcePane.current?.querySelector<HTMLElement>('.cm-scroller');
+    const reader = readerPane.current?.querySelector<HTMLElement>('.om-doc-scroll');
+    if (!source || !reader) return;
+
+    let lock = false;
+    const mirror = (from: HTMLElement, to: HTMLElement) => () => {
+      if (lock) return;
+      const fromMax = from.scrollHeight - from.clientHeight;
+      const toMax = to.scrollHeight - to.clientHeight;
+      if (fromMax <= 0 || toMax <= 0) return;
+      lock = true;
+      to.scrollTo({ top: (from.scrollTop / fromMax) * toMax, behavior: 'instant' });
+      // Released on the next frame, after the mirrored scroll event has been dispatched.
+      requestAnimationFrame(() => {
+        lock = false;
+      });
+    };
+
+    const fromSource = mirror(source, reader);
+    const fromReader = mirror(reader, source);
+    source.addEventListener('scroll', fromSource, { passive: true });
+    reader.addEventListener('scroll', fromReader, { passive: true });
+    return () => {
+      source.removeEventListener('scroll', fromSource);
+      reader.removeEventListener('scroll', fromReader);
+    };
+  }, [enabled, sourcePane, readerPane]);
+}
+
 export function App() {
   const doc = useStore((s) => s.doc);
   const ui = useStore((s) => s.ui);
@@ -104,6 +148,8 @@ export function App() {
     const timer = window.setTimeout(clearNotice, 4200);
     return () => window.clearTimeout(timer);
   }, [ui.notice, clearNotice]);
+
+  useSplitScrollSync(ui.mode === 'split', sourceHostRef, readHostRef);
 
   const jumpToHeading = useCallback(
     (entry: OutlineEntry) => {

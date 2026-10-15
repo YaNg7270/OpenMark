@@ -16,7 +16,7 @@ estimated.
 | Layer | Command | Result |
 |---|---|---|
 | Unit + DOM (Vitest) | `pnpm test` | **434 passed / 0 failed** (9 files) |
-| Browser E2E (Playwright) | `pnpm test:e2e` | **52 passed / 0 failed** (incl. 7 screenshot baselines) |
+| Browser E2E (Playwright) | `pnpm test:e2e` | **53 passed / 0 failed** (incl. 7 screenshot baselines) |
 | Desktop E2E (WebdriverIO) | `pnpm test:desktop` | **6 passed / 0 failed** |
 | Rust unit | `cargo test --lib` | **3 passed / 0 failed** |
 | Corpus validation | `pnpm corpus:verify` | **OK** — manifest matches disk |
@@ -70,7 +70,7 @@ report** and on real output:
 
 ---
 
-## 3. Browser E2E — 52
+## 3. Browser E2E — 53
 
 Runs against the production build served by `vite preview`, in the system Edge channel
 (`channel: 'msedge'`), so no browser download is required and the engine family matches
@@ -90,6 +90,7 @@ WebView2.
 | Find & replace | 3 | replace-all rewrites every occurrence in the source and nothing else; the query is treated as literal text (`$&` is not a backreference); CRLF survives |
 | Visual baselines | 7 | reading mode, instant mode, source mode, the diagnostics panel, the formula dialog, the table editor and **two tabs** |
 | File commands | 3 | New opens its own tab and leaves the open document intact; save defers to save-as without a path; Ctrl+N and Ctrl+Shift+S are wired |
+| Split view | 1 | both panes stay on the same region, asserted in *both* directions — a one-way sync would pass a test that only scrolled one side |
 
 ---
 

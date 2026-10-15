@@ -1039,3 +1039,57 @@ test.describe('file commands', () => {
     await expect(page.getByTestId('tab-bar')).toBeVisible();
   });
 });
+
+test.describe('split view', () => {
+  test('keeps both panes on the same part of the document', async ({ page }) => {
+    // Long enough that both panes actually scroll.
+    const long = Array.from({ length: 160 }, (_, i) => `## 第 ${i + 1} 节\n\n${'正文内容。'.repeat(10)}\n`).join('\n');
+    await page.addInitScript(
+      (content) => {
+        window.__OPENMARK_TEST_FILES__ = { 'split.md': content };
+      },
+      long,
+    );
+    await page.goto('/');
+    await page.waitForFunction(() => Boolean(window.__openmark__));
+    await page.evaluate(() => window.__openmark__!.openPath('split.md'));
+    await page.getByTestId('mode-split').click();
+
+    const panes = page.locator('.om-main__pane');
+    await expect(panes).toHaveCount(2);
+    const source = page.locator('.om-main__pane--source .cm-scroller');
+    const reader = page.locator('.om-main__pane--reader .om-doc-scroll');
+    await expect(source).toBeVisible();
+    await expect(reader).toBeVisible();
+
+    // Scrolling the rendered side must move the source side by the same proportion.
+    await reader.evaluate((el) => {
+      el.scrollTop = (el.scrollHeight - el.clientHeight) * 0.5;
+    });
+    await expect
+      .poll(
+        async () =>
+          source.evaluate((el) => {
+            const max = el.scrollHeight - el.clientHeight;
+            return max <= 0 ? 0 : el.scrollTop / max;
+          }),
+        { timeout: 5_000 },
+      )
+      .toBeGreaterThan(0.3);
+
+    // And the other direction, which is the half a one-way sync would miss.
+    await source.evaluate((el) => {
+      el.scrollTop = (el.scrollHeight - el.clientHeight) * 0.8;
+    });
+    await expect
+      .poll(
+        async () =>
+          reader.evaluate((el) => {
+            const max = el.scrollHeight - el.clientHeight;
+            return max <= 0 ? 0 : el.scrollTop / max;
+          }),
+        { timeout: 5_000 },
+      )
+      .toBeGreaterThan(0.5);
+  });
+});

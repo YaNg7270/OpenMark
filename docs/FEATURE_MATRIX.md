@@ -19,9 +19,9 @@ Evidence column; a row is not marked Implemented merely because a file exists.
 That audit found three rows where the code existed but did nothing, and they are now fixed and covered by
 tests: relative images never loaded because nothing called the resolver, New and Save As had no UI caller,
 and the write command ignored the caller's expected mtime so the documented clobber guard was not enforced.
-Split-pane scroll sync is still missing and is marked as such rather than rounded up.
+Split-pane scroll sync was one of them; it is implemented and tested as well.
 
-The test layers are real: 434 Vitest tests in 9 files, 52 Playwright tests (`tests/e2e/rendering.spec.ts`,
+The test layers are real: 434 Vitest tests in 9 files, 53 Playwright tests (`tests/e2e/rendering.spec.ts`,
 `tests/e2e/visual.spec.ts`) including 7 screenshot baselines, 6 WebdriverIO tests driving the compiled
 binary (`tests/desktop/openmark.spec.ts`), and a 148-fixture corpus (`tests/corpus/`, validator
 `scripts/verify-corpus.mjs`).
@@ -127,7 +127,7 @@ Counted from the rows below. Every row carries exactly one status, so the four c
 | Instant rendering (Typora-style) | yes — cursor-local source reveal | **Implemented** | `src/components/InstantView.tsx` (click a block to edit it in place; splice of the authoritative source at the block range); `tests/e2e/rendering.spec.ts` "decomposes the document into blocks and edits one without touching the others" |
 | Read mode (non-editable rendered view) | **does not exist** (issues #710/#4645/#5352/#6056) | **Implemented** | `ViewMode = 'read'` is the default; `src/components/DocumentView.tsx`; a read-only document refuses to enter edit mode (`tests/e2e/rendering.spec.ts`) |
 | Source mode | yes (`Ctrl+/`, CodeMirror) | **Implemented** | `src/components/SourceEditor.tsx` (CodeMirror 6, own undo history, find/replace panel); LF/CRLF fidelity tested |
-| Split mode | not supported | **Implemented (core only)** | `App.tsx` renders the source and reader panes side by side and `AVAILABLE_MODES.split = true`. **Missing half:** no scroll synchronisation between the panes (PRD R-MODE-4 requires it); each pane owns its own scroll position. |
+| Split mode | not supported | **Implemented** | `App.tsx` renders the source and reader panes side by side; `useSplitScrollSync` keeps them on the same region, synchronised **proportionally** rather than by pixel offset, because the same content has different heights in each pane. A re-entrancy lock stops the two listeners driving each other. Covered by the split-view E2E. |
 | Markdown shortcuts (bold/italic/code/link/heading/list/quote/table/math block/…, 40+ keys) | yes (full documented table) | **Planned** | PRD R-C-2; `App.tsx` only binds open/save/find/diagnostics/settings/modes/focus |
 | Undo / redo | yes | **Implemented** | CodeMirror `history()` in `SourceEditor.tsx` (cleared per document); `tests/e2e/rendering.spec.ts` undo/redo group (2 tests) |
 | Smart lists, table editing, code-block editing | yes | **Implemented (core only)** | Table editing is complete (`table.ts` + `TableEditor.tsx`, grid + structural edits + no-op-write guard, `tests/unit/table.test.ts`, `tests/e2e/rendering.spec.ts` grid tests). **Missing half:** smart lists rely on CodeMirror's default markdown keymap (continuation only — no renumbering/Tab-nesting control) and code-block editing has no language selector. |
@@ -242,5 +242,4 @@ Counted from the rows below. Every row carries exactly one status, so the four c
 **Deliberate gaps** (documented, not to be mistaken for completeness): code signing, MSI install testing,
 auto-update and an accessibility audit are not done (`docs/KNOWN_ISSUES.md`); relative-image loading in the
 reading surface was a gap when this table was first audited; both were fixed and are covered by tests, and
-the table has been corrected. Split-pane scroll sync (§1 row 130) is the one genuinely open item from that
-audit.
+the table has been corrected, as has split-pane scroll sync. No item from that audit remains open.
