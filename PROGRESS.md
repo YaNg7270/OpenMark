@@ -27,11 +27,13 @@ user-facing documentation.
 | Rust toolchain | `cargo -V` (project-local) | 1.99.0, MSVC 14.44 linker verified with a smoke build |
 | Type check | `tsc --noEmit` | clean |
 | Frontend build | `vite build` | exit 0 |
-| Windows binary | `tauri build --no-bundle` | `src-tauri/target/release/openmark.exe`, 13,833,728 bytes, boots |
+| Windows binary | `tauri build` | `src-tauri/target/release/openmark.exe`, 14,473,216 bytes, boots |
 | Rust check | `cargo check` | zero warnings |
 | Browser E2E | `playwright test` | **29 passed** |
+| Desktop E2E | `pnpm test:desktop` | **6 passed** (real binary, WebView2 149) |
+| Rust unit | `cargo test --lib` | **3 passed** |
 | Unit + DOM tests | `vitest run` | **371 passed** (incl. 300 corpus-conformance assertions) |
-| Windows installers | `tauri build` | NSIS 8.9 MB, MSI 9.8 MB, portable zip 10.0 MB |
+| Windows installers | `tauri build` | NSIS 8,911,640 B, MSI 9,777,152 B, portable zip 10,039,070 B |
 | Desktop binary | direct launch | debug build boots and stays alive; release build verified |
 | Corpus validation | `node scripts/verify-corpus.mjs` | OK — manifest matches disk |
 | Corpus diagnostics | `vitest run corpus.test.ts` | **148/148 fixtures emit every declared diagnostic** |
@@ -41,8 +43,15 @@ user-facing documentation.
 
 The corpus declares the diagnostics each fixture should produce, including codes the parser did
 not yet emit; the conformance suite therefore doubles as a progress meter. That number went
-from 133/148 to **148/148** this session, which also means the `DiagnosticCode` union no longer
-contains aspirational entries with no implementation.
+from 133/148 to **148/148** this session.
+
+An independent review then found that the `DiagnosticCode` union still contained 11 members
+with no emit site — a wish list rather than a contract. Six were implemented
+(`unclosed-html-comment`, `duplicate-footnote`, `setext-heading-ambiguity`,
+`math-unbalanced-environment`, `math-unknown-macro`, and the encoding facts `bom-detected` /
+`mixed-line-endings` / `invalid-utf8`), and three were removed because they described things
+that are not defects. The union now stands at **26 declared, 26 emitted, 0 unused**, and a
+check for that is cheap to re-run.
 
 ### Milestone: all four view modes implemented
 
@@ -133,14 +142,16 @@ Each of these was found by a test, not by inspection. All have regression covera
 
 ### P1
 
-1. **Table editing and image paste are not implemented.** Instant mode edits whole blocks, so a
+1. **No screenshot regression baselines.** Playwright's screenshot comparison is configured but
+   no images are committed, so a typography regression would not be caught automatically.
+2. **Table editing and image paste are not implemented.** Instant mode edits whole blocks, so a
    table can be edited as text, but there is no grid editor and no paste/drag image handling.
-2. **Tabs are not implemented.** One document at a time; the recent-files list is the
+3. **Tabs are not implemented.** One document at a time; the recent-files list is the
    substitute.
-3. **Typewriter mode is a setting with no implementation.** Focus mode works; the setting is
+4. **Typewriter mode is a setting with no implementation.** Focus mode works; the setting is
    stored and projected to CSS but nothing reads it.
-4. **WebdriverIO desktop E2E has not yet been shown green.** The toolchain and driver wiring
-   are in place and the app itself launches; see the test report for the current result.
+5. **The MSI installer is not install-tested**, and neither installer is code-signed. See
+   `docs/TEST_REPORT.md` §8 for the full list of what is not verified.
 
 ### P2
 

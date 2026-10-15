@@ -137,9 +137,17 @@ asserts on glyph elements and on a network-request log, not on DOM presence.
 
 ## 7. Immediate next step
 
-Implement **instant-rendering mode**. The parser already computes exact source ranges for
-math, diagrams, code and headings; what is missing is a range for every top-level block.
-Add that to the collect pass in `src/core/markdown/engine.ts`, expose it on `RenderResult`,
-then build block-wise editing that patches `doc.source` by offset and re-parses only the
-affected region. CodeMirror 6 slots in behind the same contract as the current
-`SourceEditor` (`value` in, `onChange` out).
+Build the **table editing grid**, then **image paste and asset placement**. Instant mode edits
+whole blocks, so a table can already be edited as text; a grid editor is the missing
+affordance. Image paste needs a decision about where assets land relative to the document,
+which is why it has not been guessed at.
+
+After that, in order: tabs, typewriter mode (currently a setting nothing reads), and find and
+replace in the reading view (source mode already has CodeMirror's panel).
+
+## 8. Final state of the acceptance criteria
+
+Everything in the goal's section 6 is evidenced in `docs/TEST_REPORT.md`, with two honest
+exceptions recorded in its §8: the MSI installer was not install-tested (only the per-user
+NSIS package was, including a clean uninstall), and neither installer is code-signed, so a
+downloaded copy will show a SmartScreen warning. Neither is a defect in the application.
