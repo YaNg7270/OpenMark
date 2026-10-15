@@ -15,7 +15,7 @@ estimated.
 
 | Layer | Command | Result |
 |---|---|---|
-| Unit + DOM (Vitest) | `pnpm test` | **427 passed / 0 failed** (7 files) |
+| Unit + DOM (Vitest) | `pnpm test` | **427 passed / 0 failed** (8 files) |
 | Browser E2E (Playwright) | `pnpm test:e2e` | **39 passed / 0 failed** |
 | Desktop E2E (WebdriverIO) | `pnpm test:desktop` | **6 passed / 0 failed** |
 | Rust unit | `cargo test --lib` | **3 passed / 0 failed** |

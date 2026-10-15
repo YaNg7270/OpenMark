@@ -15,8 +15,7 @@ whose sources are not on disk. The **Redistributed** column was derived from the
 
 OpenMark itself is **MIT**: `"license": "MIT"` in `package.json`, `license = "MIT"` in `src-tauri/Cargo.toml`.
 
-> **Gap.** The repository has no root `LICENSE` file. The project licence text should be added as `LICENSE`
-> (the canonical MIT text is `THIRD_PARTY_LICENSES/MIT.txt`).
+> A root `LICENSE` file carrying this text was added after the audit; the gap it reported is closed.
 
 ---
 

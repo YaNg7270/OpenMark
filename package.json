@@ -27,10 +27,11 @@
     "corpus:verify": "node scripts/verify-corpus.mjs",
     "tauri": "tauri",
     "desktop:dev": "tauri dev",
-    "desktop:build": "tauri build",
-    "desktop:build:portable": "tauri build --no-bundle -c src-tauri/tauri.portable.conf.json",
+    "desktop:build": "node scripts/build-release.mjs",
+    "desktop:build:portable": "node scripts/build-release.mjs --portable",
     "verify": "pnpm typecheck && pnpm lint && pnpm test",
-    "typecheck:desktop": "node node_modules/typescript/bin/tsc --noEmit -p tsconfig.desktop.json"
+    "typecheck:desktop": "node node_modules/typescript/bin/tsc --noEmit -p tsconfig.desktop.json",
+    "perf": "node --expose-gc scripts/perf-parse.mjs"
   },
   "dependencies": {
     "@codemirror/autocomplete": "^6.20.3",
