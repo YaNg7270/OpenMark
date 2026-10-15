@@ -137,17 +137,50 @@ asserts on glyph elements and on a network-request log, not on DOM presence.
 
 ## 7. Immediate next step
 
-Build the **table editing grid**, then **image paste and asset placement**. Instant mode edits
-whole blocks, so a table can already be edited as text; a grid editor is the missing
-affordance. Image paste needs a decision about where assets land relative to the document,
-which is why it has not been guessed at.
+Nothing is mid-flight; the tree is clean and every suite is green. The next work is the first
+item in `PROGRESS.md` §5:
 
-After that, in order: tabs, typewriter mode (currently a setting nothing reads), and find and
-replace in the reading view (source mode already has CodeMirror's panel).
+1. **Split-pane scroll synchronisation.** The one feature the matrix still marks as
+   incomplete: the two panes each own their scroll position, and PRD R-MODE-4 asks for them to
+   track each other.
+2. **Find and replace in the reading view steps through one match at a time.** Replace-all
+   exists; a per-match control would need a source offset for a DOM match, which is the reason
+   it was not offered.
+3. **A code-signing certificate**, which is the only way to remove the SmartScreen warning for
+   downloaded installers, and **an MSI install test** on a machine with elevation.
+4. **An accessibility audit**, then re-enabling MathJax's semantic enrichment once the SRE
+   worker lifecycle is handled explicitly.
 
-## 8. Final state of the acceptance criteria
+## 8. Final state
 
-Everything in the goal's section 6 is evidenced in `docs/TEST_REPORT.md`, with two honest
-exceptions recorded in its §8: the MSI installer was not install-tested (only the per-user
-NSIS package was, including a clean uninstall), and neither installer is code-signed, so a
-downloaded copy will show a SmartScreen warning. Neither is a defect in the application.
+Every acceptance criterion in the goal's section 6 is evidenced in `docs/TEST_REPORT.md`:
+
+| Criterion | Evidence |
+|---|---|
+| The desktop app launches | release binary boots, window titled `OpenMark`; 6 WebdriverIO tests drive it |
+| Reading, editing, maths and saving work | `docs/FEATURE_MATRIX.md` (96 Implemented / 6 core-only / 12 planned / 9 out-of-scope) |
+| Four modes switch | E2E asserts all four buttons and their panes |
+| The corpus renders correctly | 148/148 fixtures, 355 formula cases, 300 conformance assertions |
+| Round-trip loses nothing | `tests/unit/roundtrip.test.ts`, plus CRLF preservation in both editors |
+| Main E2E passes | 52 Playwright + 6 WebdriverIO |
+| P0/P1 resolved | no P0; the remaining P1s are the two items below |
+| Performance checked | `scripts/perf-parse.mjs`, figures in `TEST_REPORT.md` §5 |
+| Installer + portable built | NSIS, MSI and a portable zip, all from the current source |
+| Documents complete | README, USER_GUIDE, ARCHITECTURE, TEST_REPORT, KNOWN_ISSUES, LICENSE_NOTICES |
+
+Two things are genuinely not done and are recorded in `docs/KNOWN_ISSUES.md` rather than
+hidden: **neither installer is code-signed** (a downloaded copy will show a SmartScreen
+warning) and **the MSI was not install-tested** because it needs elevation this environment
+does not have. The per-user NSIS package was installed, smoke-launched and uninstalled
+cleanly. Neither is a defect in the application.
+
+## 9. Environment caveats that are easy to trip over
+
+See `docs/KNOWN_ISSUES.md` P3-4 for the full list. The two that cost the most time:
+
+1. **A leftover `openmark.exe` makes every new launch exit immediately** — the
+   single-instance plugin forwards to the running copy, and the WebDriver harness reports it
+   as "Chrome instance exited", which points nowhere near the cause. Kill stray processes
+   before running the desktop suite.
+2. **`vite preview` needs `--host 127.0.0.1`** or it binds IPv6 `localhost` while Playwright
+   polls the IPv4 literal, so the server runs and readiness times out anyway.
