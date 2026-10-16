@@ -163,7 +163,8 @@ surface. Its shape is declared in `src/types/automation.d.ts`.
 | `src/core/markdown/collector.ts` | holds placeholder payloads (`math-<n>`, `mermaid-<n>`, `code-<n>`, `env-<n>`, `block-<index>`) |
 | `src/core/render/typesetter.ts` | lazy fill via IntersectionObserver; sets `data-om-filled` / `data-om-state` |
 | `src/core/render/images.ts` | rewrites relative `<img src>` to asset URLs; marks `data-om-missing` |
-| `src/core/fs/fileService.ts` | every IPC call; the only place Tauri `invoke` is used |
+| `src/core/fs/fileService.ts` | every **file** IPC call, via its `tauriInvoke()` wrapper |
+| `src/core/export/ipc.ts` | the **export** IPC wrapper, `exportInvoke()`, used only by `export/assets.ts` and `export/pdf.ts`. Two wrappers exist because the export layer must also run in a plain browser — see the header there before consolidating them |
 | `src-tauri/src/commands.rs` | file IO, atomic write with the clobber guard, `stat_file`, `resolve_asset_url` |
 | `src-tauri/src/export.rs` | asset inlining for HTML export, and PDF via `PrintToPdf` |
 | `src/components/SourceEditor.tsx` | the only CodeMirror 6 integration point |
