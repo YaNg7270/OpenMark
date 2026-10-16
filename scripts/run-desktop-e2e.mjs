@@ -20,7 +20,7 @@
  * wrapper works regardless of how it is invoked.
  */
 import { spawn } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { existsSync, readdirSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -57,6 +57,67 @@ const tauriDriver = path.join(cargoBin, 'tauri-driver.exe');
 
 const wdio = path.join(ROOT, 'node_modules', '@wdio', 'cli', 'bin', 'wdio.js');
 const config = path.join(ROOT, 'tests', 'desktop', 'wdio.conf.ts');
+
+/**
+ * Refuses to run against a binary that predates the frontend it is supposed to contain.
+ *
+ * The frontend is embedded at compile time, and a stale `src-tauri/target/debug/openmark.exe`
+ * still launches, still renders, and still passes tests — it simply does not contain the change
+ * under test, so a green run proves nothing. This happened: `dist/` was rebuilt, cargo reported
+ * "Finished" without recompiling, and the suite passed against the previous UI.
+ *
+ * `src-tauri/build.rs` now declares `rerun-if-changed=../dist` so cargo re-embeds the frontend,
+ * which makes this check redundant for the default flow. It stays as a backstop because
+ * `OPENMARK_BINARY` can point anywhere.
+ *
+ * Note the build command in the messages below. `tauri build --debug` enables
+ * `tauri/custom-protocol`, and `tauri-2.12.4/build.rs` sets `dev = !custom_protocol`; without
+ * that feature the binary is a *dev-server* binary that loads `devUrl`
+ * (`http://localhost:1420`) instead of embedding `dist/`. Running a plain `cargo build` here
+ * silently replaces the good binary with one that cannot render, and every test in this suite
+ * fails for a reason that has nothing to do with the app.
+ */
+function assertBinaryIsFresh() {
+  // Mirrors `appBinary` in tests/desktop/wdio.conf.ts; keep the two in step.
+  const binary =
+    process.env['OPENMARK_BINARY'] ??
+    path.join(ROOT, 'src-tauri', 'target', 'debug', 'openmark.exe');
+
+  if (!existsSync(binary)) {
+    console.error(`[desktop-e2e] binary not found at ${binary}`);
+    console.error(`[desktop-e2e] Build it with: pnpm tauri build --debug --no-bundle`);
+    process.exit(1);
+  }
+
+  /** Newest modification time under `dir`, walking subdirectories. */
+  const newest = (dir) => {
+    let latest = 0;
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name);
+      const time = entry.isDirectory() ? newest(full) : statSync(full).mtimeMs;
+      if (time > latest) latest = time;
+    }
+    return latest;
+  };
+
+  const dist = path.join(ROOT, 'dist');
+  if (!existsSync(dist)) {
+    console.error('[desktop-e2e] dist/ not found; run: pnpm build');
+    process.exit(1);
+  }
+
+  const binaryTime = statSync(binary).mtimeMs;
+  const distTime = newest(dist);
+  if (binaryTime < distTime) {
+    console.error('[desktop-e2e] refusing to run: the binary is older than dist/');
+    console.error(`[desktop-e2e]   binary ${new Date(binaryTime).toISOString()}`);
+    console.error(`[desktop-e2e]   dist   ${new Date(distTime).toISOString()}`);
+    console.error('[desktop-e2e] Rebuild with: pnpm tauri build --debug --no-bundle');
+    process.exit(1);
+  }
+}
+
+assertBinaryIsFresh();
 
 const child = spawn(process.execPath, [wdio, 'run', config, ...process.argv.slice(2)], {
   cwd: ROOT,

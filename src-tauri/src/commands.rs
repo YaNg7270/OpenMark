@@ -44,6 +44,9 @@ impl From<AppError> for String {
 
 /// A document as it exists on disk, before any decoding.
 #[derive(Debug, Serialize)]
+// Serialised as camelCase: the TypeScript layer declares these fields in camelCase, and
+// serde's default would emit `mtime_ms` where the other side reads `mtimeMs`.
+#[serde(rename_all = "camelCase")]
 pub struct FilePayload {
     /// Raw file contents. Always serialised as a JSON array of numbers.
     pub bytes: Vec<u8>,
@@ -56,6 +59,9 @@ pub struct FilePayload {
 
 /// Result of a successful atomic save.
 #[derive(Debug, Serialize)]
+// Serialised as camelCase: the TypeScript layer declares these fields in camelCase, and
+// serde's default would emit `mtime_ms` where the other side reads `mtimeMs`.
+#[serde(rename_all = "camelCase")]
 pub struct WriteResult {
     pub path: String,
     pub size: u64,
@@ -67,6 +73,9 @@ pub struct WriteResult {
 
 /// Cheap change-detection probe for external modification checks.
 #[derive(Debug, Serialize)]
+// Serialised as camelCase: the TypeScript layer declares these fields in camelCase, and
+// serde's default would emit `mtime_ms` where the other side reads `mtimeMs`.
+#[serde(rename_all = "camelCase")]
 pub struct FileStat {
     pub exists: bool,
     pub size: u64,
@@ -77,6 +86,9 @@ pub struct FileStat {
 
 /// One entry of [`list_dir`].
 #[derive(Debug, Serialize)]
+// Serialised as camelCase: the TypeScript layer declares these fields in camelCase, and
+// serde's default would emit `mtime_ms` where the other side reads `mtimeMs`.
+#[serde(rename_all = "camelCase")]
 pub struct DirEntryInfo {
     pub name: String,
     pub path: String,
@@ -387,4 +399,91 @@ pub fn default_documents_dir(app: AppHandle) -> Result<String, String> {
 #[tauri::command]
 pub fn app_version() -> String {
     env!("CARGO_PKG_VERSION").to_string()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Serialises a value to a JSON object and returns its keys, sorted.
+    ///
+    /// Sorted because `serde_json::to_value` builds a `BTreeMap`, and because the order of keys
+    /// in a JSON object carries no meaning — the assertion is about *names*, which is exactly
+    /// what went wrong.
+    fn keys<T: serde::Serialize>(value: &T) -> Vec<String> {
+        let json = serde_json::to_value(value).expect("serialisable");
+        let mut names: Vec<String> = json
+            .as_object()
+            .expect("an IPC response is always a JSON object")
+            .keys()
+            .cloned()
+            .collect();
+        names.sort();
+        names
+    }
+
+    /*
+     * These pin the wire format of every response the TypeScript layer reads.
+     *
+     * They exist because of a real defect: serde's default is the Rust field name, so
+     * `mtime_ms` was sent under that name while `src/core/fs/fileService.ts` declared
+     * `mtimeMs`. The value arrived as `undefined`, the external-change check compared a real
+     * timestamp against `undefined` on every poll, and the "modified by another program"
+     * banner appeared on every document seconds after opening it. The same mistake silently
+     * disabled the clobber guard after the first save, because the returned mtime was
+     * `undefined` and was then sent back as the expected value.
+     *
+     * A TypeScript test cannot catch this — the compiler trusts the hand-written interface —
+     * so the assertion lives on the side that produces the bytes.
+     */
+
+    #[test]
+    fn file_payload_uses_camel_case() {
+        let payload = FilePayload {
+            bytes: vec![1, 2, 3],
+            path: "C:/docs/a.md".into(),
+            size: 3,
+            mtime_ms: 1_700_000_000_000,
+        };
+        assert_eq!(keys(&payload), vec!["bytes", "mtimeMs", "path", "size"]);
+    }
+
+    #[test]
+    fn write_result_uses_camel_case() {
+        let result = WriteResult {
+            path: "C:/docs/a.md".into(),
+            size: 3,
+            mtime_ms: 1_700_000_000_000,
+            backup_path: Some("C:/docs/.openmark-backups/a.md.bak".into()),
+        };
+        assert_eq!(keys(&result), vec!["backupPath", "mtimeMs", "path", "size"]);
+
+        // An absent backup must still be present as a key, or the frontend reads `undefined`
+        // where it expects `null` and the "backup created" notice can never be right.
+        let without = WriteResult { backup_path: None, ..result };
+        assert_eq!(keys(&without), vec!["backupPath", "mtimeMs", "path", "size"]);
+    }
+
+    #[test]
+    fn file_stat_uses_camel_case() {
+        let stat = FileStat {
+            exists: true,
+            size: 3,
+            mtime_ms: 1_700_000_000_000,
+            is_dir: false,
+        };
+        assert_eq!(keys(&stat), vec!["exists", "isDir", "mtimeMs", "size"]);
+    }
+
+    #[test]
+    fn dir_entry_uses_camel_case() {
+        let entry = DirEntryInfo {
+            name: "a.md".into(),
+            path: "C:/docs/a.md".into(),
+            is_dir: false,
+            size: 3,
+            mtime_ms: 1_700_000_000_000,
+        };
+        assert_eq!(keys(&entry), vec!["isDir", "mtimeMs", "name", "path", "size"]);
+    }
 }

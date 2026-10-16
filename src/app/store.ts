@@ -727,8 +727,17 @@ export const useStore = create<AppStore>((set, get) => ({
     const { doc } = get();
     if (!doc.path || doc.mtimeMs === null) return;
     const stat = await files.statFile(doc.path);
-    if (!stat?.exists || stat.mtimeMs === doc.mtimeMs) return;
-    set((s) => ({ doc: { ...s.doc, externalChange: { mtimeMs: stat.mtimeMs } } }));
+    if (!stat?.exists) return;
+    set((s) => {
+      // The verdict is re-checked against the live state rather than the snapshot taken before
+      // the `await`. An autosave that lands while the probe is in flight writes a new mtime, and
+      // that mtime is expected, not an external edit: comparing the pre-await snapshot raised
+      // the banner on our own write and left it standing, because the save handler had already
+      // cleared it. The path is re-checked for the same reason — switching documents during the
+      // probe must not blame the document that was just opened.
+      if (s.doc.path !== doc.path || s.doc.mtimeMs === stat.mtimeMs) return s;
+      return { doc: { ...s.doc, externalChange: { mtimeMs: stat.mtimeMs } } };
+    });
   },
 
   rememberPosition: (path, position) => {

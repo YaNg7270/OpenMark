@@ -97,8 +97,8 @@ wanted (e.g. round-trip fidelity is asserted in both layer 1 and layer 2 at diff
 
 ### Layer 4 — Desktop end-to-end (WebdriverIO + Tauri, real Windows binary)
 
-- **Owns:** the packaged application: startup, file dialogs (via command mocking), file association hand-off,
-  IPC, atomic save on a real filesystem, external-change conflict, window state, and the portable build.
+- **Owns:** the packaged application: startup, the file-association hand-off (`openmark://open-file`), IPC, atomic
+  save on a real filesystem, the external-change probe, and the portable build.
 - **Must prove:**
   - the built `.exe` launches, restores window state, and renders a document from disk;
   - open → edit → save → reopen on the real FS is byte-identical for CRLF and BOM files (the layer-2 property,
@@ -106,14 +106,23 @@ wanted (e.g. round-trip fidelity is asserted in both layer 1 and layer 2 at diff
   - a second launch with a document argument is handed to the running instance and opens the document;
   - a crash/kill during a save leaves the original intact and a backup present (§ARCHITECTURE S5);
   - the read-only gate survives a real file (oversize fixture, unclosed-fence fixture);
-  - `browser.tauri.execute()`, mocking and log capture work — i.e. the debug-only plugin + capability +
-    frontend import are all wired.
-- **Entry:** `pnpm desktop:build` then `pnpm test:desktop`. Requires msedgedriver version-matched to the machine's
-  WebView2 (`autoDownloadEdgeDriver: true` — a mismatch **hangs** rather than erroring, RESEARCH §9.5), and
-  `driverProvider: 'embedded'` with a 60 s startup timeout.
-- **Cannot** drive native OS dialogs: dialog flows assert through `browser.tauri.mock('…')` on the invoked command.
-- **Blocking prerequisite:** `index.html` must import `@wdio/tauri-plugin` and `tests/desktop/wdio.conf.ts` must
-  exist before anything in this layer can run.
+  - the **external-change probe stays silent on a document nobody is editing**, and still fires when the
+    file really is touched — the first desktop test of the poll, added after a false banner shipped on every
+    document (PROGRESS §2.9).
+- **Entry:** `pnpm tauri build --debug --no-bundle`, then `pnpm test:desktop`. Requires msedgedriver
+  version-matched to the machine's WebView2 (`autoDownloadEdgeDriver: true` — a mismatch **hangs** rather than
+  erroring, RESEARCH §9.5), with `driverProvider: 'external'`.
+- **The build command is not interchangeable.** `tauri-2.12.4/build.rs` sets `dev = !custom_protocol`, and only
+  `tauri build` enables `tauri/custom-protocol`. Without it the binary has **no embedded frontend**: it loads
+  `devUrl` (`http://localhost:1420`) and renders an empty window when no dev server is running. A plain
+  `cargo build` produces exactly that, at the same path the suite reads
+  (`src-tauri/target/debug/openmark.exe`), so it silently replaces a good binary and every test fails with
+  "element wasn't found" — which reads as a frontend fault. `scripts/run-desktop-e2e.mjs` refuses to start when
+  the binary predates `dist/`, and prints the correct command when it does.
+- **Cannot** drive native OS dialogs: dialog flows assert on the invoked command instead.
+- **Plugin note:** `@wdio/tauri-plugin` is deliberately **not** shipped, so `browser.tauri.execute()`, command
+  mocking and log capture are unavailable and the suite uses only plain WebDriver commands. The `tauri-plugin-wdio`
+  crate is still registered in debug builds so the ACL stays valid.
 
 ### Layer 5 — Performance
 

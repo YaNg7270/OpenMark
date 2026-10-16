@@ -537,8 +537,59 @@ fn find(haystack: &[u8], needle: &[u8]) -> Option<usize> {
 
 #[cfg(test)]
 mod tests {
-    use super::{base64_encode, pdf_page_count, sniff_mime};
+    use super::{base64_encode, pdf_page_count, sniff_mime, ExportAsset, PdfReport};
     use std::path::Path;
+
+    /// Serialises a value to a JSON object and returns its keys, sorted.
+    fn keys<T: serde::Serialize>(value: &T) -> Vec<String> {
+        let json = serde_json::to_value(value).expect("serialisable");
+        let mut names: Vec<String> = json
+            .as_object()
+            .expect("an IPC response is always a JSON object")
+            .keys()
+            .cloned()
+            .collect();
+        names.sort();
+        names
+    }
+
+    /*
+     * These two responses are the deliberate exception to the camelCase rule used by
+     * `commands.rs`: the TypeScript interfaces in `src/core/export/assets.ts` and
+     * `src/core/export/pdf.ts` declare `relative_path` and `page_count`, so the Rust field names
+     * go over the wire unchanged. It happens to be consistent, and that is exactly why it is
+     * worth pinning — `commands.rs` carried the opposite mistake (`mtime_ms` sent where the
+     * frontend read `mtimeMs`) for the whole of development, and nothing caught it.
+     */
+    #[test]
+    fn export_asset_matches_the_typescript_interface() {
+        let asset = ExportAsset {
+            path: "C:/docs/a.png".into(),
+            relative_path: "img/a.png".into(),
+            mime: "image/png".into(),
+            size: 3,
+            base64: "AAAA".into(),
+        };
+        assert_eq!(
+            keys(&asset),
+            vec!["base64", "mime", "path", "relative_path", "size"]
+        );
+    }
+
+    #[test]
+    fn pdf_report_matches_the_typescript_interface() {
+        let report = PdfReport {
+            path: "C:/docs/a.pdf".into(),
+            size: 3,
+            page_count: Some(2),
+        };
+        assert_eq!(keys(&report), vec!["page_count", "path", "size"]);
+
+        // An unparseable page count must still be a key, or the frontend reads `undefined`
+        // where it expects `null` and cannot tell "unknown" from "missing field".
+        let unknown = PdfReport { page_count: None, ..report };
+        assert_eq!(keys(&unknown), vec!["page_count", "path", "size"]);
+    }
 
     #[test]
     fn base64_matches_the_standard_alphabet() {

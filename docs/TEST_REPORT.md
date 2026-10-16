@@ -15,16 +15,16 @@ estimated.
 
 | Layer | Command | Result |
 |---|---|---|
-| Unit + DOM (Vitest) | `pnpm test` | **434 passed / 0 failed** (9 files) |
+| Unit + DOM (Vitest) | `pnpm test` | **440 passed / 0 failed** (10 files) |
 | Browser E2E (Playwright) | `pnpm test:e2e` | **59 passed / 0 failed** (incl. 7 screenshot baselines and 6 accessibility audits) |
-| Desktop E2E (WebdriverIO) | `pnpm test:desktop` | **6 passed / 0 failed** |
-| Rust unit | `cargo test --lib` | **3 passed / 0 failed** |
+| Desktop E2E (WebdriverIO) | `pnpm test:desktop` | **8 passed / 0 failed** (custom-protocol binary, no dev server running) |
+| Rust unit | `cargo test --lib` | **9 passed / 0 failed** (3 export + 6 IPC wire-format contract) |
 | Corpus validation | `pnpm corpus:verify` | **OK** — manifest matches disk |
 | Corpus conformance | part of `pnpm test` | **300 assertions, 148/148 fixtures emit every declared diagnostic** |
 | Type check | `pnpm typecheck` | clean |
 | Frontend build | `pnpm build` | exit 0 |
-| Installers | `pnpm desktop:build` | NSIS **9,523,529 B**, MSI **10,383,360 B** |
-| Portable | `pnpm desktop:build:portable` | **10,061,228 B** zip (`openmark.exe` + `README.txt`), verified to keep app data in `./data` |
+| Installers | `pnpm desktop:build` | NSIS **9,522,968 B**, MSI **10,383,360 B** |
+| Portable | `pnpm desktop:build:portable` | **10,061,234 B** zip (`openmark.exe` + `README.txt`), verified to keep app data in `./data` |
 
 All four test layers are green against the shipping artefacts, not against mocks: Playwright
 drives the minified production bundle in the same engine family as the app runtime, and
@@ -32,7 +32,7 @@ WebdriverIO drives the compiled `openmark.exe` over WebView2.
 
 ---
 
-## 2. Unit and DOM tests — 434
+## 2. Unit and DOM tests — 440
 
 | File | Tests | What it establishes |
 |---|---:|---|
@@ -40,6 +40,7 @@ WebdriverIO drives the compiled `openmark.exe` over WebView2.
 | `tests/unit/table.test.ts` | 36 | Table parsing and serialisation, including a fixed-point round-trip and CJK/emoji column widths |
 | `tests/unit/dom/sanitize.test.ts` | 23 | The sanitiser's security boundary and its preservation duty |
 | `tests/unit/dom/images.test.ts` | 7 | Relative image sources are rewritten to loadable URLs; traversal is refused without touching the filesystem |
+| `tests/unit/dom/external-change.test.ts` | 6 | Every interleaving of the external-change probe: a real change is reported, an autosave landing mid-probe is not, a probe in flight cannot blame a document opened meanwhile, a deleted file is not a change. Hand-driven promise ordering — no test waits on the clock, and both race cases fail on the previous implementation |
 | `tests/unit/encoding.test.ts` | 20 | BOM/EOL detection and byte-exact round-trip |
 | `tests/unit/assets.test.ts` | 20 | Image asset naming, placement and the browser fallback |
 | `tests/unit/markdown-blocks.test.ts` | 13 | Block decomposition and the splice invariant the instant editor depends on |
@@ -95,30 +96,37 @@ WebView2.
 
 ---
 
-## 4. Desktop E2E — 6
+## 4. Desktop E2E — 8
 
 Drives the compiled `openmark.exe` over WebDriver via `tauri-driver` and `msedgedriver`,
-attaching to WebView2 149.0.4022.62. Run against the **debug** build by default (that is the
-profile in which the wdio plugin is registered) and against the **release** binary with
-`OPENMARK_BINARY` set — both pass as of this report, so the shipped artefact is exercised
-directly rather than only a development build.
+attaching to WebView2 149.0.4022.62. The binary under test must be a **`custom-protocol`**
+build — `tauri build --debug --no-bundle`, or the release build. The suite was run against both,
+and the block below is the release run, so the shipped artefact is exercised directly rather
+than only a development build.
 
 ```
 Running against src-tauri/target/release/openmark.exe:
+✓ does not report an external change when nothing has touched the file
+✓ reports an external change once the file is actually touched
 ✓ launches the real binary and renders the application shell
 ✓ renders the toolbar with its document name element
 ✓ opens the fixture through the shell open-file event
 ✓ switches to source mode and shows the raw markdown
 ✓ typesets a display formula into real MathJax glyphs
 ✓ flags a broken formula as an error without losing its source
-6 passing (798ms)
+8 passing (14.2s)
 ```
+
+The first two are the regression tests for the false «文件已被其他程序修改» banner (defect 22).
+The first opens a scratch document that nothing touches and asserts no banner appears across
+three poll intervals; the second pushes the file's mtime forward from outside the application
+and asserts the banner **does** appear — so an attempt to fix the first by disabling the probe
+would fail the suite.
 
 The fixture is opened through the same `openmark://open-file` event Windows uses for
 "Open with", rather than by a test-only path, so the OS integration is exercised too.
 
-Two environmental blockers were diagnosed and are now encoded in `scripts/run-desktop-e2e.mjs`
-so they cannot recur:
+Three blockers were diagnosed and are now encoded in the harness so they cannot recur:
 
 1. `@wdio/tauri-service` finds the toolchain by looking for `cargo` on `PATH`. Rust is
    deliberately project-local here, so the service reported "Rust toolchain not found" before
@@ -128,6 +136,13 @@ so they cannot recur:
 2. A leftover `openmark.exe` from an earlier attempt made every new launch exit immediately —
    the single-instance plugin forwards to the running copy — which the driver reports as
    "Chrome instance exited", pointing nowhere near the cause.
+3. **A stale or dev-server binary passes nothing, and the failure misattributes itself.** The
+   frontend is embedded only in a `custom-protocol` build (`tauri-2.12.4/build.rs`:
+   `dev = !custom_protocol`), and `tauri_build::build()` does not watch `frontendDist`, so
+   neither a plain `cargo build` nor a `dist/` rebuild alone produces a binary that talks to a
+   live frontend. Both land at `src-tauri/target/debug/openmark.exe`. `src-tauri/build.rs` now
+   declares `rerun-if-changed=../dist`, and `scripts/run-desktop-e2e.mjs` refuses to start
+   against a binary older than `dist/`. See defects 24 and the correction note in PROGRESS §2.
 
 ---
 
@@ -197,6 +212,9 @@ or a review, not by inspection, and every one has regression coverage.
 | 19 | The tab bar was a fourth child of a three-row grid | When it appeared it displaced every other child by one track, putting the sidebar on top of it. None of the existing baselines could catch it: they all ran with a single document, where the bar renders nothing |
 | 20 | `newDocument` replaced the active tab's contents | "New" silently discarded the open document, with no way back. It now opens its own tab unless the current one is unused |
 | 21 | `write_text_file_atomic` ignored the caller's expected mtime | The documented clobber guard was not enforced where the write happens, so a change made between two polls of the external-change watcher would be overwritten |
+| 22 | Four IPC response structs serialised `snake_case` while the TypeScript layer read `camelCase` | **Reported from real use.** `mtimeMs`/`isDir`/`backupPath` arrived as `undefined`, so «文件已被其他程序修改» was raised on every document seconds after opening it — and because the mtime returned by a save was `undefined` too, defect 21's clobber guard silently disarmed itself after the first save. Found by the user, not by the suite: no layer asserted the wire format until the tests added for it |
+| 23 | `checkExternalChange()` compared against a pre-`await` snapshot of `doc` | An autosave completing mid-probe re-raised the banner over a document the save handler had just cleared, and left it standing. The comparison now runs inside the state updater against the live document |
+| 24 | The desktop E2E could drive a binary that did not contain the code under test | `tauri_build::build()` does not watch `frontendDist`, so rebuilding `dist/` left the binary stale while cargo reported success — a stale binary launches, renders and passes. Separately, `dev = !custom_protocol` means a plain `cargo build` yields a dev-server binary that renders nothing at all. Both made this layer's earlier green runs mean less than they appeared to |
 
 Corpus corrections: three fixtures or manifest entries were themselves wrong (an "unclosed
 fence" fixture that contained a closing fence; a manifest entry pinning a code the parser no
@@ -283,6 +301,8 @@ pnpm install
 pnpm typecheck && pnpm test && pnpm corpus:verify
 pnpm build && pnpm test:e2e
 pnpm desktop:dev                      # interactive
-pnpm test:desktop                     # requires a debug build: tauri build --debug --no-bundle
+pnpm tauri build --debug --no-bundle  # custom-protocol; a plain `cargo build` will NOT do
+pnpm test:desktop
+OPENMARK_BINARY=src-tauri/target/release/openmark.exe pnpm test:desktop   # against the shipped binary
 node scripts/gen-corpus-stress.mjs && node --expose-gc scripts/perf-parse.mjs
 ```

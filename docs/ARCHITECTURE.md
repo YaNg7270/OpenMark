@@ -175,7 +175,11 @@ deferral contract and the scheduling above; the `IntersectionObserver` wiring it
 `doc.source` is the authoritative text; `doc.savedSource` is the last successful load/save (dirty detection),
 `doc.hash` is an FNV-1a content hash used for change detection. `openPath()` runs the whole pipeline and then the
 read-only gate; `setSource()` re-parses on every edit and is refused outright when `doc.readOnly`;
-`checkExternalChange()` compares `stat().mtimeMs` against the loaded value and sets `doc.externalChange`.
+`checkExternalChange()` compares `stat().mtimeMs` against the loaded value and sets `doc.externalChange`. The
+comparison runs **inside the state updater, against the live document**, not against a snapshot taken before the
+IPC probe: an autosave landing mid-probe writes a new mtime that is expected, not external, and a snapshot
+comparison re-raised the banner over a document that was already clean (PROGRESS §2.10). The path is re-checked
+there for the same reason, so a probe that was in flight cannot blame a document the user opened meanwhile.
 `ui` holds mode/sidebar/searchQuery/activeHeadingId/progress/notice. Settings changes go through
 `updateSettings()` → `applySettingsToDocument()` (CSS variables) + `saveSettings()` (localStorage) — appearance
 changes never re-render a document.
@@ -345,12 +349,26 @@ boundary so JS has one shape):
 
 | Command | Contract |
 |---|---|
-| `read_text_file(path)` | raw bytes + `path`, `size`, `mtime_ms` |
-| `write_text_file_atomic(path, bytes)` | temp file in the *same* directory → `write_all` → `flush` → `sync_all` → `rename`; optional rotating backup; `WriteResult{path,size,mtime_ms,backup_path}`. Reads `makeBackup`/`make_backup` from the raw payload without deserialising `bytes` twice. |
-| `stat_file(path)` | `None` when the file does not exist (a normal answer, used for polling) |
+| `read_text_file(path)` | raw bytes + `path`, `size`, `mtimeMs` |
+| `write_text_file_atomic(path, bytes)` | temp file in the *same* directory → `write_all` → `flush` → `sync_all` → `rename`; optional rotating backup; `WriteResult{path,size,mtimeMs,backupPath}`. Reads `makeBackup`/`make_backup` from the raw payload without deserialising `bytes` twice. Enforces `expectedMtimeMs` when the caller sends one (§3 Invariant S5). |
+| `stat_file(path)` | `None` when the file does not exist (a normal answer, used for polling); `{exists,size,mtimeMs,isDir}` otherwise |
 | `list_dir(path)` | directories first, then case-insensitive by name; entries that vanish mid-listing are skipped |
 | `resolve_asset_url(path)` | canonicalise (symlinks resolved) so the result matches the asset-protocol scope check |
-| `path_exists`, `default_documents_dir`, `app_version` | small helpers |
+| `read_export_asset(documentPath, relativePath)` | base64 + sniffed MIME for one image, resolved against the *document's* directory |
+| `export_pdf(html, outputPath)` | `ICoreWebView2_7::PrintToPdf` via `Webview::with_webview`; `PdfReport{path,size,page_count}` |
+| `path_exists`, `default_documents_dir`, `app_version`, `frontend_ready`, `show_main_window` | small helpers |
+
+**Wire format — the field names are part of the contract.** Response structs do not go over the IPC boundary
+under their Rust names. Every struct in `commands.rs` carries `#[serde(rename_all = "camelCase")]`, because the
+TypeScript layer in `src/core/fs/fileService.ts` declares `mtimeMs` / `isDir` / `backupPath`, and serde's default
+would emit `mtime_ms` / `is_dir` / `backup_path` — arriving as `undefined` with no type error anywhere, since the
+interface is hand-written. `ExportAsset` and `PdfReport` in `export.rs` are the deliberate exception and stay
+`snake_case`, matching what `src/core/export/{assets,pdf}.ts` declare.
+
+This is not hypothetical: the mismatch shipped, and its first symptom was a false «文件已被其他程序修改» banner
+on every document, because `checkExternalChange()` compared a real timestamp against `undefined` (PROGRESS §2.9).
+Both conventions are now pinned by `#[cfg(test)]` tests in `commands.rs` and `export.rs` that serialise each struct
+and assert its JSON key names — the only place the mistake is visible, because it is invisible from TypeScript.
 
 **`lib.rs`.** Single-instance plugin registered first (so a second launch cannot race a second window), then
 dialog/fs/opener/store/window-state/process/os/persisted-scope; `tauri-plugin-wdio` only under
@@ -368,11 +386,14 @@ test-only capability. `tauri.conf.json` keeps `app.security.capabilities: []`, w
 auto-discovered (listing entries there would restrict the set to exactly those listed).
 
 **Distribution.** `targets: ["nsis","msi","app"]` — NSIS is primary (per-user, no admin, not affected by the
-VBSCRIPT deprecation); `app` is macOS-only and should be dropped for a Windows-only product. Portable = raw
-`.exe` via `--no-bundle` plus `appDirectoriesOverride: "data"`. File association for `md`/`markdown` is
-registered by the installer (cannot silently become the default handler on Windows 11). PDF export targets
-`ICoreWebView2_7::PrintToPdf` through `Webview::with_webview`, behind the optional `pdf-export` Cargo feature —
-**no PDF command exists yet** (RESEARCH §9.4).
+VBSCRIPT deprecation); `app` is macOS-only and unused for a Windows-only product. Portable = raw `.exe` via
+`--no-bundle` plus `appDirectoriesOverride: "data"`. File association for `md`/`markdown` is registered by the
+installer (it cannot silently become the default handler on Windows 11). PDF export targets
+`ICoreWebView2_7::PrintToPdf` through `Webview::with_webview`; there is no `pdf-export` feature gate — the
+`webview2-com` / `windows` dependencies are unconditional and `export_pdf` is always registered (RESEARCH §9.4).
 
-**Planned Rust additions:** `expectedMtimeMs` enforcement in `write_text_file_atomic` (§3 Invariant S5), the
-`pdf-export` command, and a watcher event for external change (currently polled from the frontend).
+**Build trap.** `tauri-2.12.4/build.rs` sets `dev = !custom_protocol`. Only `tauri build` enables
+`tauri/custom-protocol`, which is what embeds `dist/`; a plain `cargo build` therefore produces a binary that
+loads `devUrl` (`http://localhost:1420`) and renders an empty window. Both write to the same path, so the wrong
+command silently replaces a working binary — and the failure looks like a broken frontend, not a wrong build.
+`src-tauri/build.rs` declares `rerun-if-changed=../dist` so a frontend rebuild actually re-embeds the assets.

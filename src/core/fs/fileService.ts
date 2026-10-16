@@ -93,11 +93,19 @@ function baseName(path: string): string {
   return parts[parts.length - 1] || path;
 }
 
+/**
+ * The Rust `read_text_file` payload.
+ *
+ * Field names are camelCase because every response struct on the Rust side is annotated
+ * `#[serde(rename_all = "camelCase")]`. They were not, once: `mtime_ms` arrived under that name
+ * while this interface declared `mtimeMs`, so the value was `undefined` and the external-change
+ * check compared against nothing.
+ */
 interface FilePayload {
   bytes: number[];
   path: string;
   size: number;
-  mtime_ms: number;
+  mtimeMs: number;
 }
 
 /** The open dialog only ever opens markdown. */
@@ -169,7 +177,7 @@ export async function readFile(path: string): Promise<OpenedFile> {
     text: decoded.text,
     hash: contentHash(decoded.text),
     size: payload.size,
-    mtimeMs: payload.mtime_ms,
+    mtimeMs: payload.mtimeMs,
     bom: decoded.bom,
     eol: decoded.eol,
     lossy: decoded.lossy,

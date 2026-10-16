@@ -31,13 +31,13 @@ install-tested.
 | Rust toolchain | `cargo -V` (project-local) | 1.99.0, MSVC 14.44 linker verified with a smoke build |
 | Type check | `tsc --noEmit` | clean |
 | Frontend build | `vite build` | exit 0 |
-| Windows binary | `tauri build` | `src-tauri/target/release/openmark.exe`, 14,473,216 bytes, boots |
+| Windows binary | `tauri build` | `src-tauri/target/release/openmark.exe`, 14,484,992 bytes, boots |
 | Rust check | `cargo check` | zero warnings |
 | Browser E2E | `playwright test` | **59 passed** (incl. 7 screenshot baselines and 6 axe-core accessibility audits) |
-| Desktop E2E | `pnpm test:desktop` | **6 passed** (release binary, WebView2 149) |
-| Rust unit | `cargo test --lib` | **3 passed** |
-| Unit + DOM tests | `vitest run` | **434 passed** (incl. 300 corpus-conformance assertions) |
-| Windows installers | `pnpm desktop:build` | NSIS 9,523,529 B, MSI 10,383,360 B; portable zip 10,061,228 B via `desktop:build:portable` |
+| Desktop E2E | `pnpm test:desktop` | **8 passed** (custom-protocol debug binary, WebView2 149, no dev server running) |
+| Rust unit | `cargo test --lib` | **9 passed** (3 export + 6 IPC wire-format contract) |
+| Unit + DOM tests | `vitest run` | **440 passed** (incl. 300 corpus-conformance assertions and 6 external-change races) |
+| Windows installers | `pnpm desktop:build` | NSIS 9,522,968 B, MSI 10,383,360 B; portable zip 10,061,234 B via `desktop:build:portable` |
 | Desktop binary | direct launch | debug build boots and stays alive; release build verified |
 | Corpus validation | `node scripts/verify-corpus.mjs` | OK — manifest matches disk |
 | Corpus diagnostics | `vitest run corpus.test.ts` | **148/148 fixtures emit every declared diagnostic** |
@@ -124,6 +124,65 @@ Each of these was found by a test, not by inspection. All have regression covera
    symptom is a whole-file diff after editing one character. Editors now work in normalised
    space and the store restores the document's own style. Pinned by an E2E test that appends
    to a CRLF file and asserts no bare LF survives.
+9. **«文件已被其他程序修改» appeared on every document, seconds after opening it** — reported
+   from real use, not by a test. Serde's default is the Rust field name, so `FilePayload`,
+   `WriteResult`, `FileStat` and `DirEntryInfo` serialised `mtime_ms` / `is_dir` /
+   `backup_path` while `src/core/fs/fileService.ts` declared `mtimeMs` / `isDir` / `backupPath`.
+   Every underscored field arrived as `undefined`, so `checkExternalChange()` compared a real
+   timestamp against `undefined` on each 2.5 s poll and always concluded the file had changed.
+   The same mistake silently disabled the clobber guard *after the first save*: the mtime
+   returned by the write was `undefined`, and that was then sent back as `expectedMtimeMs`, so
+   `write_text_file_atomic` saw no expectation to enforce. Fixed with
+   `#[serde(rename_all = "camelCase")]` on all four structs — `mtimeMs` is the value the
+   frontend always meant to read. The TypeScript interfaces were already correct, which is why
+   the compiler could not see it; the contract is now pinned on the side that produces the
+   bytes, by `commands.rs` unit tests that assert the JSON key names.
+10. **The external-change probe could fire on our own save.** `checkExternalChange()` took a
+    snapshot of `doc` before `await`ing the IPC probe and compared against that snapshot
+    afterwards. An autosave landing during the probe writes a new mtime, and the save handler
+    clears the banner when it resolves — so if the probe's verdict arrived afterwards it
+    re-raised the banner over a clean document and left it standing. The comparison now runs
+    inside the state updater against the live document, which also stops a probe that was in
+    flight from blaming a document the user opened meanwhile. Pinned by
+    `tests/unit/dom/external-change.test.ts`: both races fail on the previous implementation and
+    pass on this one.
+11. **The desktop E2E could drive a binary that did not contain the code under test.**
+    `tauri_build::build()` does not watch `frontendDist`, so rebuilding `dist/` left
+    `src-tauri/target/debug/openmark.exe` untouched while cargo reported "Finished". The stale
+    binary launches, renders, and passes — it is simply not the code being changed. Found when a
+    debug binary timestamped *older* than `dist/index.html` was still being driven by the suite.
+    `src-tauri/build.rs` now declares `rerun-if-changed=../dist` so cargo re-embeds the frontend
+    (verified: a no-op build stays a no-op, `touch dist/index.html` forces a recompile), and
+    `scripts/run-desktop-e2e.mjs` refuses to start when the binary predates `dist/`.
+12. **`cargo build` produces a binary that cannot render — the entire desktop suite failed
+    against one.** `tauri-2.12.4/build.rs` sets `dev = !custom_protocol`, and the `custom-protocol`
+    feature is what makes the build embed `dist/`; without it the binary loads `devUrl`
+    (`http://localhost:1420`) instead. `tauri build --debug` enables it, plain `cargo build`
+    does not, and both write to `src-tauri/target/debug/openmark.exe` — so a plain `cargo build`
+    silently replaces a working binary with a dev-server one. Every test then failed with
+    "element wasn't found" and "placeholder never rendered", which reads as a broken frontend
+    rather than a wrong build command. Found by checking the timestamp of the failing binary
+    against `dist/` and then reading `is_dev()`. Recorded because it is invisible: the build
+    succeeds, the app launches, and the window is simply empty.
+
+### Correction: earlier desktop evidence was against a dev-server binary
+
+Defect 12 invalidates part of the previous session's desktop run. `6 passed` was real, but the
+binary under test was loading `http://localhost:1420` from a Vite dev server rather than the
+`dist/` it appeared to be testing, so it exercised current *source* instead of a packaged build.
+That is not the claim the layer advertises, and the number is superseded below by a run against
+a `custom-protocol` binary with no dev server listening. The `8 passed` recorded in §1 is the
+first desktop result in this project that is what it says it is.
+
+### Session note: the wire-format audit
+
+Because defect 9 was a *contract* mismatch that no TypeScript check can catch, every
+`invoke<T>` in the frontend was audited against its Rust producer. The complete set is: the four
+`commands.rs` structs above (now camelCase); `ExportAsset` and `PdfReport` in `export.rs`, which
+are `relative_path` / `page_count` on **both** sides and therefore consistent — an intentional
+exception, pinned by its own contract tests so a future rename cannot break it silently; and
+eight commands returning primitives (`String`, `bool`), where no field naming exists to get
+wrong.
 
 ---
 

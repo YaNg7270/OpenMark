@@ -7,7 +7,9 @@
  * fixture is opened through the application's own "a file was opened by the OS" event.
  */
 
-import { dirname, resolve } from 'node:path';
+import { writeFileSync, utimesSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { $, browser, expect } from '@wdio/globals';
 
@@ -36,6 +38,8 @@ const MODE_SOURCE = '[data-om-testid="mode-source"]';
 const SOURCE_EDITOR = '[data-om-editor="source"]';
 const SOURCE_CONTENT = '[data-om-editor="source"] .cm-content';
 const DOC_ROOT = '.om-doc';
+/** The external-change banner. Its absence is what these tests assert on. */
+const CHANGE_BANNER = '.om-banner';
 const FIXTURE_HEADING = '# OpenMark desktop fixture';
 
 const LAUNCH_TIMEOUT_MS = 60_000;
@@ -84,6 +88,63 @@ async function scrollTo(selector: string): Promise<void> {
     document.querySelector(sel)?.scrollIntoView({ block: 'center' });
   }, selector);
 }
+
+/**
+ * Writes a document to a scratch file the test can also touch on disk.
+ *
+ * A copy rather than a committed fixture, because the point is to change its mtime from
+ * outside the application and a fixture shared by other tests must not be mutated.
+ */
+function writeScratchDocument(name: string, content: string): string {
+  const target = join(tmpdir(), `openmark-e2e-${name}`);
+  writeFileSync(target, content, 'utf8');
+  return target;
+}
+
+describe('external change detection', () => {
+  before(async () => {
+    const [handle] = await browser.getWindowHandles();
+    if (handle) await browser.switchToWindow(handle);
+  });
+
+  /*
+   * Regression test for a defect that made the banner appear on every document, seconds after
+   * opening it, without anything editing the file.
+   *
+   * The Rust response structs serialised snake_case (`mtime_ms`, `is_dir`) while the TypeScript
+   * layer declared camelCase, so the stat probe compared a real timestamp against `undefined`
+   * and always concluded the file had changed. The same mismatch silently disabled the clobber
+   * guard after the first save, because the mtime returned by the write was `undefined` and was
+   * then sent back as the expected value.
+   */
+  it('does not report an external change when nothing has touched the file', async () => {
+    const path = writeScratchDocument('quiet.md', '# Quiet\n\nNothing is editing this file.\n');
+    await openFixture(path);
+
+    // The poll interval is 2.5 s; three intervals is long enough for a spurious banner to have
+    // appeared several times over.
+    await browser.pause(8_000);
+    expect(await $(CHANGE_BANNER).isExisting()).toBe(false);
+  });
+
+  it('reports an external change once the file is actually touched', async () => {
+    const path = writeScratchDocument('touched.md', '# Touched\n\nThis file will change.\n');
+    await openFixture(path);
+    await browser.pause(3_000);
+    // Still quiet, or the first test's condition was not actually fixed.
+    expect(await $(CHANGE_BANNER).isExisting()).toBe(false);
+
+    // Push the mtime forward far enough that no clock rounding can hide it.
+    const future = new Date(Date.now() + 5_000);
+    utimesSync(path, future, future);
+
+    await browser.waitUntil(async () => (await $(CHANGE_BANNER)).isExisting(), {
+      timeout: 15_000,
+      interval: 500,
+      timeoutMsg: 'the external-change banner never appeared after the file was touched',
+    });
+  });
+});
 
 describe('OpenMark desktop shell', () => {
   before(async () => {
