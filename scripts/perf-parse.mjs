@@ -2,7 +2,8 @@
 /**
  * Parse performance harness.
  *
- *     node scripts/perf-parse.mjs
+ *     node scripts/perf-parse.mjs            report only
+ *     node scripts/perf-parse.mjs --check    also fail when a fixture exceeds its budget
  *
  * Measures the synchronous half of the pipeline — the part that runs on every keystroke and
  * therefore decides whether a large document feels responsive — against the generated stress
@@ -11,6 +12,9 @@
  *
  * Run `node scripts/gen-corpus-stress.mjs` first; the harness reports which fixtures are
  * missing rather than failing, so it is safe to run on a fresh checkout.
+ *
+ * `--check` compares each median with `scripts/perf-budget.json` and exits 1 on any overrun, or
+ * when a budgeted fixture is missing (a check that silently measured nothing would pass).
  *
  * Figures are the median of several runs. A single run on a machine with other work in flight
  * is not evidence.
@@ -24,6 +28,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const STRESS = path.join(ROOT, 'tests', 'corpus', 'stress');
 
 const RUNS = 5;
+const CHECK = process.argv.includes('--check');
 
 /** The parser is TypeScript; load it through Vite's transform pipeline rather than tsc. */
 async function loadParser() {
@@ -64,8 +69,10 @@ async function main() {
   if (present.length === 0) {
     console.log('No stress fixtures found. Run: node scripts/gen-corpus-stress.mjs');
     await close();
+    if (CHECK) process.exitCode = 1;
     return;
   }
+  const results = new Map();
 
   console.log(`\nParse benchmark — median of ${RUNS} runs, Node ${process.version}\n`);
   console.log(
@@ -102,6 +109,7 @@ async function main() {
     last.heapDelta = retained;
 
     const ms = median(times);
+    results.set(name, ms);
     const throughput = bytes / 1048576 / (ms / 1000);
     const lines = last.stats.sourceLines;
     const heap = `${((last.heapDelta ?? 0) / 1048576).toFixed(1)} MB`;
@@ -121,6 +129,22 @@ async function main() {
   console.log('    transient allocation. It is reclaimed by the next collection; it is not retained by the document.');
 
   await close();
+
+  if (CHECK) {
+    const budget = JSON.parse(await readFile(path.join(ROOT, 'scripts', 'perf-budget.json'), 'utf8'));
+    const failures = [];
+    for (const [name, { maxParseMs }] of Object.entries(budget.fixtures)) {
+      const ms = results.get(name);
+      if (ms === undefined) failures.push(`${name}: not measured (fixture missing)`);
+      else if (ms > maxParseMs) failures.push(`${name}: ${ms.toFixed(0)} ms > budget ${maxParseMs} ms`);
+    }
+    if (failures.length > 0) {
+      console.error(`\n[perf-parse] over budget:\n  ${failures.join('\n  ')}`);
+      process.exitCode = 1;
+    } else {
+      console.log(`\n[perf-parse] all ${Object.keys(budget.fixtures).length} fixtures within budget.`);
+    }
+  }
 }
 
 main().catch((error) => {

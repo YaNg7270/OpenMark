@@ -31,7 +31,8 @@
     "desktop:build:portable": "node scripts/build-release.mjs --portable",
     "verify": "pnpm typecheck && pnpm lint && pnpm test",
     "typecheck:desktop": "node node_modules/typescript/bin/tsc --noEmit -p tsconfig.desktop.json",
-    "perf": "node --expose-gc scripts/perf-parse.mjs"
+    "perf": "node --expose-gc scripts/perf-parse.mjs",
+    "perf:check": "node --expose-gc scripts/perf-parse.mjs --check"
   },
   "dependencies": {
     "@codemirror/autocomplete": "^6.20.3",

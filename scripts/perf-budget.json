@@ -1,0 +1,10 @@
+{
+  "$comment": "Parse-time budgets (median ms) for `pnpm perf:check`. Reference medians on 2026-10-16, repeated runs on an idle machine: huge-textbook ~171, math-dense ~45, many-small-blocks ~140, deep-nesting 18-52 (bimodal, GC), wide-tables ~535. Budgets are roughly 2-5x those: loose enough to absorb machine noise, tight enough to catch an accidental quadratic. Raise a budget only with a measured reason, recorded in docs/TEST_REPORT.md section 5.",
+  "fixtures": {
+    "huge-textbook.md": { "maxParseMs": 400 },
+    "math-dense.md": { "maxParseMs": 250 },
+    "many-small-blocks.md": { "maxParseMs": 750 },
+    "deep-nesting.md": { "maxParseMs": 120 },
+    "wide-tables.md": { "maxParseMs": 950 }
+  }
+}
