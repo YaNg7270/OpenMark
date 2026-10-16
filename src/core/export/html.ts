@@ -121,7 +121,7 @@ async function buildStandaloneHtml(options: StandaloneHtmlOptions): Promise<Html
   resolveCodeTheme(root, theme);
   normalizeDiagrams(root);
   removeBlockToolbars(root);
-  removeMathJaxCounters(root);
+  removeRuntimeAttributes(root);
   await inlineImages(root, {
     documentPath: options.sourcePath,
     readAsset: options.readAsset ?? desktopAssetReader,
@@ -415,9 +415,13 @@ function removeBlockToolbars(root: HTMLElement): void {
  * meaningless: it makes the export depend on how many formulas the page had already typeset,
  * so exporting the same document twice would not produce the same file.
  */
-function removeMathJaxCounters(root: HTMLElement): void {
+function removeRuntimeAttributes(root: HTMLElement): void {
   for (const container of Array.from(root.querySelectorAll('mjx-container[ctxtmenu_counter]'))) {
     container.removeAttribute('ctxtmenu_counter');
+  }
+  // Source line anchors are for the app's view switching; an exported file has no source.
+  for (const block of Array.from(root.querySelectorAll('[data-om-line]'))) {
+    block.removeAttribute('data-om-line');
   }
 }
 

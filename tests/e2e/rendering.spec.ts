@@ -791,6 +791,53 @@ test.describe('session state', () => {
     await expect(page.getByTestId('draft-recovery')).toHaveCount(0);
   });
 
+  /*
+   * Each view unmounts on a mode switch. Before, each one started at its own top (or at the
+   * per-file reading position), so switching to source mode to fix a typo lost the reader's
+   * place. The views now hand over the source line at the top of the viewport.
+   */
+  test('a mode switch keeps the same part of the document on screen', async ({ page }) => {
+    // Section k starts on line 4(k-1)+1: heading, blank, text, blank.
+    const long = Array.from({ length: 200 }, (_, i) => `## 第 ${i + 1} 节\n\n${'正文内容。'.repeat(12)}\n`).join('\n');
+    await page.addInitScript((content) => {
+      window.__OPENMARK_TEST_FILES__ = { 'modes.md': content };
+    }, long);
+    await page.goto('/');
+    await page.waitForFunction(() => Boolean(window.__openmark__));
+    await page.evaluate(() => window.__openmark__!.openPath('modes.md'));
+    await expect(page.locator('.om-doc-scroll')).toBeVisible();
+
+    const sectionLine = (k: number) => 4 * (k - 1) + 1;
+    /** Line of the first source-tagged block still visible at the top of a rendered view. */
+    const renderedTopLine = () =>
+      page.locator('.om-doc-scroll').evaluate((scroller) => {
+        const top = scroller.getBoundingClientRect().top;
+        const block = Array.from(scroller.querySelectorAll('[data-om-line]')).find(
+          (el) => el.getBoundingClientRect().bottom > top + 1,
+        );
+        return Number(block?.getAttribute('data-om-line') ?? 0);
+      });
+
+    await page.locator('#第-120-节, [id*="120"]').first().evaluate((heading) => heading.scrollIntoView({ block: 'start' }));
+    await expect.poll(renderedTopLine).toBeGreaterThanOrEqual(sectionLine(120) - 4);
+    const readLine = await renderedTopLine();
+
+    await page.getByTestId('mode-source').click();
+    // The caret is placed on the handed-over line, and that line is at the top of the editor.
+    await expect(page.getByTestId('source-caret')).toHaveText(`${readLine}:1`);
+    const firstVisible = await page.locator('.om-source__host').evaluate((host) => {
+      const scroller = host.querySelector('.cm-scroller')!;
+      const top = scroller.getBoundingClientRect().top;
+      const line = Array.from(host.querySelectorAll('.cm-line')).find((el) => el.getBoundingClientRect().bottom > top + 14);
+      return line?.textContent ?? '';
+    });
+    expect(firstVisible).toContain('第 120 节');
+
+    await page.getByTestId('mode-instant').click();
+    await expect.poll(renderedTopLine).toBeGreaterThanOrEqual(sectionLine(120) - 4);
+    expect(await renderedTopLine()).toBeLessThanOrEqual(sectionLine(121));
+  });
+
   test('remembers recently opened files, most recent first', async ({ page }) => {
     await page.addInitScript(() => {
       window.__OPENMARK_TEST_FILES__ = {

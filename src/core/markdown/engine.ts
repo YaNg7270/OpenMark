@@ -1018,6 +1018,21 @@ export function createEngine(options: EngineOptions = {}): MarkdownItInstance {
     collectPass({ tokens: state.tokens, src: state.src, env });
   });
 
+  /*
+   * Top-level blocks carry their 1-based source line as `data-om-line`. It is what lets a view
+   * switch keep the reader on the same part of the document: the rendered views and the source
+   * editor have nothing else in common to anchor on. Blocks rendered as placeholders (fences,
+   * math, Mermaid) do not print token attributes, so a reader of this attribute uses the
+   * nearest tagged block before a position.
+   */
+  md.core.ruler.push('openmark_source_lines', (state) => {
+    for (const token of state.tokens) {
+      if (token.level === 0 && token.nesting !== -1 && token.map && token.type !== 'om_frontmatter') {
+        token.attrSet('data-om-line', String(token.map[0] + 1));
+      }
+    }
+  });
+
   return md;
 }
 

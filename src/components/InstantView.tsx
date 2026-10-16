@@ -3,6 +3,7 @@ import type { SourceBlock } from '@/core/markdown/types';
 import { useStore, type DocumentState } from '@/app/store';
 import { useReadingProgress, useTypesetting } from './useTypesetting';
 import { MathTools } from './MathTools';
+import { anchorKey, useViewAnchor } from './viewAnchor';
 import { TableEditor } from './TableEditor';
 import { applyShortcutToTextarea } from './markdownShortcuts';
 import { readFenceLanguage, setFenceLanguage } from '@/core/markdown/edit-commands';
@@ -62,6 +63,7 @@ export function InstantView({ doc, onNavigate }: InstantViewProps) {
 
   useTypesetting(hostRef, scrollRef, doc.render, signature, revision, doc.path);
   useReadingProgress(scrollRef, hostRef, { path: doc.path, hash: doc.hash }, signature);
+  useViewAnchor(scrollRef, hostRef, anchorKey(activeTabId, doc.path), Boolean(doc.source));
 
   // Leaving edit mode restores placeholders that were inside the edited block, so the
   // typesetter has to run again for them.
@@ -177,6 +179,7 @@ function Block({
       className="om-block"
       data-om-block={block.index}
       data-om-kind={block.kind}
+      data-om-line={block.range.start.line}
       data-editing={active ? 'true' : undefined}
     >
       <div

@@ -3,6 +3,7 @@ import { useStore, type DocumentState } from '@/app/store';
 import { useReadingProgress, useTypesetting } from './useTypesetting';
 import { RecentPanel } from './RecentPanel';
 import { MathTools } from './MathTools';
+import { anchorKey, useViewAnchor } from './viewAnchor';
 
 /**
  * The reading surface.
@@ -45,6 +46,8 @@ export function DocumentView({ doc, onNavigate }: DocumentViewProps) {
 
   useTypesetting(hostRef, scrollRef, doc.render, signature, 0, doc.path);
   useReadingProgress(scrollRef, hostRef, { path: doc.path, hash: doc.hash }, signature);
+  // Declared after the reading-position restore, so a line handed over by the previous view wins.
+  useViewAnchor(scrollRef, hostRef, anchorKey(activeTabId, doc.path), Boolean(doc.source) && !doc.error);
 
   if (doc.error) {
     return (

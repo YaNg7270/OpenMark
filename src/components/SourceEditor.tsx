@@ -22,6 +22,7 @@ import { useStore, type DocumentState } from '@/app/store';
 import { imageMarkdown, saveImageAsset } from '@/core/fs/assets';
 import { t } from '@/i18n';
 import { markdownShortcutsExtension } from './markdownShortcuts';
+import { anchorKey, anchorLineFor, rememberTopLine } from './viewAnchor';
 
 /**
  * Markdown source editor built on CodeMirror 6.
@@ -308,7 +309,35 @@ export function SourceEditor({ doc, onChange, readOnly }: SourceEditorProps) {
     });
 
     viewRef.current = view;
+
+    /*
+     * Start where the previous view left the reader (see `viewAnchor.ts`), with the caret on
+     * that line so typing begins there rather than at the top of the file.
+     */
+    const key = anchorKey(useStore.getState().activeTabId, doc.path);
+    const startLine = anchorLineFor(key);
+    if (startLine !== null && startLine <= view.state.doc.lines) {
+      const from = view.state.doc.line(startLine).from;
+      view.dispatch({
+        selection: { anchor: from },
+        effects: EditorView.scrollIntoView(from, { y: 'start' }),
+      });
+    }
+
+    let frame = 0;
+    const onScroll = () => {
+      if (frame) return;
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        const block = view.lineBlockAtHeight(view.scrollDOM.scrollTop - view.documentPadding.top);
+        rememberTopLine(key, view.state.doc.lineAt(block.from).number);
+      });
+    };
+    view.scrollDOM.addEventListener('scroll', onScroll, { passive: true });
+
     return () => {
+      cancelAnimationFrame(frame);
+      view.scrollDOM.removeEventListener('scroll', onScroll);
       view.destroy();
       viewRef.current = null;
     };

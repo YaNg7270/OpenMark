@@ -115,7 +115,8 @@ describe('sanitizeHtml: legitimate markdown must survive', () => {
 
   it('keeps GFM tables with every part of the structure', () => {
     const { html } = render('| A | B |\n| :-- | --: |\n| 1 | 2 |\n');
-    for (const fragment of ['<table>', '<thead>', '<tbody>', '<th', '<td']) {
+    // `<table` rather than `<table>`: top-level blocks carry `data-om-line`.
+    for (const fragment of ['<table', '<thead>', '<tbody>', '<th', '<td']) {
       expect(html, `missing ${fragment}`).toContain(fragment);
     }
   });
