@@ -16,13 +16,19 @@ import type { MathExpression, MermaidDiagram } from '../markdown/types';
 
 /** Names a typeset formula, using its LaTeX source as the label. */
 export function nameFormula(node: HTMLElement, tex: string): void {
+  /*
+   * With the experimental speech setting on, MathJax's spoken description ("E equals m c
+   * squared") is a far better name than the LaTeX source; it is on the outermost semantic node.
+   */
+  const spoken = node.querySelector('[data-semantic-speech-none]')?.getAttribute('data-semantic-speech-none');
+  const label = spoken || tex;
   // The `<svg>` is the element MathJax gives `role="img"`, so it is the one that needs the name.
   const svg = node.querySelector('svg');
-  if (svg) svg.setAttribute('aria-label', tex);
+  if (svg) svg.setAttribute('aria-label', label);
   const container = node.querySelector('mjx-container');
-  if (container) container.setAttribute('aria-label', tex);
+  if (container) container.setAttribute('aria-label', label);
   // `role="math"` on a placeholder already says what this is; the label says which formula.
-  node.setAttribute('aria-label', tex);
+  node.setAttribute('aria-label', label);
 }
 
 /** Names a formula placeholder in place, for callers that only have the rendered element. */

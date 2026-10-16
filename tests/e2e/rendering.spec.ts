@@ -219,6 +219,33 @@ test.describe('critical path', () => {
     }
   });
 
+  test('with spoken formulas enabled, a formula is named by its speech, offline', async ({ page }) => {
+    // The setting is read when MathJax boots, so it is stored before the app starts.
+    await page.addInitScript(() => {
+      localStorage.setItem('openmark.settings.v1', JSON.stringify({ version: 1, reading: { mathSpeech: true } }));
+    });
+    const external: string[] = [];
+    page.on('request', (request) => {
+      const url = request.url();
+      // The speech worker is started from a local `blob:` URL; that is not a network request.
+      if (/^(?:http:\/\/(?:127\.0\.0\.1|localhost)|data:|blob:)/.test(url)) return;
+      external.push(url);
+    });
+    await openFixture(
+      page,
+      'speech.md',
+      ['# 语音', '', '$E = mc^2$', '', '$$\\begin{equation}a + b\\end{equation}$$'].join('\n'),
+    );
+
+    const first = page.locator('.om-math').first();
+    await expect(first).toHaveAttribute('data-om-state', 'ok', { timeout: 15_000 });
+    await expect(first).toHaveAttribute('aria-label', /equals/);
+    expect(await first.locator('svg use, svg path').count()).toBeGreaterThan(0);
+    // Numbering still works through the promise-based conversion.
+    await expect(page.locator('.om-math').nth(1)).toHaveAttribute('data-om-state', 'ok');
+    expect(external, `speech reached the network: ${external.join(', ')}`).toEqual([]);
+  });
+
   test('the health report can be copied and exported', async ({ page, context }) => {
     await context.grantPermissions(['clipboard-read', 'clipboard-write']);
     await openFixture(

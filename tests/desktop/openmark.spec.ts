@@ -406,3 +406,57 @@ describe('version history', () => {
     );
   });
 });
+
+/*
+ * Spoken formulas start MathJax's speech worker from a `blob:` URL and load its rules from the
+ * vendored `sre/` folder. Under the app's own origin and header CSP that is a different setting
+ * from the browser suite, so it is checked here. The setting is read when MathJax boots, hence
+ * the reload.
+ */
+describe('spoken formulas', () => {
+  it('names a formula by its speech when the experimental setting is on', async () => {
+    await browser.execute(() => {
+      localStorage.setItem('openmark.settings.v1', JSON.stringify({ version: 1, reading: { mathSpeech: true } }));
+      location.reload();
+    });
+    await waitFor(TOOLBAR, 'the shell did not come back after the reload', LAUNCH_TIMEOUT_MS);
+    // The reloaded frontend registers its open-file listener after the toolbar mounts, so an
+    // event sent too early is lost; send it until the document is open.
+    await browser.waitUntil(
+      async () => {
+        await openFixture(FIXTURE_PATH);
+        await browser.pause(500);
+        return (await $(DOCUMENT_NAME).getText()).includes('math-render');
+      },
+      { timeout: MOUNT_TIMEOUT_MS, timeoutMsg: 'the fixture did not open after the reload' },
+    );
+    await $(MODE_READ).click();
+    try {
+      await browser.waitUntil(
+        async () =>
+          browser.execute(() =>
+            Array.from(document.querySelectorAll('.om-math[data-om-state="ok"]')).some((node) =>
+              /equals|plus|squared|over/.test(node.getAttribute('aria-label') ?? ''),
+            ),
+          ),
+        { timeout: LAUNCH_TIMEOUT_MS, timeoutMsg: 'no formula was named by a spoken description' },
+      );
+    } catch (error) {
+      const state = await browser.execute(() => ({
+        stored: localStorage.getItem('openmark.settings.v1'),
+        speech: (window as unknown as { MathJax?: { config?: { options?: Record<string, unknown> } } }).MathJax?.config?.options?.['enableSpeech'],
+        worker: (window as unknown as { MathJax?: { config?: { options?: Record<string, unknown> } } }).MathJax?.config?.options?.['worker'],
+        formulas: Array.from(document.querySelectorAll('.om-math')).slice(0, 3).map((n) => `${n.getAttribute('data-om-state')} | ${n.getAttribute('aria-label')} | ${(n as HTMLElement).title}`),
+        resources: performance.getEntriesByType('resource').map((r) => r.name).filter((n) => /sre|worker|mathmaps/.test(n)),
+      }));
+      console.log(`[desktop-e2e] speech diagnostics ${JSON.stringify(state)}`);
+      throw error;
+    } finally {
+      await browser.execute(() => {
+        localStorage.removeItem('openmark.settings.v1');
+        location.reload();
+      });
+      await waitFor(TOOLBAR, 'the shell did not come back after resetting the setting', LAUNCH_TIMEOUT_MS);
+    }
+  });
+});

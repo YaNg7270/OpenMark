@@ -74,6 +74,28 @@ interface MathJaxGlobal {
   };
   /** MathJax's module tree; only the tag factory is reached into, see `setEquationNumbering`. */
   _?: { input?: { tex?: { Tags?: { TagsFactory?: { create(name: string): TexTags } } } } };
+  /** Conversion that waits for every asynchronous action, the speech worker included. */
+  tex2svgPromise?: (tex: string, options: Record<string, unknown>) => Promise<HTMLElement>;
+}
+
+/**
+ * Spoken descriptions of formulas (MathJax semantic enrichment + speech), off by default.
+ *
+ * Read once, when MathJax is first configured: the bundle reads its options at boot, so a
+ * change after that takes effect on the next launch. The speech rules and the worker are
+ * vendored under `mathjax/v4/sre/`, so this needs no network either.
+ */
+let speechEnabled = false;
+
+/** Returns false when MathJax has already booted with the other setting (restart needed). */
+export function setMathSpeech(enabled: boolean): boolean {
+  if (runtime() && enabled !== speechEnabled) return false;
+  speechEnabled = enabled;
+  return true;
+}
+
+export function isMathSpeechEnabled(): boolean {
+  return speechEnabled;
 }
 
 /** A TeX tag handler: owns the equation counter and the label table. */
@@ -179,17 +201,26 @@ function configure(): void {
       },
       enableMenu: true,
       enableAssistiveMml: false,
-      enableSpeech: false,
+      enableSpeech: speechEnabled,
       enableBraille: false,
-      enableEnrichment: false,
+      enableEnrichment: speechEnabled,
       menuOptions: {
         settings: {
           assistiveMml: false,
-          speech: false,
+          speech: speechEnabled,
           braille: false,
-          enrich: false,
+          enrich: speechEnabled,
           zoom: 'None',
         },
+      },
+      /*
+       * The speech worker is started from a `blob:` URL, against which a relative path does not
+       * resolve — the worker then waits for its rules forever. Absolute URLs on the app's own
+       * origin keep it working offline (CSP `worker-src 'self' blob:`).
+       */
+      worker: {
+        path: new URL(`${MATHJAX_DIR}/sre`, globalThis.location?.href ?? 'http://localhost/').href,
+        maps: new URL(`${MATHJAX_DIR}/sre/mathmaps`, globalThis.location?.href ?? 'http://localhost/').href,
       },
     },
     startup: {
@@ -280,7 +311,11 @@ export async function renderExpression(
   };
 
   try {
-    const node = await convertWithRetries(mj, tex, convertOptions);
+    // With speech on, only the promise API waits for the worker to attach the description.
+    const node =
+      speechEnabled && mj.tex2svgPromise
+        ? await mj.tex2svgPromise(tex, convertOptions)
+        : await convertWithRetries(mj, tex, convertOptions);
     const html = mj.startup.adaptor.outerHTML(node);
     const errorMatch = MERROR_REGEX.exec(html);
     if (errorMatch) {

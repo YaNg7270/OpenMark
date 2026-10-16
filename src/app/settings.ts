@@ -11,6 +11,7 @@
  */
 
 import { setPageZoom } from '@/core/util/window';
+import { setMathSpeech } from '@/core/math/mathjax';
 
 export type ThemePreference = 'light' | 'dark' | 'system';
 export type ContentFont = 'serif' | 'sans' | 'system';
@@ -41,6 +42,11 @@ export interface ReadingSettings {
   zoom: number;
   /** Alignment of an image that stands alone in its paragraph. */
   imageAlign: ImageAlign;
+  /**
+   * Experimental: MathJax semantic enrichment and speech, so a screen reader hears
+   * "E equals m c squared" instead of the LaTeX. Takes effect on the next launch.
+   */
+  mathSpeech: boolean;
 }
 
 export interface EditorSettings {
@@ -91,6 +97,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
     autoNumberHeadings: false,
     zoom: 1,
     imageAlign: 'left',
+    mathSpeech: false,
   },
   editor: {
     // On by default (PRD R-C-8). Autosaves take a backup at most every ten minutes, so the
@@ -218,4 +225,6 @@ export function applySettingsToDocument(settings: AppSettings): void {
   // Padding grows as the column narrows, so a narrow column still reads as a book page.
   root.style.setProperty('--om-content-padding', `${Math.max(1.5, 4 + (46 - reading.contentWidth) * 0.12)}rem`);
   void setPageZoom(clampZoom(reading.zoom));
+  // Only effective before MathJax first boots; the setting says so in the panel.
+  setMathSpeech(reading.mathSpeech);
 }

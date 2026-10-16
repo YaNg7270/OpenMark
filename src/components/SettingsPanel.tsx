@@ -131,6 +131,11 @@ export function SettingsPanel({ onChange }: SettingsPanelProps) {
           onChange={(autoNumberHeadings) => patchReading({ autoNumberHeadings })}
         />
         <Toggle
+          label={t('settings.mathSpeech')}
+          checked={reading.mathSpeech}
+          onChange={(mathSpeech) => patchReading({ mathSpeech })}
+        />
+        <Toggle
           label={t('settings.progress')}
           checked={reading.showReadingProgress}
           onChange={(showReadingProgress) => patchReading({ showReadingProgress })}
