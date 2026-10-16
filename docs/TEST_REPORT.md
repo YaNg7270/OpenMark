@@ -260,6 +260,8 @@ It found six real problems, all fixed and now enforced:
 | Scripts never execute | Hostile fixtures assert `window.__pwned` is undefined and no `<script>` survives |
 | Sanitisation happens **before** typesetting | Math, Mermaid and code are empty placeholders when DOMPurify runs, so untrusted markup never reaches the DOM and library output never passes an allow-list |
 | Path traversal is refused without touching the filesystem | `classifyRelativePath` rejects a net climb of two or more levels (one level up is ordinary: `../assets/logo.png`); percent-encoding is decoded first |
+| The export applies the same boundary | `read_export_asset` checks the canonical path against the document's folder plus one level and inlines only `image/*`; three Rust tests in `src-tauri/src/export.rs` |
+| Formula output cannot carry links, ids or styles the document chose | MathJax output bypasses DOMPurify, so `ui/safe` filters it (`javascript:`/`data:`/`file:` links dropped, ids and classes limited to `mjx-*`, `\style` reduced to harmless properties); `rendering.spec.ts` › "formulas cannot inject…" |
 | Exported HTML carries no behaviour | The export test asserts no `<script>` in the produced file |
 
 Known gaps: dependency licences are documented in `docs/LICENSE_NOTICES.md`, which records two

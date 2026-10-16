@@ -37,6 +37,7 @@ const EXTRA_PACKAGES = [
   'color', // \color, \textcolor inside math
   'unicode', // Unicode-aware tokenisation for non-Latin text in formulas
   'textmacros', // \text{} with nested macros
+  'html', // \href, \cssId, \class, \style — filtered by `ui/safe`, see `configure`
   'autoload', // lazy-load any remaining package a user's macro needs
 ];
 
@@ -71,6 +72,13 @@ interface MathJaxGlobal {
     promise: Promise<unknown>;
     typeset?: boolean;
   };
+  /** MathJax's module tree; only the tag factory is reached into, see `setEquationNumbering`. */
+  _?: { input?: { tex?: { Tags?: { TagsFactory?: { create(name: string): TexTags } } } } };
+}
+
+/** A TeX tag handler: owns the equation counter and the label table. */
+interface TexTags {
+  configuration: unknown;
 }
 
 /** Shape accepted by `window.MathJax` before the bundle loads. */
@@ -88,7 +96,7 @@ interface MathJaxDocument {
   convert(tex: string, options: Record<string, unknown>): HTMLElement;
   clear(): void;
   /** Present at runtime; the TeX input jax carries the `tags` option. */
-  inputJax?: { options?: { tags?: string } }[];
+  inputJax?: { name?: string; parseOptions?: { tags: TexTags } }[];
 }
 
 declare global {
@@ -114,7 +122,18 @@ function configure(): void {
   window.MathJax = {
     ...existing,
     loader: {
-      load: ['[tex]/mhchem'],
+      /*
+       * `[tex]/html` (`\href`, `\cssId`, `\class`, `\style`, `\data`) is loaded up front rather
+       * than left to autoload, so the extension `ui/safe` filters is present from the first
+       * render instead of arriving mid-document.
+       *
+       * `ui/safe` is what makes that output acceptable. MathJax's SVG is written into the page
+       * *after* DOMPurify has run, so it is the only filter between a formula and the DOM: it
+       * keeps http(s)/mailto links, drops `javascript:`, `data:` and (see `safeOptions`) `file:`,
+       * limits ids and classes to `mjx-*`, and reduces `\style` to a short list of harmless
+       * properties.
+       */
+      load: ['[tex]/mhchem', '[tex]/html', 'ui/safe'],
       // Vendored, so no component or glyph ever comes from the network.
       paths: { mathjax: MATHJAX_DIR, fonts: FONTS_DIR },
     },
@@ -154,6 +173,10 @@ function configure(): void {
      * placeholders carry `role="math"`.
      */
     options: {
+      // `ui/safe` allows `file:` links by default; a document must not link into the disk.
+      safeOptions: {
+        safeProtocols: { http: true, https: true, mailto: true, file: false, javascript: false, data: false },
+      },
       enableMenu: true,
       enableAssistiveMml: false,
       enableSpeech: false,
@@ -257,7 +280,7 @@ export async function renderExpression(
   };
 
   try {
-    const node = mj.startup.document.convert(tex, convertOptions);
+    const node = await convertWithRetries(mj, tex, convertOptions);
     const html = mj.startup.adaptor.outerHTML(node);
     const errorMatch = MERROR_REGEX.exec(html);
     if (errorMatch) {
@@ -283,6 +306,35 @@ export async function renderExpression(
   }
 }
 
+/** Bound on retries for one expression; each retry is one extension load, so a handful is plenty. */
+const MAX_CONVERT_RETRIES = 10;
+
+/**
+ * `convert`, but waiting out MathJax's asynchronous loads.
+ *
+ * The first time a document uses a macro from an extension that is not loaded yet (`\bbox`,
+ * `\enclose`, `\bra`, …), `autoload` starts fetching it and `convert` throws a "MathJax retry"
+ * error whose `retry` property is a promise for that load. Treating that as a render failure
+ * showed the first such formula as broken, and only a later render — after the extension had
+ * quietly arrived — came out right. Waiting for the promise and converting again is MathJax's
+ * own retry protocol (`mathjax.handleRetriesFor`), done here so the call stays per-expression.
+ */
+async function convertWithRetries(
+  mj: MathJaxGlobal,
+  tex: string,
+  options: Record<string, unknown>,
+): Promise<HTMLElement> {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return mj.startup.document.convert(tex, options);
+    } catch (err) {
+      const retry = (err as { retry?: unknown } | null)?.retry;
+      if (!(retry instanceof Promise) || attempt >= MAX_CONVERT_RETRIES) throw err;
+      await retry;
+    }
+  }
+}
+
 function decodeAttr(value: string): string {
   // MathJax escapes its error text; attribute values are already HTML-entity encoded.
   return value
@@ -300,16 +352,33 @@ function decodeAttr(value: string): string {
  * lazily-rendered subset would receive numbers in viewport order. The renderer
  * therefore only turns numbering on when the document actually contains tags or labels.
  *
- * The setting lives on the TeX input jax, not on the config global: MathJax reads
- * `tex.tags` when it constructs the jax at startup, so mutating the config afterwards
- * has no effect.
+ * The switch replaces the TeX parser's tag handler. Setting `tex.tags` — on the config global
+ * or on the input jax's options — does nothing once the jax exists: MathJax reads it once, at
+ * construction, to build the handler. That is how numbering silently never worked while
+ * explicit `\tag{…}` (which needs no counter) did. A fresh handler also starts its counter and
+ * label table at zero, which is what makes a re-render number identically.
+ *
+ * Enabling waits for MathJax to boot: the typesetter calls this before the first formula is
+ * converted, so on a cold start there is no runtime yet to switch. Disabling does not — a
+ * runtime that has not booted will start with numbering off.
  */
-export function setEquationNumbering(enable: boolean): void {
-  const mj = runtime();
-  const jaxes = mj?.startup.document.inputJax;
-  if (!mj || !jaxes) return;
-  for (const jax of jaxes) {
-    if (jax.options) jax.options.tags = enable ? 'ams' : 'none';
+export async function setEquationNumbering(enable: boolean): Promise<void> {
+  let mj = runtime();
+  if (!mj) {
+    if (!enable) return;
+    try {
+      mj = await ensureMathJax();
+    } catch {
+      // MathJax unavailable: every formula will degrade to its source anyway.
+      return;
+    }
+  }
+  const factory = mj._?.input?.tex?.Tags?.TagsFactory;
+  for (const jax of mj.startup.document.inputJax ?? []) {
+    if (!factory || !jax.parseOptions) continue;
+    const tags = factory.create(enable ? 'ams' : 'none');
+    tags.configuration = jax.parseOptions;
+    jax.parseOptions.tags = tags;
   }
   mj.startup.document.clear();
 }

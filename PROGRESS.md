@@ -41,10 +41,10 @@ desktop number.
 | Frontend build | `vite build` | exit 0 |
 | Windows binary | `tauri build` | `src-tauri/target/release/openmark.exe`, 14,486,016 bytes, boots |
 | Rust check | `cargo check` | zero warnings |
-| Browser E2E | `playwright test` | **59 passed** (incl. 7 screenshot baselines and 6 axe-core accessibility audits) |
+| Browser E2E | `playwright test` | **62 passed** (incl. 7 screenshot baselines and 6 axe-core accessibility audits) |
 | Desktop E2E | `pnpm test:desktop` | **9 passed** (custom-protocol binary, WebView2 149, no dev server running) |
-| Rust unit | `cargo test --lib` | **12 passed** (3 export + 6 wire-format contract + 3 asset-resolution) |
-| Unit + DOM tests | `vitest run` | **441 passed** (incl. 300 corpus-conformance assertions and 6 external-change races) |
+| Rust unit | `cargo test --lib` | **15 passed** (3 export + 3 export-boundary + 6 wire-format contract + 3 asset-resolution) |
+| Unit + DOM tests | `vitest run` | **442 passed** (incl. 300 corpus-conformance assertions and 6 external-change races) |
 | Windows installers | `pnpm desktop:build` | NSIS 9,521,072 B, MSI 10,383,360 B; portable zip 10,061,771 B via `desktop:build:portable` |
 | Desktop binary | direct launch | debug build boots and stays alive; release build verified |
 | Corpus validation | `node scripts/verify-corpus.mjs` | OK — manifest matches disk |
@@ -196,6 +196,42 @@ Each of these was found by a test, not by inspection. All have regression covera
     image resolves to an asset URL and is *not* marked missing — the only test here that can see the
     two sides disagree. Reproduced before the fix (it failed with "the relative image was never
     rewritten to an asset URL") and passing after.
+14. **The HTML/PDF export inlined any file the document named.** `read_export_asset` refused
+    absolute paths but accepted any number of `..`, and inlined non-images as
+    `application/octet-stream`. A received document holding `![](../../../../Users/me/.ssh/id_rsa)`
+    exported that key as base64, while the reading view refused the same reference. The command now
+    checks the canonical path against the reader's boundary (one level up is allowed, two is not)
+    and only inlines `image/*`. Three Rust tests in `export.rs`; the two refusal tests failed on the
+    previous implementation.
+15. **Formulas could emit `javascript:` links and arbitrary ids, classes and styles.** MathJax
+    output is written after DOMPurify, and autoload maps `\href`/`\cssId`/`\class`/`\style` to the
+    `html` extension with no filter. The first render of such a macro failed with "MathJax retry"
+    (synchronous convert vs. async autoload); the *next* render emitted the payload — into the
+    reader, where only the CSP stopped it, and into exported HTML, which has no CSP. `[tex]/html`
+    is now preloaded and `ui/safe` loaded with `file:` disabled. Pinned by
+    `rendering.spec.ts` › "formulas cannot inject…", which renders twice and failed on the previous
+    config with the `javascript:` href.
+16. **A malformed percent-escape aborted image resolution.** `decodeURI('%FF.png')` throws, and the
+    call sat outside the `try` in `resolveLocalImages`: every later image stayed unresolved and the
+    caller's promise chain dropped the runtime diagnostics already collected. The reference is now
+    marked missing instead. Pinned in `tests/unit/dom/images.test.ts`; failed before with
+    `URIError: URI malformed`. The same `decodeURI` in `App.tsx`'s link notice is guarded too.
+17. **The first autoloaded macro in a session rendered as an error.** `renderExpression` called
+    the synchronous `convert`, and `autoload` fetches an extension asynchronously the first time
+    one of its macros (`\bbox`, `\enclose`, `\bra`, …) appears: MathJax throws "MathJax retry" with
+    a `retry` promise, which was reported as a render failure. A later render came out right, so it
+    looked intermittent. `convertWithRetries` now awaits the promise and converts again (bounded).
+    Explicit `\tag`s survive the retry (checked by probe). Pinned by `rendering.spec.ts` ›
+    "autoloaded macros render on the first attempt", which failed before with the retry message.
+18. **Automatic equation numbering never worked.** `setEquationNumbering` set `tags: 'ams'` on the
+    TeX input jax's options, but MathJax builds the tag handler from that option once, at
+    construction — so the switch was a no-op. It was also called before MathJax had booted, when
+    there was no runtime to switch at all. Explicit `\tag{…}` needs no counter and kept working,
+    which hid the fault; `FEATURE_MATRIX.md` listed the row as Implemented with no test behind it.
+    The function now awaits boot when enabling and installs a fresh handler from MathJax's
+    `TagsFactory` (which also restarts the counter per typeset). Pinned by `rendering.spec.ts` ›
+    "numbers equations in document order and restarts on reopen"; failed before with no "(1)" in
+    the first equation.
 
 ### Correction: earlier desktop evidence was against a dev-server binary
 

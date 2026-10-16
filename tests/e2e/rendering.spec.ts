@@ -149,6 +149,76 @@ test.describe('critical path', () => {
     expect(external, `MathJax reached the network: ${external.join(', ')}`).toEqual([]);
   });
 
+  /*
+   * Formulas are converted synchronously, but `autoload` fetches an extension asynchronously the
+   * first time one of its macros is seen. MathJax signals that with a "MathJax retry" error, and
+   * the converter used to report it as a render failure — so the first `\bbox` or `\bra` in a
+   * session showed as broken, and only a later render (after the extension had quietly loaded)
+   * came out right. One render is the whole point of this test.
+   */
+  test('autoloaded macros render on the first attempt', async ({ page }) => {
+    await openFixture(
+      page,
+      'autoload.md',
+      ['# 自动加载', '', '$\\bbox[red]{x}$', '', '$\\enclose{circle}{y}$', '', '$\\bra{\\psi}$', ''].join('\n'),
+    );
+
+    const math = page.locator('.om-math');
+    await expect(math).toHaveCount(3);
+    await expect(page.locator('.om-math[data-om-state]')).toHaveCount(3);
+    for (let i = 0; i < 3; i++) {
+      const node = math.nth(i);
+      await expect(node, `expression #${i}: ${await node.getAttribute('title')}`).toHaveAttribute('data-om-state', 'ok');
+      expect(await node.locator('svg use, svg path').count()).toBeGreaterThan(0);
+    }
+  });
+
+  /*
+   * Automatic AMS numbering. `setEquationNumbering` used to set `tags: 'ams'` on the TeX input
+   * jax's options after startup, but MathJax builds its tag handler from that option once, when
+   * the jax is constructed — so the switch did nothing and no `equation` was ever numbered,
+   * while explicit `\tag{…}` (which needs no counter) kept working and hid the fault.
+   *
+   * Numbers are read from the SVG glyph codes: `(` is 28, `1` is 31, `2` is 32, `)` is 29.
+   * The document is opened twice to prove the counter restarts instead of continuing at (3).
+   */
+  test('numbers equations in document order and restarts on reopen', async ({ page }) => {
+    const source = [
+      '# 编号',
+      '',
+      '$$\\begin{equation}a \\label{eq:a}\\end{equation}$$',
+      '',
+      '$$\\begin{equation}b\\end{equation}$$',
+      '',
+      '$$c = \\eqref{eq:a}$$',
+    ].join('\n');
+    await page.addInitScript((content: string) => {
+      window.__OPENMARK_TEST_FILES__ = { 'numbered.md': content, 'numbered-2.md': `${content}\n` };
+    }, source);
+    await page.goto('/');
+    await page.waitForFunction(() => Boolean(window.__openmark__));
+
+    const glyphs = () =>
+      page.locator('.om-math').evaluateAll((nodes) =>
+        nodes.map((node) =>
+          Array.from(node.querySelectorAll('[data-c]'))
+            .map((glyph) => glyph.getAttribute('data-c'))
+            .join(','),
+        ),
+      );
+
+    for (const name of ['numbered.md', 'numbered-2.md']) {
+      await page.evaluate((path) => window.__openmark__!.openPath(path), name);
+      await expect(page.getByTestId('document-name')).toHaveText(name);
+      await expect(page.locator('.om-math[data-om-state="ok"]')).toHaveCount(3);
+      const [first, second, reference] = await glyphs();
+      expect(first, `${name}: first equation`).toContain('28,31,29');
+      expect(second, `${name}: second equation`).toContain('28,32,29');
+      expect(second, `${name}: numbering continued from the previous document`).not.toContain('28,34,29');
+      expect(reference, `${name}: \\eqref{eq:a}`).toContain('31');
+    }
+  });
+
   test('a broken formula keeps its source and is reported', async ({ page }) => {
     await openFixture(
       page,
@@ -261,6 +331,65 @@ test.describe('critical path', () => {
     for (const href of hrefs) {
       expect(href, `unsafe href survived: ${href}`).not.toMatch(/^\s*(?:javascript|vbscript|file):/i);
     }
+  });
+
+  /*
+   * MathJax output is written into the page *after* DOMPurify has run, so whatever a formula
+   * can emit bypasses the sanitiser entirely. Autoload maps `\href`, `\cssId`, `\class` and
+   * `\style` to MathJax's `html` extension, which honours any URL, id, class or CSS unless the
+   * `ui/safe` component is loaded. A `javascript:` link then reached both the reader (where
+   * only the CSP stood in the way) and the exported HTML (which has no CSP at all).
+   *
+   * The document is rendered twice on purpose. Before the fix, the first render of an
+   * autoloaded macro failed with "MathJax retry" while the extension loaded in the background,
+   * and the *second* render emitted the payload — so a single render would have passed.
+   */
+  test('formulas cannot inject dangerous links, ids, classes or styles', async ({ page }) => {
+    const hostile = [
+      '# 公式安全',
+      '',
+      '$\\href{javascript:window.__pwned=true}{a}$',
+      '',
+      '$\\href{file:///C:/Windows/win.ini}{b}$',
+      '',
+      '$\\href{https://example.com/}{c}$',
+      '',
+      '$\\cssId{om-hijacked}{d}$',
+      '',
+      '$\\class{om-flash}{e}$',
+      '',
+      '$\\style{position:fixed;top:0;left:0;width:100vw;height:100vh}{f}$',
+    ].join('\n');
+    await page.addInitScript((content: string) => {
+      window.__OPENMARK_TEST_FILES__ = { 'hostile-math.md': content, 'hostile-math-2.md': `${content}\n` };
+    }, hostile);
+    await page.goto('/');
+    await page.waitForFunction(() => Boolean(window.__openmark__));
+    await page.evaluate(() => window.__openmark__!.openPath('hostile-math.md'));
+    await expect(page.locator('.om-math[data-om-state]')).toHaveCount(6);
+    await page.evaluate(() => window.__openmark__!.openPath('hostile-math-2.md'));
+    await expect(page.getByTestId('document-name')).toHaveText('hostile-math-2.md');
+
+    // Each formula still typesets: the guard strips the dangerous part, not the formula.
+    await expect(page.locator('.om-math[data-om-state="ok"]')).toHaveCount(6);
+
+    const math = page.locator('.om-math');
+    const hrefs = await math.locator('a').evaluateAll((nodes) =>
+      nodes.map((node) => node.getAttribute('href') ?? node.getAttribute('xlink:href') ?? ''),
+    );
+    for (const href of hrefs) {
+      expect(href, `unsafe href survived in a formula: ${href}`).not.toMatch(/^\s*(?:javascript|vbscript|file|data):/i);
+    }
+    // An ordinary web link is kept: the fix must not simply delete every `\href`.
+    expect(hrefs).toContain('https://example.com/');
+
+    await expect(page.locator('#om-hijacked')).toHaveCount(0);
+    await expect(math.locator('.om-flash')).toHaveCount(0);
+    const fixed = await math.locator('[style]').evaluateAll((nodes) =>
+      nodes.filter((node) => /position\s*:\s*fixed/i.test(node.getAttribute('style') ?? '')).length,
+    );
+    expect(fixed, 'a formula set position:fixed').toBe(0);
+    expect(await page.evaluate(() => window.__pwned)).toBeUndefined();
   });
 
   test('reading settings change layout without re-parsing', async ({ page }) => {

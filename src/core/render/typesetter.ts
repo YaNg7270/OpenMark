@@ -78,7 +78,7 @@ export async function typesetPlaceholders(options: TypesetOptions): Promise<numb
   // Numbering and eager mode both require strict document order, which the lazy path
   // cannot guarantee.
   if (options.eager || needsNumbering(options.math.map((m) => m.tex))) {
-    setEquationNumbering(true);
+    await setEquationNumbering(true);
     resetMathDocument();
     let filled = 0;
     for (const target of targets) {
@@ -89,7 +89,7 @@ export async function typesetPlaceholders(options: TypesetOptions): Promise<numb
     return filled;
   }
 
-  setEquationNumbering(false);
+  await setEquationNumbering(false);
   return scheduleLazily(targets, options);
 }
 
