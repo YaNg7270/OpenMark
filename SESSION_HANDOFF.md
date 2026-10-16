@@ -101,6 +101,11 @@ scripts/             prepare-mathjax.mjs, env.sh, verify-corpus.mjs, gen-corpus-
    font URLs as `<fonts>/<fontName>/svg.js`, so renaming either font directory silently
    breaks chemistry with a CDN fallback that only shows as missing glyphs.
 7. **Test ids use `data-om-testid`**, configured in `playwright.config.ts`.
+8. **IPC response structs in `commands.rs` are `#[serde(rename_all = "camelCase")]`.** The
+   TypeScript interfaces are hand-written, so a mismatched field name is `undefined` at runtime
+   with no compile error anywhere. `ExportAsset` / `PdfReport` in `export.rs` are the deliberate
+   exception and stay `snake_case` to match `src/core/export/*.ts`. Adding a field means adding it
+   to the `keys()` assertions in both files' test modules.
 
 ---
 
@@ -116,6 +121,17 @@ scripts/             prepare-mathjax.mjs, env.sh, verify-corpus.mjs, gen-corpus-
   Vitest; assert rendering in Playwright.
 - **`noundefined` is intentionally removed** from MathJax's package list so unknown macros
   become real errors instead of silent red text. Re-adding it blinds the diagnostics panel.
+- **`cargo build` does not produce a runnable binary — use `tauri build`.** `tauri-2.12.4/build.rs`
+  sets `dev = !custom_protocol`, and only `tauri build` enables `tauri/custom-protocol`, which is
+  what makes the build embed `dist/`. Without it the binary loads `devUrl`
+  (`http://localhost:1420`) and renders an **empty window** when no dev server is running. Both
+  commands write `src-tauri/target/debug/openmark.exe`, so a plain `cargo build` silently replaces
+  a working binary. The symptom is misleading: every desktop E2E test fails with "element wasn't
+  found", which reads as a frontend fault.
+- **`tauri_build::build()` does not watch `frontendDist`.** Rebuilding `dist/` alone used to leave
+  the binary stale while cargo reported "Finished" — so a green desktop run could be testing the
+  previous UI. `src-tauri/build.rs` now declares `rerun-if-changed=../dist`, and
+  `scripts/run-desktop-e2e.mjs` refuses to start against a binary older than `dist/`.
 
 ---
 
@@ -129,6 +145,12 @@ scripts/             prepare-mathjax.mjs, env.sh, verify-corpus.mjs, gen-corpus-
 | `node node_modules/@playwright/test/cli.js test` | real rendering, **offline MathJax with glyphs**, XSS neutralised |
 | `node scripts/verify-corpus.mjs` | corpus manifest matches the files on disk |
 | `node_modules/.bin/tauri.CMD build --no-bundle` | a real Windows binary that boots |
+| `pnpm tauri build --debug --no-bundle` then `pnpm test:desktop` | the packaged app over WebView2: startup, open event, source mode, MathJax glyphs, **and the external-change probe staying silent on an untouched file** |
+| `OPENMARK_BINARY=src-tauri/target/release/openmark.exe pnpm test:desktop` | the same, against the shipped binary |
+
+The desktop suite needs a `custom-protocol` build (see §5). It exercises the real process, which
+is why its two external-change tests are the only ones that can catch a wire-format regression in
+the `stat_file` / `write_text_file_atomic` contract.
 
 The Playwright suite is the only place that can honestly claim a formula *rendered*: it
 asserts on glyph elements and on a network-request log, not on DOM presence.

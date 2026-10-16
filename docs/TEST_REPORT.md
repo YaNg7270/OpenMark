@@ -23,8 +23,12 @@ estimated.
 | Corpus conformance | part of `pnpm test` | **300 assertions, 148/148 fixtures emit every declared diagnostic** |
 | Type check | `pnpm typecheck` | clean |
 | Frontend build | `pnpm build` | exit 0 |
-| Installers | `pnpm desktop:build` | NSIS **9,522,968 B**, MSI **10,383,360 B** |
+| Installers | `pnpm desktop:build` | NSIS **9,523,349 B**, MSI **10,383,360 B** |
 | Portable | `pnpm desktop:build:portable` | **10,061,234 B** zip (`openmark.exe` + `README.txt`), verified to keep app data in `./data` |
+
+Installer byte counts move by a few hundred bytes between builds (the packages embed a build
+timestamp); these are the values from the artifacts under test, not invariants. The portable
+zip is reproducible to the byte.
 
 All four test layers are green against the shipping artefacts, not against mocks: Playwright
 drives the minified production bundle in the same engine family as the app runtime, and
