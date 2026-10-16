@@ -41,15 +41,29 @@ desktop number.
 | Frontend build | `vite build` | exit 0 |
 | Windows binary | `tauri build` | `src-tauri/target/release/openmark.exe`, 14,486,016 bytes, boots |
 | Rust check | `cargo check` | zero warnings |
-| Browser E2E | `playwright test` | **62 passed** (incl. 7 screenshot baselines and 6 axe-core accessibility audits) |
-| Desktop E2E | `pnpm test:desktop` | **9 passed** (custom-protocol binary, WebView2 149, no dev server running) |
-| Rust unit | `cargo test --lib` | **15 passed** (3 export + 3 export-boundary + 6 wire-format contract + 3 asset-resolution) |
-| Unit + DOM tests | `vitest run` | **442 passed** (incl. 300 corpus-conformance assertions and 6 external-change races) |
+| Browser E2E | `playwright test` | **78 passed** (incl. 7 screenshot baselines and 6 axe-core accessibility audits) |
+| Desktop E2E | `pnpm test:desktop` | **13 passed** (custom-protocol binary, WebView2 149, no dev server running; incl. native fullscreen, WebView2 zoom, version history and spoken formulas) |
+| Rust unit | `cargo test --lib` | **16 passed** (3 export + 3 export-boundary + 6 wire-format contract + 3 asset-resolution + 1 backup pruning) |
+| Unit + DOM tests | `vitest run` | **517 passed** (incl. 300 corpus-conformance assertions and 6 external-change races) |
+| Parse budgets | `pnpm perf:check` | all 5 stress fixtures within `scripts/perf-budget.json`; shown failing with a budget tightened below the measurement |
 | Windows installers | `pnpm desktop:build` | NSIS 9,521,072 B, MSI 10,383,360 B; portable zip 10,061,771 B via `desktop:build:portable` |
 | Desktop binary | direct launch | debug build boots and stays alive; release build verified |
 | Corpus validation | `node scripts/verify-corpus.mjs` | OK — manifest matches disk |
 | Corpus diagnostics | `vitest run corpus.test.ts` | **148/148 fixtures emit every declared diagnostic** |
 | Corpus size | — | 148 markdown docs, 355 formula cases (40 expected-error), 5 stress fixtures |
+
+### Milestone: the 2026-10-16 feature batch
+
+Twelve items from the feature matrix's Planned list, each with tests at the lowest layer that
+can make the claim: Typora-compatible formatting shortcuts in both editors; crash recovery of
+unsaved work; smart lists (Tab nesting with renumbering, Enter continuation) and a code-block
+language field; the reading position kept across view-mode switches (source-line anchors on
+top-level blocks); real fullscreen (F11; focus mode moved to F8, typewriter to F9), window zoom
+and standalone-image alignment; following local Markdown links with their fragments (never
+launching other files); forward `\eqref` resolution; health-report copy/export; autosave on by
+default with throttled backups and a version-history list; parse-time performance budgets; and
+spoken formula descriptions as an experimental opt-in. Defects 19-21 below were found while
+building them.
 
 ### Milestone: the editing feature set is complete
 
@@ -233,6 +247,19 @@ Each of these was found by a test, not by inspection. All have regression covera
     "numbers equations in document order and restarts on reopen"; failed before with no "(1)" in
     the first equation.
 
+19. **Ctrl+S, Ctrl+O and Ctrl+N did nothing while the source editor had focus.** The window's
+    key handler stood down for the editor before it reached them, and CodeMirror binds none of
+    them — so the mode for editing could not save from the keyboard. File commands now run before
+    the stand-down; Ctrl+F and Ctrl+Z stay the editor's. `rendering.spec.ts` › "Ctrl+S saves while
+    the source editor has focus" (no download before).
+20. **`save()` marked text typed during the write as saved.** It copied the *current* source into
+    `savedSource` after the write resolved, so anything typed meanwhile was never written and no
+    longer showed as unsaved. It now records the text it wrote. `tests/unit/dom/autosave-backups.test.ts`.
+21. **Backup pruning counted another file's backups.** The prefix `notes.md.` also matches the
+    backups of `notes.md.md`, which could be deleted when `notes.md` passed 20 copies. Pruning
+    (and the new version list) now require exactly a timestamp between name and `.bak`. Rust test
+    `prune_backups_leaves_another_files_backups_alone`, shown failing on the old filter.
+
 ### Correction: earlier desktop evidence was against a dev-server binary
 
 Defect 12 invalidates part of the previous session's desktop run. `6 passed` was real, but the
@@ -296,12 +323,12 @@ wrong.
 
 ### P2
 
-6. **MathJax's semantic enrichment is disabled by default.** v4 enables semantic enrichment, speech
-   and Braille by default, which spins up an SRE web worker and made rendering
-   non-deterministic in testing. The payload is vendored, so this can be turned on once the
-   worker lifecycle is handled explicitly.
-7. **`Cargo.toml` declares `rust-version = "1.77.2"`** against Tauri 2.12's requirement of
-   Rust ≥ 1.90. Harmless locally (1.99 is installed) but wrong.
+6. **Spoken formula descriptions are an experimental opt-in.** MathJax semantic enrichment and
+   speech work offline (vendored worker and rules) behind a setting, verified in both browser and
+   desktop suites; they stay off by default for the ~0.5 s worker start-up and English-only rules.
+   See `docs/KNOWN_ISSUES.md` P2-1.
+7. **Performance budgets cover parsing only.** `pnpm perf:check` enforces them; typesetting is
+   not measured, and there is no CI to run either.
 8. **A machine-level junction `C:\omkth` → `<repo>\.tools`** exists so the Tauri CLI can see
    the project-local toolchain through this shell's PATH handling. Remove with
    `rmdir C:\omkth`; it is not needed for ordinary builds.
@@ -310,14 +337,15 @@ wrong.
 
 ## 5. Next actions, in priority order
 
-1. **Screenshot regression baselines**, so a typography change cannot slip through.
-2. **Find and replace in the reading view.** Source mode has CodeMirror's panel already.
-3. **MathJax semantic enrichment** — the payload is vendored but disabled; enabling it needs the
-   SRE worker lifecycle handled explicitly. The axe audit is in place, so the change would be
-   checked rather than hoped for.
-4. **Code signing**, which is the only way to remove the SmartScreen warning for downloaded
-   installers.
-5. **MSI install test** on a machine where elevation is available.
+1. **Code signing.** Needs a purchased code-signing certificate (OV or EV); with one, Tauri's
+   `bundle.windows.certificateThumbprint` / `signCommand` signs both installers. It is the only way
+   to remove the SmartScreen warning, and it cannot be done from a development machine without it.
+2. **MSI install test** on a machine where elevation is available.
+3. **CI** running `pnpm typecheck`, `pnpm test`, `pnpm build && pnpm test:e2e`, `cargo test` and
+   `pnpm perf:check`, so the budgets and suites guard every change rather than every session.
+4. **Spoken formulas by default**: Chinese speech rules, a long-document measurement, then
+   consider turning the setting on.
+5. **Exported HTML** does not carry the image-alignment setting or the zoom; decide whether it should.
 
 ---
 

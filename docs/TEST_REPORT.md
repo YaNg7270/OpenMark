@@ -169,6 +169,14 @@ and bounded by the viewport.
 | `math-dense.md` | 0.54 MB | 12 002 | 49 ms | 11.0 MB/s | 4 001 | 2 000 | 28 MB |
 | `deep-nesting.md` | 0.19 MB | 992 | 47 ms | 4.0 MB/s | 61 | 0 | 6.5 MB |
 
+**Budgets (2026-10-16).** `pnpm perf:check` runs the same benchmark and fails when a fixture's
+median exceeds its budget in `scripts/perf-budget.json` (about 2-5x the reference medians, so it
+catches an algorithmic regression rather than machine noise), or when a budgeted fixture is
+missing. A re-measure after top-level blocks gained `data-om-line` anchors (for keeping the
+reading position across view modes) put `many-small-blocks.md` at ~140 ms against ~127 ms
+before: about 10% for tagging 20 000 blocks. The other fixtures were unchanged within noise;
+`deep-nesting.md` is bimodal (18 or ~50 ms) with either engine, which is garbage collection.
+
 Reading these numbers honestly:
 
 - A 3 MB textbook opens in **176 ms**, and that is also the per-edit budget in instant mode.

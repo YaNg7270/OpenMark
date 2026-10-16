@@ -85,7 +85,8 @@ pnpm build                # vite build -> dist/
 pnpm test:e2e             # Playwright; runs against the BUILT bundle, so build first
 pnpm test:e2e:update      # regenerate screenshot baselines (do this in the target environment)
 pnpm corpus:verify        # manifest.json <-> tests/corpus on disk
-pnpm perf                 # parse-only benchmark, no thresholds
+pnpm perf                 # parse-only benchmark (run gen-corpus-stress.mjs first)
+pnpm perf:check           # the same, failing when a fixture exceeds scripts/perf-budget.json
 
 # Desktop shell / real binary
 pnpm desktop:dev                              # tauri dev

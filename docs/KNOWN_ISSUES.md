@@ -37,35 +37,29 @@ OpenMark 的已知问题与未实现功能。**每一条都经过代码核对**�
 
 ## P2 — 影响体验、合规或可维护性
 
-### P2-1 MathJax 的语义增强默认关闭
+### P2-1 公式语音描述只是实验选项，默认关闭
 
-**现象**：MathJax 4 默认启用语义增强、语音与盲文，这会启动一个 SRE Web Worker 并拉取
-mathmaps。实测中它与排版过程竞争，使渲染结果不确定。因此默认关闭：
-`enableSpeech: false`、`enableBraille: false`、`enableEnrichment: false`。
+**现象**：MathJax 的语义增强与语音（SRE）现在可以在设置里开启（「公式语音描述（实验，重启后生效）」）：
+开启后公式以 MathJax 生成的朗读文本命名（如 “E equals m c squared”），完全离线——语音 Worker 与
+规则文件都随应用打包。浏览器与桌面端各有一个端到端测试。
 
-**影响**：屏幕阅读器得不到 MathJax 的语义增强。SVG 输出本身仍保留结构，占位元素带
-`role="math"`，所以基础可访问性不受影响。
+**为什么仍默认关闭**：开启后每个公式改走 MathJax 的 Promise 接口等待 Worker，首个公式多出约
+0.5 秒的 Worker 启动时间；朗读文本目前只有英文规则；与懒排版、长文档的交互只做了基本验证。
 
-**依据**：`src/core/math/mathjax.ts` 的 `options` 段；SRE 数据已随应用打包
-（`public/mathjax/v4/sre/`），因此开启它不需要联网。
+**依据**：`src/core/math/mathjax.ts`（`setMathSpeech`、`worker` 路径必须是绝对 URL，否则 `blob:`
+Worker 解析不了相对路径、会一直等待）；`index.html` 的 CSP 为此加了 `worker-src 'self' blob:`，
+与 `tauri.conf.json` 一致。
 
-**已完成的部分**：已用 axe-core 做了无障碍审核，并把审核纳入测试套件
-（`tests/e2e/a11y.spec.ts`，6 个用例，覆盖外壳、四种视图、所有侧栏面板与两个对话框）。
-审核发现并修复了 7 个真实问题，其中影响最大的是公式与图表的 SVG 带 `role="img"` 却没有可访问名称——
-禁用语义增强后，正常提供名称的机制也随之关闭了。现在每个公式以它的 LaTeX 源码作为名称，
-图表以其自身标签生成描述。
+**未完成**：中文朗读规则；长文档下的性能测量；在更多实测之后考虑默认开启。
 
-**未完成**：显式处理 SRE Worker 的生命周期后重新启用语义增强，让公式能被「朗读」而不是「读出源码」。
+### P2-2 性能门限只覆盖解析，不覆盖排版
 
-### P2-2 性能有测量、没有门限
+**现象**：`pnpm perf:check` 对 5 个压力样例的**解析**耗时设了门限（`scripts/perf-budget.json`），超出即
+失败。排版（MathJax / Mermaid / Shiki）仍不在测量范围内，也还没有接入 CI（仓库没有 CI）。
 
-**现象**：`scripts/perf-parse.mjs` 能给出每个压力样例的解析耗时、吞吐与堆增长，但**没有断言**，
-也没有接入 CI。排版（MathJax / Mermaid / Shiki）不在测量范围内。
+**已知数字**：3 MB 教材约 171 ms；40×2000 的宽表格约 535 ms。详见 [`TEST_REPORT.md`](TEST_REPORT.md) §5。
 
-**已知数字**：3 MB 教材 176 ms；40×2000 的宽表格 455 ms，其中 markdown-it 自身的分词占 143 ms。
-详见 [`TEST_REPORT.md`](TEST_REPORT.md) §5。
-
-**未完成**：门限与回归检测；排版侧的性能测量。
+**未完成**：排版侧的性能测量；把 `perf:check` 放进 CI。
 
 ### P2-3 安装包目标里含一个 macOS 专属项
 
