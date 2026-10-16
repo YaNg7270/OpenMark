@@ -3,9 +3,9 @@
 //! Two things the frontend cannot do itself:
 //!
 //! - **Read a local image next to the document and hand it back as base64**, so the
-//!   self-contained HTML exporter can inline it as a `data:` URI. The webview has no
-//!   filesystem access, and the `asset:` protocol deliberately serves only paths the user
-//!   has granted — an exported document must not depend on that grant.
+//!   self-contained HTML exporter can inline it as a `data:` URI. An exported document must
+//!   not depend on the `asset:` protocol, which only exists inside this app. Only images
+//!   within the document's folder (or one level up) are read — see `read_export_asset`.
 //! - **Print the exported document to PDF, silently, offline.** `ICoreWebView2_7::PrintToPdf`
 //!   is the only API on this platform that does it without a dialog, and it can only be
 //!   reached through COM interop from inside the webview (`Webview::with_webview`). Tauri's
@@ -94,16 +94,38 @@ pub fn read_export_asset(document_path: String, relative_path: String) -> Result
             document_path
         )
     })?;
+    /*
+     * Containment, checked on the canonical path so `..`, symlinks and junctions are already
+     * resolved. The boundary is the reader's rule (`classifyRelativePath`): a net climb of one
+     * level is how documents are organised (`../assets/logo.png`), two or more has left the
+     * document's neighbourhood. Without this, a received document could reference any file the
+     * user can read and the export would bake it into a file they then send to someone else.
+     */
+    let boundary = directory.parent().filter(|p| !p.as_os_str().is_empty()).unwrap_or(&directory);
+    let boundary = fs::canonicalize(boundary)
+        .map_err(|err| format!("cannot resolve {}: {err}", boundary.display()))?;
+    if !resolved.starts_with(&boundary) {
+        return Err(format!(
+            "outside the document's folder: {relative} (resolves to {})",
+            resolved.display()
+        ));
+    }
     if !resolved.is_file() {
         return Err(format!("not a file: {}", resolved.display()));
     }
 
     let bytes =
         fs::read(&resolved).map_err(|err| format!("cannot read {}: {err}", resolved.display()))?;
+    let mime = sniff_mime(&resolved, &bytes);
+    // Only pictures are inlined: anything else referenced as an image would be shipped as an
+    // opaque `data:` URI the recipient can decode but the author never sees.
+    if !mime.starts_with("image/") {
+        return Err(format!("not an image: {relative} ({mime})"));
+    }
     Ok(ExportAsset {
         path: display_path(&resolved)?,
         relative_path,
-        mime: sniff_mime(&resolved, &bytes),
+        mime,
         size: bytes.len() as u64,
         base64: base64_encode(&bytes),
     })
@@ -537,8 +559,56 @@ fn find(haystack: &[u8], needle: &[u8]) -> Option<usize> {
 
 #[cfg(test)]
 mod tests {
-    use super::{base64_encode, pdf_page_count, sniff_mime, ExportAsset, PdfReport};
-    use std::path::Path;
+    use super::{base64_encode, pdf_page_count, read_export_asset, sniff_mime, ExportAsset, PdfReport};
+    use std::fs;
+    use std::path::{Path, PathBuf};
+
+    /// A scratch tree: `<root>/a/docs/notes.md`, `<root>/a/assets/logo.png` (one level up from
+    /// the document, which is ordinary) and `<root>/secret.png` (two levels up, which is not).
+    fn scratch_tree(name: &str) -> (PathBuf, String) {
+        let root = std::env::temp_dir().join(format!("openmark-export-{name}-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&root);
+        fs::create_dir_all(root.join("a").join("docs")).expect("docs directory");
+        fs::create_dir_all(root.join("a").join("assets")).expect("assets directory");
+        let png = b"\x89PNG\r\n\x1a\nrest";
+        fs::write(root.join("a").join("assets").join("logo.png"), png).expect("logo");
+        fs::write(root.join("secret.png"), png).expect("secret");
+        fs::write(root.join("a").join("docs").join("notes.txt"), b"private notes").expect("notes");
+        let document = root.join("a").join("docs").join("notes.md");
+        fs::write(&document, b"# notes").expect("document");
+        (root, document.to_str().expect("utf-8 path").to_string())
+    }
+
+    /*
+     * The export reads files on the document's behalf and bakes them into a file the user then
+     * sends to other people. It used to accept any relative path, so a received document holding
+     * `![](../../../../Users/me/.ssh/id_rsa)` exported that key as base64 — while the reading view
+     * refused the same reference. The export must apply the reader's rule: one level up is how
+     * documents are organised, two is leaving the neighbourhood.
+     */
+    #[test]
+    fn read_export_asset_refuses_a_reference_that_climbs_two_levels() {
+        let (_root, document) = scratch_tree("climb");
+        let err = read_export_asset(document, "../../secret.png".into())
+            .expect_err("a reference two levels up must not be inlined");
+        assert!(err.contains("outside"), "unexpected error: {err}");
+    }
+
+    #[test]
+    fn read_export_asset_still_inlines_a_sibling_folder_one_level_up() {
+        let (_root, document) = scratch_tree("sibling");
+        let asset = read_export_asset(document, "../assets/logo.png".into())
+            .expect("`../assets/` is an ordinary layout");
+        assert_eq!(asset.mime, "image/png");
+    }
+
+    #[test]
+    fn read_export_asset_refuses_a_file_that_is_not_an_image() {
+        let (_root, document) = scratch_tree("not-image");
+        let err = read_export_asset(document, "notes.txt".into())
+            .expect_err("only images are inlined");
+        assert!(err.contains("not an image"), "unexpected error: {err}");
+    }
 
     /// Serialises a value to a JSON object and returns its keys, sorted.
     fn keys<T: serde::Serialize>(value: &T) -> Vec<String> {
