@@ -1,8 +1,13 @@
 # Repository Guidelines
 
+## Project Overview
+
 OpenMark is a Windows 11 desktop Markdown reader/editor: Typora-class instant rendering, offline
 LaTeX/mhchem, and immersive long-document reading. UI text is Chinese-first, with English
-available. The product runs entirely offline.
+available. The product runs entirely offline — no CDN, no network call while rendering.
+
+The build targets a real installable product (NSIS + MSI installers, plus a portable zip whose
+config and WebView2 profile live in a `data/` folder beside the executable), not a dev-server page.
 
 **Stack:** Tauri 2.12 (Rust 1.99) + React 19 + TypeScript 7 + Vite 8 · `markdown-it@15` + GFM
 plugins · MathJax 4.1.3 (SVG, mhchem) · Mermaid 12 · Shiki 4 · DOMPurify 3.4 · zustand.
@@ -127,6 +132,54 @@ injects the project-local Rust toolchain and the space-free driver path.
   `playwright.config.ts`), class names are prefixed `om-`, and behaviour flags are `data-om-*`.
 - **Test ids in selectors** — `getByTestId('x')` resolves `[data-om-testid="x"]`, not
   `data-testid`.
+
+---
+
+## Important Files
+
+**Entry points**
+
+| Path | Role |
+|---|---|
+| `src/main.tsx` | mounts into `#root`; installs the test seam when `__OPENMARK_TEST_FILES__` is set |
+| `src/App.tsx` | the shell: global keydown handler, drag-and-drop open, mode switching |
+| `src-tauri/src/main.rs` | thin launcher — calls `openmark_lib::run()` |
+| `src-tauri/src/lib.rs` | plugin registration, startup argv handling, `frontend_ready`, the `generate_handler!` list |
+| `index.html` | the single HTML entry; loads `/src/main.tsx` |
+
+The **test seam** is how the browser suite (Playwright) opens a document, since it cannot drive an
+OS dialog. Setting `window.__OPENMARK_TEST_FILES__` before any app script runs does two things:
+the file-service browser backend serves those paths from that in-memory map, and `main.tsx` exposes
+`window.__openmark__` (`openPath`, `getSource`, `getEncoding`) to drive the store from the page.
+It is installed only when the map is already present, so a shipped build carries no automation
+surface. Its shape is declared in `src/types/automation.d.ts`.
+
+**Load-bearing modules**
+
+| Path | Role |
+|---|---|
+| `src/app/store.ts` | the whole application state and every action; the one `MarkdownIt` instance |
+| `src/core/markdown/engine.ts` | markdown-it configuration + the structural diagnostics pass |
+| `src/core/markdown/collector.ts` | holds placeholder payloads (`math-<n>`, `mermaid-<n>`, `code-<n>`, `env-<n>`, `block-<index>`) |
+| `src/core/render/typesetter.ts` | lazy fill via IntersectionObserver; sets `data-om-filled` / `data-om-state` |
+| `src/core/render/images.ts` | rewrites relative `<img src>` to asset URLs; marks `data-om-missing` |
+| `src/core/fs/fileService.ts` | every IPC call; the only place Tauri `invoke` is used |
+| `src-tauri/src/commands.rs` | file IO, atomic write with the clobber guard, `stat_file`, `resolve_asset_url` |
+| `src-tauri/src/export.rs` | asset inlining for HTML export, and PDF via `PrintToPdf` |
+| `src/components/SourceEditor.tsx` | the only CodeMirror 6 integration point |
+
+**Configuration**
+
+| Path | Role |
+|---|---|
+| `package.json` | all scripts; the only place dependency versions are declared for JS |
+| `vite.config.ts` | build target, `@` alias, `dist/` output |
+| `vitest.config.ts` | the `unit` (node) and `dom` (jsdom) projects, and the coverage scope |
+| `playwright.config.ts` | `testIdAttribute`, the `vite preview` web server, screenshot tolerance |
+| `tests/desktop/wdio.conf.ts` | target binary (`OPENMARK_BINARY`), driver provider, msedgedriver |
+| `src-tauri/tauri.conf.json` | window, `frontendDist`, `devUrl`, asset-protocol scope, bundle targets |
+| `src-tauri/capabilities/default.json` | the production permission set; `wdio.json` is test-only |
+| `src-tauri/build.rs` | pins the frontend rebuild trigger — see Traps |
 
 ---
 
