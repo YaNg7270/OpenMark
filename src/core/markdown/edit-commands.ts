@@ -256,6 +256,36 @@ export function toggleLinePrefix(text: string, sel: TextSelection, kind: LinePre
   });
 }
 
+// --------------------------------------------------------------- code fences
+
+const FENCE_OPEN = /^([ \t]{0,3})(`{3,}|~{3,})([^\n]*)/;
+
+/**
+ * The language of a fenced code block's source (its first info-string token), `''` when the
+ * fence has none, or null when the text does not open with a fence (an indented code block).
+ */
+export function readFenceLanguage(block: string): string | null {
+  const match = FENCE_OPEN.exec(block);
+  if (!match) return null;
+  return (match[3] ?? '').trim().split(/\s+/)[0] ?? '';
+}
+
+/**
+ * Sets the language of a fenced code block, keeping the rest of the info string (`title=…`
+ * and other meta) and every other byte of the block. Returns null when the block is not fenced.
+ */
+export function setFenceLanguage(block: string, lang: string): string | null {
+  const match = FENCE_OPEN.exec(block);
+  if (!match) return null;
+  const [whole, indent = '', fence = '', info = ''] = match;
+  const meta = info.trim().split(/\s+/).slice(1).join(' ');
+  const cleaned = lang.trim().replace(/\s+/g, '');
+  // A backtick fence's info string may not contain backticks.
+  if (fence.startsWith('`') && cleaned.includes('`')) return null;
+  const nextInfo = [cleaned, meta].filter(Boolean).join(' ');
+  return `${indent}${fence}${nextInfo}${block.slice(whole.length)}`;
+}
+
 // --------------------------------------------------------------------- blocks
 
 export type BlockKind = 'code' | 'math' | 'table';

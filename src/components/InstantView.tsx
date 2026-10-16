@@ -5,6 +5,7 @@ import { useReadingProgress, useTypesetting } from './useTypesetting';
 import { MathTools } from './MathTools';
 import { TableEditor } from './TableEditor';
 import { applyShortcutToTextarea } from './markdownShortcuts';
+import { readFenceLanguage, setFenceLanguage } from '@/core/markdown/edit-commands';
 import { imageMarkdown, saveImageAsset } from '@/core/fs/assets';
 import { t } from '@/i18n';
 
@@ -158,6 +159,8 @@ function Block({
 }: BlockProps) {
   const timer = useRef(0);
   const latest = useRef(block.source);
+  const areaRef = useRef<HTMLTextAreaElement | null>(null);
+  const [language, setLanguage] = useState(() => readFenceLanguage(block.source));
 
   // Clear a pending commit if the block unmounts mid-edit, so a stale splice cannot land
   // on a different document.
@@ -215,8 +218,48 @@ function Block({
           {t('table.edit')}
         </button>
       )}
+      {active && block.kind === 'code' && language !== null && (
+        /*
+         * The language lives on the opening fence, where it is easy to mistype and hard to find
+         * in a long block. The field rewrites only that token, through the same textarea, so the
+         * change commits — and undoes — like any other edit to the block.
+         */
+        <label className="om-block__lang">
+          <span>{t('code.language')}</span>
+          <input
+            type="text"
+            list="om-code-languages"
+            value={language}
+            spellCheck={false}
+            data-om-testid="code-language"
+            onChange={(event) => {
+              const area = areaRef.current;
+              if (!area) return;
+              const next = setFenceLanguage(area.value, event.target.value);
+              setLanguage(event.target.value);
+              if (next === null || next === area.value) return;
+              area.value = next;
+              latest.current = next;
+              window.clearTimeout(timer.current);
+              timer.current = window.setTimeout(flush, COMMIT_DELAY_MS);
+            }}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' || event.key === 'Escape') {
+                event.preventDefault();
+                areaRef.current?.focus();
+              }
+            }}
+          />
+          <datalist id="om-code-languages">
+            {CODE_LANGUAGES.map((name) => (
+              <option key={name} value={name} />
+            ))}
+          </datalist>
+        </label>
+      )}
       {active && (
         <textarea
+          ref={areaRef}
           className="om-block__editor"
           data-om-block-editor={block.index}
           // Uncontrolled on purpose: a controlled value would be reset by the re-render that
@@ -227,6 +270,7 @@ function Block({
           rows={Math.max(2, block.source.split('\n').length)}
           onChange={(event) => {
             latest.current = event.target.value;
+            if (block.kind === 'code') setLanguage(readFenceLanguage(event.target.value));
             window.clearTimeout(timer.current);
             timer.current = window.setTimeout(flush, COMMIT_DELAY_MS);
           }}
@@ -287,3 +331,10 @@ function Block({
     </section>
   );
 }
+
+/** Offered in the code-block language field; any other name can still be typed. */
+const CODE_LANGUAGES = [
+  'bash', 'c', 'cpp', 'csharp', 'css', 'diff', 'go', 'html', 'java', 'javascript', 'json', 'kotlin',
+  'latex', 'lua', 'markdown', 'matlab', 'php', 'powershell', 'python', 'r', 'ruby', 'rust', 'scala',
+  'shell', 'sql', 'swift', 'toml', 'tsx', 'typescript', 'xml', 'yaml',
+];

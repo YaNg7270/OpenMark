@@ -3,6 +3,8 @@ import {
   applyEdits,
   insertBlock,
   insertLink,
+  readFenceLanguage,
+  setFenceLanguage,
   setHeading,
   shiftHeading,
   toggleLinePrefix,
@@ -155,6 +157,24 @@ describe('toggleLinePrefix', () => {
 
   it('does not touch the line after a selection that ends at its start', () => {
     expect(run('«a\n»b', (t, s) => toggleLinePrefix(t, s, 'quote'))).toBe('> «a\n»b');
+  });
+});
+
+describe('code fence language', () => {
+  it('reads the first info-string token', () => {
+    expect(readFenceLanguage('```ts title="a.ts"\nx\n```')).toBe('ts');
+    expect(readFenceLanguage('```\nx\n```')).toBe('');
+    expect(readFenceLanguage('    indented code')).toBeNull();
+  });
+
+  it('replaces only the language and keeps the meta and the body', () => {
+    expect(setFenceLanguage('```ts title="a.ts"\nconst x = 1;\n```', 'js')).toBe('```js title="a.ts"\nconst x = 1;\n```');
+    expect(setFenceLanguage('~~~~\nx\n~~~~', 'python')).toBe('~~~~python\nx\n~~~~');
+    expect(setFenceLanguage('```rust\nfn main() {}\n```', '')).toBe('```\nfn main() {}\n```');
+  });
+
+  it('refuses a backtick inside a backtick fence, which would break the fence', () => {
+    expect(setFenceLanguage('```\nx\n```', 'a`b')).toBeNull();
   });
 });
 

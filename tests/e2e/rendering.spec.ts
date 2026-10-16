@@ -458,6 +458,48 @@ test.describe('instant rendering', () => {
     expect(source).toBe(['# 标题', '', '第一段已经改写。', '', '第二段原文。', '', '- 列表项', ''].join('\n'));
   });
 
+  test('the code block language can be changed without touching the code', async ({ page }) => {
+    const source = ['# 代码', '', '```js title="a.js"', 'const x = 1;', '```', ''].join('\n');
+    await openFixture(page, 'instant-code.md', source);
+    await page.getByTestId('mode-instant').click();
+
+    await page.locator('.om-block[data-om-kind="code"] .om-block__rendered').click();
+    const language = page.getByTestId('code-language');
+    await expect(language).toHaveValue('js');
+    await language.fill('python');
+    await expect(page.locator('.om-block__editor')).toHaveValue('```python title="a.js"\nconst x = 1;\n```');
+    await language.press('Enter');
+    await page.locator('.om-block__editor').press('Escape');
+
+    expect(await page.evaluate(() => window.__openmark__!.getSource())).toBe(
+      ['# 代码', '', '```python title="a.js"', 'const x = 1;', '```', ''].join('\n'),
+    );
+  });
+
+  test('lists continue on Enter and nest on Tab in the block editor', async ({ page }) => {
+    await openFixture(page, 'instant-lists.md', DOC);
+    await page.getByTestId('mode-instant').click();
+
+    await page.locator('.om-block[data-om-kind="list"] .om-block__rendered').click();
+    const editor = page.locator('.om-block__editor');
+    await editor.press('Control+End');
+    await editor.press('Enter');
+    await editor.pressSequentially('新项');
+    await expect(editor).toHaveValue('- 列表项\n- 新项');
+
+    // Tab nests the item instead of moving focus out of the textarea.
+    await editor.press('Tab');
+    await expect(editor).toHaveValue('- 列表项\n  - 新项');
+    await expect(editor).toBeFocused();
+    await editor.press('Shift+Tab');
+    await expect(editor).toHaveValue('- 列表项\n- 新项');
+
+    // Enter on an empty item leaves the list.
+    await editor.press('Enter');
+    await editor.press('Enter');
+    await expect(editor).toHaveValue('- 列表项\n- 新项\n');
+  });
+
   test('formatting shortcuts work in the block editor without switching mode', async ({ page }) => {
     await openFixture(page, 'instant-shortcuts.md', DOC);
     await page.getByTestId('mode-instant').click();
@@ -598,6 +640,35 @@ test.describe('source editor', () => {
     // Each shortcut is one undo step.
     await page.keyboard.press('Control+z');
     expect(await page.evaluate(() => window.__openmark__!.getSource())).toBe('**word**');
+  });
+
+  test('Tab nests an ordered list item and renumbers the list', async ({ page }) => {
+    await openFixture(page, 'editor-lists.md', '');
+    await page.getByTestId('mode-source').click();
+    await page.locator('.om-source__host .cm-content').click();
+
+    // CodeMirror's own Markdown keymap continues the list on Enter.
+    await page.keyboard.type('1. a');
+    await page.keyboard.press('Enter');
+    await page.keyboard.type('b');
+    await page.keyboard.press('Enter');
+    await page.keyboard.type('c');
+    expect(await page.evaluate(() => window.__openmark__!.getSource())).toBe('1. a\n2. b\n3. c');
+
+    await page.keyboard.press('ArrowUp');
+    await page.keyboard.press('Tab');
+    expect(await page.evaluate(() => window.__openmark__!.getSource())).toBe('1. a\n   1. b\n2. c');
+    await page.keyboard.press('Shift+Tab');
+    expect(await page.evaluate(() => window.__openmark__!.getSource())).toBe('1. a\n2. b\n3. c');
+
+    // Outside a list, Tab still indents as before.
+    await page.keyboard.press('Control+End');
+    await page.keyboard.press('Enter');
+    await page.keyboard.press('Enter');
+    await page.keyboard.type('plain');
+    await page.keyboard.press('Home');
+    await page.keyboard.press('Tab');
+    expect(await page.evaluate(() => window.__openmark__!.getSource())).toMatch(/\n[ \t]+plain$/);
   });
 
   test('supports undo and redo with the keyboard', async ({ page }) => {

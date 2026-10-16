@@ -1261,3 +1261,25 @@ html[data-om-focus='on'] .om-statusbar {
   color: var(--om-text-muted);
   font-variant-numeric: tabular-nums;
 }
+
+/* ---- code block language field (instant mode) --------------------------------- */
+
+.om-block__lang {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+  font-size: 12px;
+  color: var(--om-text-muted);
+}
+
+.om-block__lang input {
+  width: 12em;
+  font: inherit;
+  font-family: var(--om-font-mono);
+  padding: 1px 6px;
+  border: 1px solid var(--om-border);
+  border-radius: var(--om-radius-sm);
+  background: var(--om-bg-elevated);
+  color: var(--om-text);
+}

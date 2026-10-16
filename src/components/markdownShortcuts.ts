@@ -10,6 +10,7 @@ import {
   type EditResult,
   type TextSelection,
 } from '@/core/markdown/edit-commands';
+import { continueList, shiftListItems } from '@/core/markdown/list-commands';
 
 /**
  * The Markdown formatting shortcuts, shared by the source editor and the instant-mode block
@@ -74,6 +75,26 @@ export function matchShortcut(event: KeyboardEvent): MarkdownShortcut | null {
 }
 
 /**
+ * List keys: Tab / Shift+Tab nest and un-nest list items (renumbering ordered lists), and — in
+ * editors that ask for it — Enter continues the list. Returns null when the key does not apply
+ * here (not on a list item, or a different key), so the editor's own behaviour runs instead.
+ */
+function listKeyCommand(event: KeyboardEvent, withEnter: boolean): Command | null {
+  if (event.ctrlKey || event.metaKey || event.altKey) return null;
+  if (event.key === 'Tab') {
+    const direction = event.shiftKey ? -1 : 1;
+    return (text, sel) => shiftListItems(text, sel, direction) ?? NOT_APPLICABLE;
+  }
+  if (withEnter && event.key === 'Enter' && !event.shiftKey && !event.isComposing) {
+    return (text, sel) => continueList(text, sel) ?? NOT_APPLICABLE;
+  }
+  return null;
+}
+
+/** Sentinel result: the command does not apply at this position. */
+const NOT_APPLICABLE: EditResult = { changes: [], selection: { from: -1, to: -1 } };
+
+/**
  * CodeMirror adapter. Highest precedence, because several keys collide with CodeMirror's own
  * defaults (`Ctrl+I` selects the parent syntax node, `Ctrl+Shift+K` deletes a line) and a
  * Markdown editor's formatting keys should win there.
@@ -82,10 +103,12 @@ export function markdownShortcutsExtension(): Extension {
   return Prec.highest(
     EditorView.domEventHandlers({
       keydown: (event, view) => {
-        const shortcut = matchShortcut(event);
-        if (!shortcut || view.state.readOnly) return false;
+        // Enter is left to CodeMirror's own Markdown continuation, which already renumbers.
+        const command = matchShortcut(event)?.command ?? listKeyCommand(event, false);
+        if (!command || view.state.readOnly) return false;
         const range = view.state.selection.main;
-        const result = shortcut.command(view.state.doc.toString(), { from: range.from, to: range.to });
+        const result = command(view.state.doc.toString(), { from: range.from, to: range.to });
+        if (result === NOT_APPLICABLE) return false;
         view.dispatch({
           changes: result.changes,
           selection: { anchor: result.selection.from, head: result.selection.to },
@@ -107,12 +130,13 @@ export function markdownShortcutsExtension(): Extension {
  * event the block editor already listens to.
  */
 export function applyShortcutToTextarea(event: KeyboardEvent, area: HTMLTextAreaElement): boolean {
-  const shortcut = matchShortcut(event);
-  if (!shortcut || area.readOnly) return false;
-  event.preventDefault();
+  const command = matchShortcut(event)?.command ?? listKeyCommand(event, true);
+  if (!command || area.readOnly) return false;
 
   const text = area.value;
-  const result = shortcut.command(text, { from: area.selectionStart, to: area.selectionEnd });
+  const result = command(text, { from: area.selectionStart, to: area.selectionEnd });
+  if (result === NOT_APPLICABLE) return false;
+  event.preventDefault();
   if (result.changes.length > 0) {
     const from = Math.min(...result.changes.map((c) => c.from));
     const to = Math.max(...result.changes.map((c) => c.to));
