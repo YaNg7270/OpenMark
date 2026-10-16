@@ -25,7 +25,11 @@ import {
 /** The four view modes the product promises. */
 export type ViewMode = 'read' | 'instant' | 'source' | 'split';
 
-export type SidebarPanel = 'outline' | 'search' | 'diagnostics' | 'settings' | 'recent' | null;
+/**
+ * The margin's panels. Settings is not one of them: it is a drawer on the other side of the
+ * page, so the reader can tune the type while the outline stays in view.
+ */
+export type SidebarPanel = 'outline' | 'search' | 'diagnostics' | 'recent';
 
 export interface DocumentState {
   path: string | null;
@@ -50,7 +54,11 @@ export interface DocumentState {
 
 export interface UiState {
   mode: ViewMode;
-  sidebar: SidebarPanel;
+  /** The margin's current panel; `null` while the margin is hidden. */
+  sidebar: SidebarPanel | null;
+  /** The panel the margin reopens on. */
+  lastSidebar: SidebarPanel;
+  settingsOpen: boolean;
   searchQuery: string;
   activeHeadingId: string | null;
   progress: number;
@@ -224,7 +232,12 @@ interface AppStore {
    */
   replaceAll: (query: string, replacement: string) => number;
   setMode: (mode: ViewMode) => void;
+  /** Shows the margin on `panel`. */
   setSidebar: (panel: SidebarPanel) => void;
+  /** Hides the margin, or brings it back on the panel it last showed. */
+  toggleMargin: () => void;
+  /** Opens or closes the settings drawer; toggles when `open` is omitted. */
+  toggleSettings: (open?: boolean) => void;
   setSearchQuery: (query: string) => void;
   setActiveHeading: (id: string | null) => void;
   setProgress: (value: number) => void;
@@ -403,6 +416,8 @@ export const useStore = create<AppStore>((set, get) => ({
   ui: {
     mode: 'read',
     sidebar: 'outline',
+    lastSidebar: 'outline',
+    settingsOpen: false,
     searchQuery: '',
     activeHeadingId: null,
     progress: 0,
@@ -911,7 +926,9 @@ export const useStore = create<AppStore>((set, get) => ({
   },
 
   setMode: (mode) => set((s) => ({ ui: { ...s.ui, mode } })),
-  setSidebar: (panel) => set((s) => ({ ui: { ...s.ui, sidebar: s.ui.sidebar === panel ? null : panel } })),
+  setSidebar: (panel) => set((s) => ({ ui: { ...s.ui, sidebar: panel, lastSidebar: panel } })),
+  toggleMargin: () => set((s) => ({ ui: { ...s.ui, sidebar: s.ui.sidebar ? null : s.ui.lastSidebar } })),
+  toggleSettings: (open) => set((s) => ({ ui: { ...s.ui, settingsOpen: open ?? !s.ui.settingsOpen } })),
   setSearchQuery: (query) => set((s) => ({ ui: { ...s.ui, searchQuery: query } })),
   setActiveHeading: (id) => set((s) => ({ ui: { ...s.ui, activeHeadingId: id } })),
   setProgress: (value) => set((s) => ({ ui: { ...s.ui, progress: Math.min(1, Math.max(0, value)) } })),

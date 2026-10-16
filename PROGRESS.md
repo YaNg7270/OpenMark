@@ -41,16 +41,52 @@ desktop number.
 | Frontend build | `vite build` | exit 0 |
 | Windows binary | `tauri build` | `src-tauri/target/release/openmark.exe`, 14,486,016 bytes, boots |
 | Rust check | `cargo check` | zero warnings |
-| Browser E2E | `playwright test` | **78 passed** (incl. 7 screenshot baselines and 6 axe-core accessibility audits) |
+| Browser E2E | `playwright test` | **79 passed** (incl. 7 screenshot baselines — regenerated for the Broadsheet interface — and 6 axe-core accessibility audits) |
 | Desktop E2E | `pnpm test:desktop` | **13 passed** (custom-protocol binary, WebView2 149, no dev server running; incl. native fullscreen, WebView2 zoom, version history and spoken formulas) |
 | Rust unit | `cargo test --lib` | **16 passed** (3 export + 3 export-boundary + 6 wire-format contract + 3 asset-resolution + 1 backup pruning) |
-| Unit + DOM tests | `vitest run` | **517 passed** (incl. 300 corpus-conformance assertions and 6 external-change races) |
+| Unit + DOM tests | `vitest run` | **521 passed** (incl. 300 corpus-conformance assertions and 6 external-change races) |
 | Parse budgets | `pnpm perf:check` | all 5 stress fixtures within `scripts/perf-budget.json`; shown failing with a budget tightened below the measurement |
 | Windows installers | `pnpm desktop:build` | NSIS 9,521,072 B, MSI 10,383,360 B; portable zip 10,061,771 B via `desktop:build:portable` |
 | Desktop binary | direct launch | debug build boots and stays alive; release build verified |
 | Corpus validation | `node scripts/verify-corpus.mjs` | OK — manifest matches disk |
 | Corpus diagnostics | `vitest run corpus.test.ts` | **148/148 fixtures emit every declared diagnostic** |
 | Corpus size | — | 148 markdown docs, 355 formula cases (40 expected-error), 5 stress fixtures |
+
+### Milestone: the Broadsheet interface (2026-10-16)
+
+The interface was redesigned in Claude Design (project "Broadsheet", prototype
+`OpenMark Redesign.html`) and ported into the React shell. The pipeline, store actions and test
+seam are unchanged; only the chrome and the document styles moved.
+
+- **Tokens** (`tokens.css`): paper ground, near-black serif ink, cyan for what can be pressed and
+  magenta for unsaved / error / read-only. Text-on-accent uses the deep 700 step: the base cyan
+  measures 3.6:1 on paper, below 4.5:1. A matching dark palette keeps the theme setting working
+  (the prototype has no dark surface).
+- **Type**: Source Serif 4 (Latin, true italic) over Noto Serif SC, bundled through @fontsource
+  — still no network. A Vite plugin (`woff2Only` in `vite.config.ts`) drops the `.woff`
+  fallbacks; the CJK face is unicode-range split, 6.6 MB of woff2 in `dist/`.
+- **Icons**: Phosphor duotone, one module per icon (`components/icons.tsx`).
+- **Shell**: `Masthead.tsx` replaces `Toolbar.tsx` (modes with Ctrl+number superscripts, icon
+  toggles, a File menu holding new/open/save-as/export, Save as the only filled button); the tab
+  row is always shown; the margin (`Sidebar.tsx`) switches outline/search/diagnostics/recent
+  with a word row; settings moved to a right-hand drawer (`ui.settingsOpen`, `toggleSettings`),
+  and `toggleMargin` hides and restores the margin on its last panel; `StatusBar.tsx` is the
+  colophon (read %, encoding, zoom). Closing a dirty tab asks in `ConfirmDialog.tsx` instead of
+  `window.confirm`.
+- **Document**: the column hangs from the left margin (centred in focus mode), headings without
+  rules, italic pull quotes, hairline-only tables, accent list markers and section numbers.
+  Display formulas stay centred (the prototype sets them flush left). HTML/PDF export keeps its
+  own stylesheet and is unaffected.
+
+Three faults surfaced while porting, each now covered:
+
+- The tab row as an ARIA `tablist` owned close buttons — an axe violation latent since tabs
+  existed, because the bar used to hide with one document and every audit ran with one. Now a
+  `nav` with `aria-current`.
+- Shiki's GitHub Light was drawn for white; on paper its keyword red measured 3.77:1. A
+  Broadsheet light theme (`core/render/broadsheet-theme.ts`) replaces it.
+- Crash recovery drawn as a modal blocked the window — including a file opened from Explorer —
+  until answered; the desktop suite caught it. It is a non-blocking dialog card again.
 
 ### Milestone: the 2026-10-16 feature batch
 
@@ -329,7 +365,9 @@ wrong.
    See `docs/KNOWN_ISSUES.md` P2-1.
 7. **Performance budgets cover parsing only.** `pnpm perf:check` enforces them; typesetting is
    not measured, and there is no CI to run either.
-8. **A machine-level junction `C:\omkth` → `<repo>\.tools`** exists so the Tauri CLI can see
+8. **`pnpm lint` cannot run**: ESLint 10 needs an `eslint.config.*` and the repository has
+   none. `pnpm verify` therefore fails at its lint step; typecheck and tests are unaffected.
+9. **A machine-level junction `C:\omkth` → `<repo>\.tools`** exists so the Tauri CLI can see
    the project-local toolchain through this shell's PATH handling. Remove with
    `rmdir C:\omkth`; it is not needed for ordinary builds.
 
@@ -346,6 +384,9 @@ wrong.
 4. **Spoken formulas by default**: Chinese speech rules, a long-document measurement, then
    consider turning the setting on.
 5. **Exported HTML** does not carry the image-alignment setting or the zoom; decide whether it should.
+6. **Re-measure the installers** after the bundled fonts (≈6.6 MB of woff2) and decide whether
+   the CJK serif should ship with only the most common subsets.
+7. **Add an ESLint flat config** so `pnpm lint` / `pnpm verify` run again.
 
 ---
 

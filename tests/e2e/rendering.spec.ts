@@ -41,13 +41,19 @@ async function openFixture(page: Page, name: string, content: string): Promise<v
   await expect(page.getByTestId('document-name')).toHaveText(name);
 }
 
+/** The file commands live behind the masthead's File menu; this opens it. */
+async function openFileMenu(page: Page): Promise<void> {
+  await page.getByTestId('file-menu').click();
+  await expect(page.getByRole('menu')).toBeVisible();
+}
+
 test.describe('critical path', () => {
   test('app shell loads without touching the network', async ({ page }) => {
     const external = trackExternalRequests(page);
     await page.goto('/');
-    await expect(page.locator('.om-toolbar')).toBeVisible();
+    await expect(page.locator('.om-mast')).toBeVisible();
     // All four view modes must be offered: read, instant, source, split.
-    await expect(page.locator('.om-segmented__item')).toHaveCount(4);
+    await expect(page.locator('.om-mode')).toHaveCount(4);
     for (const mode of ['read', 'instant', 'source', 'split']) {
       await expect(page.getByTestId(`mode-${mode}`)).toBeVisible();
     }
@@ -506,8 +512,8 @@ test.describe('critical path', () => {
     // The chrome really grew, and the status bar is still on screen: zoom rescales the window
     // rather than overflowing it. (Client rects are already in zoomed coordinates.)
     const layout = await page.evaluate(() => ({
-      toolbar: document.querySelector('.om-toolbar')!.getBoundingClientRect().height,
-      bar: document.querySelector('.om-statusbar')!.getBoundingClientRect().bottom,
+      toolbar: document.querySelector('.om-mast')!.getBoundingClientRect().height,
+      bar: document.querySelector('.om-colo')!.getBoundingClientRect().bottom,
       inner: window.innerHeight,
     }));
     expect(layout.toolbar).toBeGreaterThan(42 * 1.05);
@@ -1210,6 +1216,7 @@ test.describe('export', () => {
     await expect(page.locator('.om-mermaid svg').first()).toBeVisible({ timeout: 30_000 });
 
     const downloadPromise = page.waitForEvent('download');
+    await openFileMenu(page);
     await page.getByTestId('export-html').click();
     const download = await downloadPromise;
 
@@ -1237,7 +1244,8 @@ test.describe('export', () => {
       window.__OPENMARK_TEST_FILES__ = {};
     });
     await page.goto('/');
-    await expect(page.locator('.om-toolbar')).toBeVisible();
+    await expect(page.locator('.om-mast')).toBeVisible();
+    await openFileMenu(page);
     await expect(page.getByTestId('export-html')).toBeDisabled();
     await expect(page.getByTestId('export-pdf')).toBeDisabled();
   });
@@ -1249,14 +1257,14 @@ test.describe('writing modes and images', () => {
     const long = Array.from({ length: 120 }, (_, i) => `第 ${i + 1} 行内容。`).join('\n\n');
     await openFixture(page, 'typewriter.md', `${long}\n`);
 
-    await expect(page.getByTestId('typewriter-toggle')).not.toHaveAttribute('data-active', 'true');
+    await expect(page.getByTestId('typewriter-toggle')).toHaveAttribute('aria-pressed', 'false');
     await page.getByTestId('mode-source').click();
 
     const content = page.locator('.om-source__host .cm-content');
     await content.click();
 
     await page.getByTestId('typewriter-toggle').click();
-    await expect(page.getByTestId('typewriter-toggle')).toHaveAttribute('data-active', 'true');
+    await expect(page.getByTestId('typewriter-toggle')).toHaveAttribute('aria-pressed', 'true');
 
     // The toggle took focus, so the editor has to be re-focused before typing reaches it.
     await content.click();
@@ -1416,10 +1424,10 @@ test.describe('tabs', () => {
     await page.goto('/');
     await page.waitForFunction(() => Boolean(window.__openmark__));
 
-    // A single document shows no tab bar: it would be chrome that says nothing.
+    // A single document still has its tab: the tab is where the window names the document.
     await page.evaluate(() => window.__openmark__!.openPath('first.md'));
     await expect(page.getByTestId('document-name')).toHaveText('first.md');
-    await expect(page.getByTestId('tab-bar')).toHaveCount(0);
+    await expect(page.locator('.om-tab')).toHaveCount(1);
 
     await page.evaluate(() => window.__openmark__!.openPath('second.md'));
     await expect(page.getByTestId('document-name')).toHaveText('second.md');
@@ -1455,7 +1463,7 @@ test.describe('tabs', () => {
     await paragraph.locator('.om-block__editor').blur();
 
     // The dirty marker follows the tab, not the window.
-    await expect(page.locator('.om-tab').first().locator('.om-tab__dirty')).toBeVisible();
+    await expect(page.locator('.om-tab').first().locator('.om-dirty-dot')).toBeVisible();
 
     await page.locator('.om-tab').nth(1).locator('.om-tab__label').click();
     await expect(page.getByTestId('document-name')).toHaveText('beta.md');
@@ -1493,9 +1501,51 @@ test.describe('tabs', () => {
 
     // Close the active tab; the remaining one must come forward.
     await page.locator('.om-tab').nth(1).locator('.om-tab__close').click();
-    await expect(page.locator('.om-tab')).toHaveCount(0); // one tab left, so the bar hides
+    await expect(page.locator('.om-tab')).toHaveCount(1);
     await expect(page.getByTestId('document-name')).toHaveText('keep.md');
     await expect(page.locator('.om-doc')).toContainText('保留');
+  });
+
+  test('closing a tab with unsaved edits asks in an in-app dialog, and cancel keeps the edits', async ({ page }) => {
+    await page.addInitScript(() => {
+      window.__OPENMARK_TEST_FILES__ = { 'stay.md': '# 留下\n', 'edited.md': '# 编辑\n\n原文。\n' };
+    });
+    await page.goto('/');
+    await page.waitForFunction(() => Boolean(window.__openmark__));
+    await page.evaluate(() => window.__openmark__!.openPath('stay.md'));
+    await page.evaluate(() => window.__openmark__!.openPath('edited.md'));
+
+    // A browser confirm() would be a page-level dialog event; this must never fire.
+    let nativeDialogs = 0;
+    page.on('dialog', (dialog) => {
+      nativeDialogs++;
+      void dialog.dismiss();
+    });
+
+    await page.getByTestId('mode-source').click();
+    await page.locator('.om-source__host .cm-content').click();
+    await page.keyboard.press('Control+End');
+    await page.keyboard.type('未保存的一行');
+    const edited = page.locator('.om-tab').nth(1);
+    await expect(edited.locator('.om-dirty-dot')).toBeVisible();
+
+    await edited.locator('.om-tab__close').click();
+    const dialog = page.getByTestId('close-tab-dialog');
+    await expect(dialog).toBeVisible();
+    await expect(dialog).toContainText('edited.md');
+    // The safe answer has focus, so Enter on arrival cannot discard anything.
+    await expect(dialog.getByRole('button', { name: '取消' })).toBeFocused();
+
+    await page.keyboard.press('Escape');
+    await expect(dialog).toHaveCount(0);
+    await expect(page.locator('.om-tab')).toHaveCount(2);
+    expect(await page.evaluate(() => window.__openmark__!.getSource())).toContain('未保存的一行');
+
+    await edited.locator('.om-tab__close').click();
+    await page.getByTestId('confirm-accept').click();
+    await expect(page.locator('.om-tab')).toHaveCount(1);
+    await expect(page.getByTestId('document-name')).toHaveText('stay.md');
+    expect(nativeDialogs).toBe(0);
   });
 });
 
@@ -1550,6 +1600,7 @@ test.describe('file commands', () => {
     await openFixture(page, 'existing.md', '# 已有文档\n\n内容。\n');
     await expect(page.getByTestId('document-name')).toHaveText('existing.md');
 
+    await openFileMenu(page);
     await page.getByTestId('new-button').click();
     await expect(page.getByTestId('document-name')).toHaveText('untitled.md');
     // An empty document offers the recent list rather than a blank page.
@@ -1567,10 +1618,11 @@ test.describe('file commands', () => {
       window.__OPENMARK_TEST_FILES__ = {};
     });
     await page.goto('/');
-    await expect(page.locator('.om-toolbar')).toBeVisible();
+    await expect(page.locator('.om-mast')).toBeVisible();
 
     // Nothing open: both are inert because there is nothing to write.
     await expect(page.getByTestId('save-button')).toBeDisabled();
+    await openFileMenu(page);
     await expect(page.getByTestId('save-as-button')).toBeDisabled();
 
     await page.getByTestId('new-button').click();
@@ -1580,6 +1632,7 @@ test.describe('file commands', () => {
 
     // A never-saved document has no path; save must defer to save-as rather than fail.
     await expect(page.getByTestId('save-button')).toBeDisabled();
+    await openFileMenu(page);
     await expect(page.getByTestId('save-as-button')).toBeEnabled();
   });
 

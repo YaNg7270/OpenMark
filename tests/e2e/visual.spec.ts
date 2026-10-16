@@ -182,7 +182,7 @@ test.describe('visual baselines', () => {
     await settled(page);
     await parkPointer(page);
 
-    await expect(page.locator('.om-sidebar')).toHaveScreenshot('diagnostics-panel.png', TOLERANCE);
+    await expect(page.locator('.om-margin')).toHaveScreenshot('diagnostics-panel.png', TOLERANCE);
   });
 
   test('formula dialog', async ({ page }) => {

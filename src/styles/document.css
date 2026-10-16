@@ -4,6 +4,10 @@
    This file is the product. Everything here is tuned for a long reading session on a
    desktop display: a measured column, a calm vertical rhythm, Chinese/Latin mixed
    typography, and print-quality maths.
+
+   Set as a Broadsheet page: the column hangs from the left margin with open paper to its
+   right, headings stand on size and weight alone (no rules under them), and the accent
+   appears only where the reader can act or where the page counts something.
    ========================================================================== */
 
 .om-doc-scroll {
@@ -18,9 +22,9 @@
 }
 
 .om-doc {
-  max-width: var(--om-content-width);
-  margin: 0 auto;
-  padding: calc(var(--om-content-padding) * 0.6) var(--om-content-padding) 40vh;
+  max-width: calc(var(--om-content-width) + 2 * var(--om-space-8));
+  margin: 0;
+  padding: var(--om-space-6) var(--om-space-8) 40vh;
   font-family: var(--om-content-font, var(--om-font-ui));
   font-size: var(--om-font-size);
   line-height: var(--om-line-height);
@@ -30,6 +34,17 @@
   user-select: text;
   cursor: auto;
   overflow-wrap: break-word;
+}
+
+/* Focus mode: nothing else on the page, so the column takes the centre. */
+html[data-om-focus='on'] .om-doc {
+  margin-inline: auto;
+  padding-top: 80px;
+}
+
+/* In split view the source pane already provides the left margin. */
+.om-body[data-mode='split'] .om-doc {
+  padding-left: 0;
 }
 
 html[data-om-justify='on'] .om-doc p,
@@ -76,7 +91,7 @@ html[data-om-hyphenate='on'] .om-doc p {
 
 .om-progress__bar {
   height: 100%;
-  background: var(--om-accent);
+  background: var(--om-accent-ink);
   transform-origin: 0 50%;
   transform: scaleX(0);
   /* 100 ms is under the threshold where a progress bar feels laggy. */
@@ -92,28 +107,30 @@ html[data-om-hyphenate='on'] .om-doc p {
 .om-doc h5,
 .om-doc h6 {
   font-family: var(--om-font-ui);
-  font-weight: 650;
-  line-height: 1.3;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.015em;
   /* Headings never sit flush against the previous block. */
-  margin: calc(1.6em * var(--om-density)) 0 calc(0.6em * var(--om-density));
+  margin: calc(1.6em * var(--om-density)) 0 calc(0.5em * var(--om-density));
   scroll-margin-top: 20px;
+  text-wrap: balance;
 }
 
 .om-doc h1 {
-  font-size: 1.9em;
+  font-size: 2.35em;
+  line-height: 1.15;
   margin-top: 0;
-  padding-bottom: 0.3em;
-  border-bottom: 1px solid var(--om-border);
+  margin-bottom: calc(0.7em * var(--om-density));
 }
 
 .om-doc h2 {
-  font-size: 1.5em;
-  padding-bottom: 0.24em;
-  border-bottom: 1px solid var(--om-border);
+  font-size: 1.55em;
+  margin-top: calc(1.9em * var(--om-density));
+  margin-bottom: calc(0.55em * var(--om-density));
 }
 
 .om-doc h3 {
-  font-size: 1.25em;
+  font-size: 1.18em;
 }
 
 .om-doc h4 {
@@ -130,6 +147,12 @@ html[data-om-hyphenate='on'] .om-doc p {
    on or off never re-parses or re-renders the document. */
 html[data-om-numbered='on'] .om-doc {
   counter-reset: om-h1 om-h2 om-h3 om-h4 om-h5 om-h6;
+}
+
+/* The section number is the one place a heading takes the accent: it is a count, set like the
+   section figure on a newspaper page. */
+html[data-om-numbered='on'] .om-doc :is(h1, h2, h3, h4)::before {
+  color: var(--om-accent-ink);
 }
 
 html[data-om-numbered='on'] .om-doc h1 {
@@ -165,6 +188,10 @@ html[data-om-numbered='on'] .om-doc h4::before {
 
 /* ---- blocks -------------------------------------------------------------- */
 
+.om-doc p {
+  text-wrap: pretty;
+}
+
 .om-doc p,
 .om-doc ul,
 .om-doc ol,
@@ -186,7 +213,7 @@ html[data-om-numbered='on'] .om-doc h4::before {
 }
 
 .om-doc strong {
-  font-weight: 680;
+  font-weight: 600;
 }
 
 .om-doc mark {
@@ -211,6 +238,10 @@ html[data-om-numbered='on'] .om-doc h4::before {
 
 .om-doc li {
   margin-bottom: calc(0.28em * var(--om-density));
+}
+
+.om-doc li::marker {
+  color: var(--om-accent-ink);
 }
 
 .om-doc li > ul,
@@ -244,10 +275,19 @@ html[data-om-numbered='on'] .om-doc h4::before {
 
 /* ---- blockquote ---------------------------------------------------------- */
 
+/* A pull quote: the serif's true italic, a size up, no bar beside it. */
 .om-doc blockquote {
-  padding: 0.2em 0 0.2em 1.1em;
-  border-inline-start: 3px solid var(--om-border-strong);
+  margin-block: calc(1.4em * var(--om-density));
+  padding: 0;
+  max-width: 34em;
+  font-style: italic;
+  font-size: 1.15em;
+  line-height: 1.55;
   color: var(--om-text-muted);
+}
+
+.om-doc blockquote :is(pre, code, table) {
+  font-style: normal;
 }
 
 .om-doc blockquote > :last-child {
@@ -265,23 +305,24 @@ html[data-om-numbered='on'] .om-doc h4::before {
   font-size: 0.94em;
 }
 
+/* Rows are separated by hairlines only; no column rules, no zebra. */
 .om-doc th,
 .om-doc td {
-  padding: 0.42em 0.85em;
-  border: 1px solid var(--om-border);
+  padding: 0.45em 1.1em 0.45em 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--om-text) 8%, transparent);
   text-align: start;
   vertical-align: top;
 }
 
 .om-doc thead th {
-  background: var(--om-bg-subtle);
-  font-weight: 650;
+  font-size: 0.8em;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--om-text-muted);
+  border-bottom-color: var(--om-border);
   /* Header text should not wrap mid-word for narrow CJK columns. */
   white-space: nowrap;
-}
-
-.om-doc tbody tr:nth-child(even) {
-  background: color-mix(in srgb, var(--om-bg-subtle) 55%, transparent);
 }
 
 /* ---- footnotes ----------------------------------------------------------- */
@@ -289,7 +330,6 @@ html[data-om-numbered='on'] .om-doc h4::before {
 .om-doc .footnotes {
   margin-top: calc(2.4em * var(--om-density));
   padding-top: 1em;
-  border-top: 1px solid var(--om-border);
   font-size: 0.9em;
   color: var(--om-text-muted);
 }
@@ -326,12 +366,13 @@ html[data-om-numbered='on'] .om-doc h4::before {
   min-height: 1em;
 }
 
+/* A missing image keeps its place as a screened blank, like an unfilled plate. */
 .om-doc img[data-om-missing='true'] {
   display: inline-block;
-  min-width: 200px;
-  min-height: 60px;
-  border: 1px dashed var(--om-error);
-  background: var(--om-error-soft);
+  min-width: 240px;
+  min-height: 90px;
+  background: repeating-linear-gradient(135deg, var(--om-bg-subtle) 0 8px, var(--om-bg) 8px 16px);
+  outline: 1px solid color-mix(in srgb, var(--om-accent-2) 30%, transparent);
 }
 
 /* ---- preserved source ---------------------------------------------------- */
@@ -358,9 +399,8 @@ html[data-om-numbered='on'] .om-doc h4::before {
 
 .om-code {
   position: relative;
-  margin: 0 0 calc(1.1em * var(--om-density));
-  border: 1px solid var(--om-border);
-  border-radius: var(--om-radius);
+  margin: 0 0 calc(1.2em * var(--om-density));
+  border-radius: var(--om-radius-sm);
   background: var(--om-code-bg);
   overflow: hidden;
 }
@@ -372,17 +412,20 @@ html[data-om-numbered='on'] .om-doc h4::before {
   min-height: 0;
 }
 
+/* The copy control floats in the block's top-right corner, where the language label sits;
+   the label gives way to it on hover. Neither takes a line of its own. */
 .om-code__toolbar:not(:empty) {
-  min-height: 26px;
-  padding: 0 10px;
-  border-bottom: 1px solid var(--om-border);
+  position: absolute;
+  top: var(--om-space-1);
+  right: var(--om-space-2);
+  z-index: 1;
   font-size: 11px;
   color: var(--om-text-faint);
 }
 
 .om-code__pre {
   margin: 0;
-  padding: 12px 14px;
+  padding: var(--om-space-3) var(--om-space-4);
   overflow-x: auto;
   font-size: 0.86em;
   line-height: 1.6;
@@ -390,8 +433,10 @@ html[data-om-numbered='on'] .om-doc h4::before {
 
 .om-code__pre[data-om-lang-label]::before {
   content: attr(data-om-lang-label);
-  display: block;
-  margin-bottom: 6px;
+  position: absolute;
+  top: var(--om-space-2);
+  right: var(--om-space-3);
+  transition: opacity var(--om-transition);
   font-family: var(--om-font-ui);
   font-size: 0.72rem;
   letter-spacing: 0.04em;
@@ -421,7 +466,10 @@ html[data-om-theme='dark'] .om-doc .shiki span {
   background-color: var(--shiki-dark-bg);
 }
 
-.om-code__pre .shiki {
+.om-code__pre .shiki,
+.om-code__pre .shiki span {
+  /* The block's own paper shows through: Shiki's theme background is white, and on the
+     Broadsheet ground that printed a pale box behind every token. */
   background: none !important;
 }
 
@@ -433,10 +481,11 @@ html[data-om-theme='dark'] .om-doc .shiki span {
   font: inherit;
   font-size: 11px;
   padding: 1px 7px;
-  border: 1px solid var(--om-border);
+  border: 0;
   border-radius: var(--om-radius-sm);
   background: var(--om-bg-elevated);
-  color: var(--om-text-muted);
+  box-shadow: var(--om-shadow-sm);
+  color: var(--om-accent);
   cursor: pointer;
   opacity: 0;
   transition: opacity var(--om-transition);
@@ -447,9 +496,13 @@ html[data-om-theme='dark'] .om-doc .shiki span {
   opacity: 1;
 }
 
+.om-code:hover .om-code__pre::before,
+.om-code:focus-within .om-code__pre::before {
+  opacity: 0;
+}
+
 .om-code__copy:hover {
-  color: var(--om-text);
-  border-color: var(--om-border-strong);
+  background: var(--om-accent-soft);
 }
 
 /* ---- math ---------------------------------------------------------------- */
@@ -488,7 +541,6 @@ html[data-om-theme='dark'] .om-doc .shiki span {
 .om-math--error {
   display: block;
   padding: 6px 10px;
-  border-inline-start: 3px solid var(--om-error);
   background: var(--om-error-soft);
   border-radius: var(--om-radius-sm);
   text-align: start;
@@ -514,8 +566,9 @@ html[data-om-theme='dark'] .om-doc .shiki span {
 }
 
 @keyframes om-flash {
-  0% {
-    background: color-mix(in srgb, var(--om-accent) 30%, transparent);
+  0%,
+  40% {
+    background: var(--om-accent-2-tint);
   }
   100% {
     background: transparent;
@@ -526,10 +579,7 @@ html[data-om-theme='dark'] .om-doc .shiki span {
 
 .om-mermaid {
   margin: calc(1.2em * var(--om-density)) 0;
-  padding: 10px;
-  border: 1px solid var(--om-border);
-  border-radius: var(--om-radius);
-  background: var(--om-bg-subtle);
+  padding: 10px 0;
   text-align: center;
   overflow-x: auto;
 }
@@ -540,7 +590,7 @@ html[data-om-theme='dark'] .om-doc .shiki span {
 }
 
 .om-mermaid--error {
-  border-color: var(--om-error);
+  padding: 10px;
   background: var(--om-error-soft);
   text-align: start;
 }
@@ -556,9 +606,11 @@ html[data-om-theme='dark'] .om-doc .shiki span {
 /* ---- print --------------------------------------------------------------- */
 
 @media print {
-  .om-toolbar,
-  .om-sidebar,
-  .om-statusbar,
+  .om-mast,
+  .om-tabs,
+  .om-margin,
+  .om-drawer,
+  .om-colo,
   .om-progress,
   .om-toast,
   .om-banner {
@@ -618,7 +670,7 @@ html[data-om-theme='dark'] .om-doc .shiki span {
 
 /* A hairline gutter marks the block being edited without shifting the reading column. */
 .om-block[data-editing='true'] {
-  box-shadow: -3px 0 0 0 var(--om-accent);
+  box-shadow: -3px 0 0 0 var(--om-accent-ink);
   padding-inline-start: 10px;
   margin-inline-start: -13px;
 }
@@ -633,19 +685,21 @@ html[data-om-theme='dark'] .om-doc .shiki span {
 }
 
 .om-block__rendered:hover {
-  background: color-mix(in srgb, var(--om-accent) 5%, transparent);
+  background: color-mix(in srgb, var(--om-accent-ink) 6%, transparent);
+  box-shadow: 0 0 0 6px color-mix(in srgb, var(--om-accent-ink) 6%, transparent);
+  border-radius: var(--om-radius-sm);
 }
 
 .om-block__editor {
   display: block;
   width: 100%;
   resize: vertical;
-  border: 1px solid var(--om-accent);
+  border: 0;
   border-radius: var(--om-radius-sm);
-  outline: none;
+  outline: 2px solid var(--om-accent-ink);
   padding: 8px 10px;
   margin: 0;
-  background: var(--om-bg-elevated);
+  background: var(--om-accent-soft);
   color: var(--om-text);
   font-family: var(--om-font-mono);
   /* Slightly smaller than prose so the mono metrics match the rendered line box. */

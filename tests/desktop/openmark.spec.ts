@@ -27,9 +27,10 @@ interface TauriGlobal {
 
 const FIXTURE_PATH = resolve(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'math-render.md');
 
-const TOOLBAR = '.om-toolbar';
+const TOOLBAR = '.om-mast';
 const DOCUMENT_NAME = '[data-om-testid="document-name"]';
-const OPEN_BUTTON = '[data-om-testid="open-button"]';
+// The file commands (open, new, save as, export) sit behind this menu button.
+const FILE_MENU = '[data-om-testid="file-menu"]';
 const SAVE_BUTTON = '[data-om-testid="save-button"]';
 const MODE_READ = '[data-om-testid="mode-read"]';
 const MODE_SOURCE = '[data-om-testid="mode-source"]';
@@ -224,10 +225,10 @@ describe('OpenMark desktop shell', () => {
     expect(await browser.getTitle()).toContain('OpenMark');
   });
 
-  it('renders the toolbar with its document name element', async () => {
+  it('renders the masthead with its document name element', async () => {
     await waitFor(DOCUMENT_NAME, 'the document name element is missing');
 
-    await expect($(OPEN_BUTTON)).toExist();
+    await expect($(FILE_MENU)).toExist();
     await expect($(SAVE_BUTTON)).toExist();
 
     // Empty start: the shell names the placeholder document before a file is opened.
@@ -256,7 +257,7 @@ describe('OpenMark desktop shell', () => {
     });
 
     expect(await $(SOURCE_CONTENT).getText()).toContain(FIXTURE_HEADING);
-    expect(await $(MODE_SOURCE).getAttribute('data-active')).toBe('true');
+    expect(await $(MODE_SOURCE).getAttribute('aria-selected')).toBe('true');
 
     // Back to reading, so the math assertions run against the reading surface.
     await $(MODE_READ).click();

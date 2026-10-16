@@ -54,15 +54,15 @@ const theme = EditorView.theme({
     height: '100%',
     backgroundColor: 'transparent',
     color: 'var(--om-text)',
-    fontSize: '13px',
+    fontSize: '13.5px',
   },
   '.cm-scroller': {
     fontFamily: 'var(--om-font-mono)',
-    lineHeight: '1.65',
+    lineHeight: '1.75',
     overflow: 'auto',
   },
   '.cm-content': {
-    caretColor: 'var(--om-accent)',
+    caretColor: 'var(--om-accent-ink)',
     padding: '12px 0 40vh',
   },
   '.cm-gutters': {
@@ -73,11 +73,11 @@ const theme = EditorView.theme({
   },
   '.cm-activeLine': { backgroundColor: 'color-mix(in srgb, var(--om-accent) 6%, transparent)' },
   '.cm-activeLineGutter': { backgroundColor: 'transparent', color: 'var(--om-text-muted)' },
-  '&.cm-focused .cm-cursor, .cm-cursor': { borderLeftColor: 'var(--om-accent)', borderLeftWidth: '2px' },
+  '&.cm-focused .cm-cursor, .cm-cursor': { borderLeftColor: 'var(--om-accent-ink)', borderLeftWidth: '2px' },
   '&.cm-focused .cm-selectionBackground, .cm-selectionBackground, ::selection': {
     backgroundColor: 'color-mix(in srgb, var(--om-accent) 28%, transparent)',
   },
-  '.cm-searchMatch': { backgroundColor: 'color-mix(in srgb, var(--om-warning) 35%, transparent)' },
+  '.cm-searchMatch': { backgroundColor: 'var(--om-accent-tint)' },
   '.cm-searchMatch.cm-searchMatch-selected': {
     backgroundColor: 'color-mix(in srgb, var(--om-accent) 45%, transparent)',
   },

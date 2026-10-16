@@ -1,5 +1,6 @@
 import { createHighlighterCore, type HighlighterCore } from 'shiki/core';
 import { createJavaScriptRegexEngine } from 'shiki/engine/javascript';
+import { BROADSHEET_LIGHT } from './broadsheet-theme';
 
 /**
  * Syntax highlighting via Shiki.
@@ -15,7 +16,7 @@ import { createJavaScriptRegexEngine } from 'shiki/engine/javascript';
  *    imported, so the initial payload stays small even though the grammar set is large.
  */
 
-const THEME_LIGHT = 'github-light';
+const THEME_LIGHT = BROADSHEET_LIGHT.name!;
 const THEME_DARK = 'github-dark';
 
 /**
@@ -145,7 +146,7 @@ export function resolveLanguage(raw: string): string {
 async function getHighlighter(): Promise<HighlighterCore> {
   if (!highlighterPromise) {
     highlighterPromise = createHighlighterCore({
-      themes: [import('shiki/themes/github-light.mjs'), import('shiki/themes/github-dark.mjs')],
+      themes: [BROADSHEET_LIGHT, import('shiki/themes/github-dark.mjs')],
       // A tiny eager set keeps the first code block instant; the rest arrive on demand.
       langs: [import('shiki/langs/javascript.mjs'), import('shiki/langs/json.mjs')],
       engine: createJavaScriptRegexEngine({ forgiving: true }),

@@ -73,7 +73,8 @@ src/core/render/     typesetter.ts, mermaid.ts, highlighter.ts
 src/core/fs/         encoding.ts, fileService.ts
 src/app/             store.ts (zustand), settings.ts
 src/components/      DocumentView, SourceEditor, Sidebar, OutlinePanel, SearchPanel,
-                     DiagnosticsPanel, SettingsPanel, Toolbar, StatusBar
+                     DiagnosticsPanel, SettingsPanel, Masthead, TabBar, StatusBar,
+                     ConfirmDialog, icons
 src/styles/          tokens.css, app.css, document.css
 src-tauri/           lib.rs, commands.rs, tauri.conf.json, capabilities/, icons/
 tests/corpus/        148 markdown docs, 355 math cases, manifest.json

@@ -1,8 +1,26 @@
-import { defineConfig } from 'vite';
+import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import { fileURLToPath } from 'node:url';
 
 const host = process.env.TAURI_DEV_HOST;
+
+/**
+ * Drops the `.woff` fallback from @fontsource stylesheets.
+ *
+ * Each `@font-face` lists woff2 and then woff; Vite emits every `url()` it sees, so the bundle
+ * would carry both — roughly doubling the ~9 MB Noto Serif SC subset set. WebView2 reads woff2,
+ * so the fallback is dead weight in the installer.
+ */
+function woff2Only(): Plugin {
+  return {
+    name: 'openmark:woff2-only',
+    enforce: 'pre',
+    transform(code, id) {
+      if (!id.includes('@fontsource') || !id.endsWith('.css')) return null;
+      return code.replace(/,\s*url\([^)]*\.woff\)\s*format\('woff'\)/g, '');
+    },
+  };
+}
 
 /**
  * Tauri needs a fixed dev port and must not fight the Rust watcher.
@@ -11,7 +29,7 @@ const host = process.env.TAURI_DEV_HOST;
  * without shipping polyfills.
  */
 export default defineConfig({
-  plugins: [react()],
+  plugins: [woff2Only(), react()],
 
   resolve: {
     alias: {

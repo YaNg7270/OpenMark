@@ -3,10 +3,11 @@ import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { DocumentView } from './components/DocumentView';
 import { InstantView } from './components/InstantView';
-import { Sidebar } from './components/Sidebar';
+import { SettingsDrawer, Sidebar } from './components/Sidebar';
 import { SourceEditor } from './components/SourceEditor';
 import { StatusBar } from './components/StatusBar';
-import { Toolbar, AVAILABLE_MODES } from './components/Toolbar';
+import { Masthead, AVAILABLE_MODES } from './components/Masthead';
+import { CheckCircle, FileArrowDown, WarningCircle } from './components/icons';
 import { TabBar } from './components/TabBar';
 import { isDirty, startDraftJournal, useStore, type ViewMode } from './app/store';
 import { DraftRecovery } from './components/DraftRecovery';
@@ -87,6 +88,7 @@ export function App() {
   const setSource = useStore((s) => s.setSourceFromEditor);
   const setMode = useStore((s) => s.setMode);
   const setSidebar = useStore((s) => s.setSidebar);
+  const toggleSettings = useStore((s) => s.toggleSettings);
   const setActiveHeading = useStore((s) => s.setActiveHeading);
   const updateSettings = useStore((s) => s.updateSettings);
   const clearNotice = useStore((s) => s.clearNotice);
@@ -314,10 +316,11 @@ export function App() {
       }
       if (mod && event.key === ',') {
         event.preventDefault();
-        setSidebar('settings');
+        toggleSettings();
         return;
       }
       if (event.key === 'Escape') {
+        if (useStore.getState().ui.settingsOpen) toggleSettings(false);
         if (useStore.getState().settings.reading.focusMode) {
           updateSettings((draft) => ({ ...draft, reading: { ...draft.reading, focusMode: false } }));
         }
@@ -351,7 +354,7 @@ export function App() {
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('wheel', onWheel, { capture: true });
     };
-  }, [newDocument, notify, openViaDialog, save, saveAs, setMode, setSidebar, updateSettings]);
+  }, [newDocument, notify, openViaDialog, save, saveAs, setMode, setSidebar, toggleSettings, updateSettings]);
 
   // --- drag and drop -------------------------------------------------------------
   const onDrop = useCallback(
@@ -423,29 +426,39 @@ export function App() {
   const body = useMemo(
     () => (
       <div className="om-body" data-mode={ui.mode}>
-        <Sidebar
-          getDocumentRoot={getDocumentRoot}
-          onOutlineSelect={jumpToHeading}
-          onDiagnosticSelect={jumpToDiagnostic}
-          onSettingsChange={updateSettings}
-        />
+        <Sidebar getDocumentRoot={getDocumentRoot} onOutlineSelect={jumpToHeading} onDiagnosticSelect={jumpToDiagnostic} />
         <main className="om-main">
-          {showSource && (
-            <div className="om-main__pane om-main__pane--source" ref={sourceHostRef}>
-              <SourceEditor doc={doc} onChange={setSource} readOnly={doc.readOnly} />
+          {doc.externalChange && (
+            <div className="om-banner" role="alert">
+              <WarningCircle />
+              <span className="om-banner__text">{t('notice.externalChange')}</span>
+              <button type="button" className="om-btn om-btn--secondary om-btn--sm" onClick={() => doc.path && void openPath(doc.path)}>
+                {t('notice.reload')}
+              </button>
+              <button type="button" className="om-btn om-btn--ghost om-btn--sm" onClick={() => void save()}>
+                {t('notice.keepMine')}
+              </button>
             </div>
           )}
-          {showReader && (
-            <div className="om-main__pane om-main__pane--reader" ref={readHostRef}>
-              <DocumentView doc={doc} onNavigate={handleLink} />
-            </div>
-          )}
-          {showInstant && (
-            <div className="om-main__pane om-main__pane--instant">
-              <InstantView doc={doc} onNavigate={handleLink} />
-            </div>
-          )}
+          <div className="om-panes">
+            {showSource && (
+              <div className="om-main__pane om-main__pane--source" ref={sourceHostRef}>
+                <SourceEditor doc={doc} onChange={setSource} readOnly={doc.readOnly} />
+              </div>
+            )}
+            {showReader && (
+              <div className="om-main__pane om-main__pane--reader" ref={readHostRef}>
+                <DocumentView doc={doc} onNavigate={handleLink} />
+              </div>
+            )}
+            {showInstant && (
+              <div className="om-main__pane om-main__pane--instant">
+                <InstantView doc={doc} onNavigate={handleLink} />
+              </div>
+            )}
+          </div>
         </main>
+        <SettingsDrawer onSettingsChange={updateSettings} />
       </div>
     ),
     [
@@ -453,6 +466,8 @@ export function App() {
       getDocumentRoot,
       handleLink,
       jumpToDiagnostic,
+      openPath,
+      save,
       jumpToHeading,
       setSource,
       showInstant,
@@ -475,19 +490,12 @@ export function App() {
       onDrop={(event) => void onDrop(event)}
     >
       {/*
-        The toolbar and the tab bar share one grid row.
-        `.om-shell` declares three rows, and the tab bar renders nothing at all when a single
-        document is open — so as a sibling it would claim a track when visible and shift every
-        other child down one when it appeared, which put the sidebar on top of it.
-      */}
-      {/*
         A visually hidden level-one heading naming the open document.
         A screen-reader user arriving in the window otherwise has no statement of what is open;
         the visible file name is chrome, and without this the page has no h1 at all.
       */}
       <h1 className="om-visually-hidden">{doc.name}</h1>
-      <div className="om-shell__top">
-      <Toolbar
+      <Masthead
         onOpen={() => void openViaDialog()}
         onNew={() => newDocument()}
         onSave={() => void save()}
@@ -502,31 +510,28 @@ export function App() {
         }
       />
       <TabBar />
-      </div>
       {body}
       <StatusBar />
 
       <DraftRecovery />
 
-      {doc.externalChange && (
-        <div className="om-banner" role="alert">
-          <span>{t('notice.externalChange')}</span>
-          <button type="button" className="om-button" onClick={() => doc.path && void openPath(doc.path)}>
-            {t('notice.reload')}
-          </button>
-          <button type="button" className="om-button" onClick={() => void save()}>
-            {t('notice.keepMine')}
-          </button>
-        </div>
-      )}
-
       {ui.notice && (
         <div className="om-toast" data-kind={ui.notice.kind} role="status" onClick={clearNotice}>
-          {ui.notice.message}
+          {ui.notice.kind === 'info' ? <CheckCircle /> : <WarningCircle />}
+          <span>{ui.notice.message}</span>
         </div>
       )}
 
-      {dragging && <div className="om-dropzone">{t('drop.hint')}</div>}
+      {settings.reading.focusMode && <div className="om-focus-hint">{t('focus.hint')}</div>}
+
+      {dragging && (
+        <div className="om-dropzone">
+          <div>
+            <FileArrowDown size={48} />
+            {t('drop.hint')}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

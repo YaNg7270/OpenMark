@@ -15,10 +15,10 @@ estimated.
 
 | Layer | Command | Result |
 |---|---|---|
-| Unit + DOM (Vitest) | `pnpm test` | **441 passed / 0 failed** (10 files) |
-| Browser E2E (Playwright) | `pnpm test:e2e` | **59 passed / 0 failed** (incl. 7 screenshot baselines and 6 accessibility audits) |
-| Desktop E2E (WebdriverIO) | `pnpm test:desktop` | **9 passed / 0 failed** (custom-protocol binary, no dev server running) |
-| Rust unit | `cargo test --lib` | **12 passed / 0 failed** (3 export + 6 IPC wire-format contract + 3 asset-resolution) |
+| Unit + DOM (Vitest) | `pnpm test` | **521 passed / 0 failed** (20 files) |
+| Browser E2E (Playwright) | `pnpm test:e2e` | **79 passed / 0 failed** (incl. 7 screenshot baselines, regenerated for the Broadsheet interface, and 6 accessibility audits) |
+| Desktop E2E (WebdriverIO) | `pnpm test:desktop` | **13 passed / 0 failed** (custom-protocol debug binary, no dev server running) |
+| Rust unit | `cargo test --lib` | **16 passed / 0 failed** (3 export + 3 export-boundary + 6 IPC wire-format contract + 3 asset-resolution + 1 backup pruning) |
 | Corpus validation | `pnpm corpus:verify` | **OK** — manifest matches disk |
 | Corpus conformance | part of `pnpm test` | **300 assertions, 148/148 fixtures emit every declared diagnostic** |
 | Type check | `pnpm typecheck` | clean |
@@ -114,7 +114,7 @@ Running against src-tauri/target/release/openmark.exe:
 ✓ reports an external change once the file is actually touched
 ✓ resolves a relative image reference through the real command
 ✓ launches the real binary and renders the application shell
-✓ renders the toolbar with its document name element
+✓ renders the masthead with its document name element
 ✓ opens the fixture through the shell open-file event
 ✓ switches to source mode and shows the raw markdown
 ✓ typesets a display formula into real MathJax glyphs

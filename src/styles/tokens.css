@@ -1,5 +1,10 @@
 /* ============================================================================
-   OpenMark design tokens.
+   OpenMark design tokens — the Broadsheet system.
+
+   Newsprint set for the screen: near-black serif on paper white, with the two
+   process accents — cyan for anything interactive, magenta as the rarer second
+   spot colour (unsaved state, errors, the read-only flag). Structure comes from
+   the serif scale and whitespace, not from boxes and rules.
 
    Every user-facing appearance setting (page width, density, font size, line
    height, image and formula scale) is expressed as one of these variables, so the
@@ -10,20 +15,18 @@
 :root {
   color-scheme: light dark;
 
-  /* --- typography --- */
+  /* --- typography: the serif is the chrome --- */
   --om-font-ui:
-    'Segoe UI Variable Text', 'Segoe UI', -apple-system, 'Microsoft YaHei UI', 'PingFang SC', 'Noto Sans SC',
-    system-ui, sans-serif;
+    'Source Serif 4', 'Noto Serif SC', 'Source Han Serif SC', 'Songti SC', 'SimSun', Georgia, serif;
   --om-font-content:
-    'Source Han Serif SC', 'Noto Serif SC', 'Songti SC', 'SimSun', Georgia, 'Times New Roman', serif;
+    'Source Serif 4', 'Noto Serif SC', 'Source Han Serif SC', 'Songti SC', 'SimSun', Georgia, serif;
   --om-font-sans-content:
-    'Source Han Sans SC', 'Noto Sans SC', 'Microsoft YaHei', -apple-system, 'Segoe UI', sans-serif;
-  --om-font-mono: 'Cascadia Code', 'JetBrains Mono', Consolas, 'Courier New', ui-monospace, monospace;
+    'Segoe UI Variable Text', 'Segoe UI', 'Microsoft YaHei UI', 'PingFang SC', 'Noto Sans SC', system-ui, sans-serif;
+  --om-font-mono: 'Cascadia Mono', 'Cascadia Code', Consolas, 'Courier New', ui-monospace, monospace;
 
   --om-font-size: 16px;
   --om-line-height: 1.75;
   --om-letter-spacing: 0.01em;
-  /* Latin text is measured in `ch` for a stable reading rhythm. */
   --om-content-width: 46rem;
   --om-content-padding: 3.5rem;
 
@@ -31,69 +34,96 @@
   --om-math-scale: 1;
   --om-image-scale: 1;
 
-  /* --- rhythm (density) --- */
+  /* --- rhythm: Broadsheet's airy 1.25x scale --- */
+  --om-space-1: 5px;
+  --om-space-2: 10px;
+  --om-space-3: 15px;
+  --om-space-4: 20px;
+  --om-space-6: 30px;
+  --om-space-8: 40px;
   --om-density: 1;
   --om-gap-block: calc(1.1em * var(--om-density));
-  --om-radius: 6px;
-  --om-radius-sm: 4px;
+  --om-radius: 4px;
+  --om-radius-sm: 2px;
 
   --om-transition: 140ms cubic-bezier(0.2, 0, 0.13, 1);
 }
 
-/* ---- light ---- */
+/* ---- light: paper ---- */
 :root,
 [data-om-theme='light'] {
-  --om-bg: #ffffff;
-  --om-bg-subtle: #f7f8fa;
-  --om-bg-elevated: #ffffff;
-  --om-bg-hover: #eef0f4;
-  --om-bg-active: #e3e7ee;
-  --om-text: #1f2328;
-  --om-text-muted: #5a6169;
-  /* 4.6:1 on --om-bg-subtle. The previous #8b939c measured 2.92:1, below the 4.5:1 minimum for
-     body-size text — de-emphasised still has to be readable. */
-  --om-text-faint: #656d79;
-  --om-border: #e2e5ea;
-  --om-border-strong: #cdd3db;
-  /* Darkened from #2f6feb, which measured 3.98:1 as text on --om-accent-soft. */
-  --om-accent: #1f5bd7;
-  --om-accent-text: #ffffff;
-  --om-accent-soft: #e8f0fe;
-  --om-success: #1a7f37;
-  --om-warning: #9a6700;
-  --om-error: #cf222e;
-  --om-error-soft: #ffebe9;
-  --om-warning-soft: #fff8c5;
-  --om-code-bg: #f6f8fa;
-  --om-mark-bg: #fff3a3;
-  --om-shadow: 0 1px 2px rgb(31 35 40 / 8%), 0 8px 24px rgb(31 35 40 / 6%);
+  --om-bg: #f3f2f2;
+  --om-bg-subtle: #eae9e9;
+  --om-bg-elevated: #f3f2f2;
+  --om-bg-hover: color-mix(in srgb, #201e1d 7%, transparent);
+  --om-bg-active: color-mix(in srgb, #201e1d 14%, transparent);
+  --om-text: #201e1d;
+  --om-text-muted: #444141;
+  /* 5.4:1 on the surface fill — de-emphasised still has to be readable. */
+  --om-text-faint: #605d5d;
+  --om-border: color-mix(in srgb, #201e1d 16%, transparent);
+  --om-border-strong: #bab6b6;
+  /*
+   * Cyan has two jobs. As a fill or a rule (progress, the selected-mode underline, a checked
+   * box) it is the full process ink. As text or a fill under text it is the deep 700 step: the
+   * base ink measures 3.6:1 against paper, enough for chrome but not for words.
+   */
+  --om-accent: #006786;
+  --om-accent-ink: #0088b0;
+  --om-accent-hover: #004961;
+  --om-accent-text: #f3f2f2;
+  --om-accent-soft: #e9f8ff;
+  --om-accent-tint: #cbeeff;
+  /* Magenta: the second spot colour. */
+  --om-accent-2: #d6006c;
+  --om-accent-2-text: #aa0b56;
+  --om-accent-2-soft: #fff1f4;
+  --om-accent-2-tint: #ffdee6;
+  --om-success: #006786;
+  --om-warning: #444141;
+  --om-error: #aa0b56;
+  --om-error-soft: #fff1f4;
+  --om-warning-soft: #eae7e7;
+  --om-code-bg: #eae9e9;
+  --om-mark-bg: color-mix(in srgb, #edbb00 38%, #f3f2f2);
+  --om-shadow-sm: 0 1px 2px color-mix(in srgb, #2d2b2b 14%, transparent);
+  --om-shadow: 0 3px 10px color-mix(in srgb, #2d2b2b 16%, transparent);
+  --om-shadow-lg: 0 12px 32px color-mix(in srgb, #2d2b2b 22%, transparent);
 }
 
-/* ---- dark ---- */
+/* ---- dark: the same press, night shift. Broadsheet itself shows no dark surface; this keeps
+   the theme setting honest with the same ramps, lifted for a dark ground. ---- */
 [data-om-theme='dark'] {
-  --om-bg: #16181d;
-  --om-bg-subtle: #1c1f26;
-  --om-bg-elevated: #21252d;
-  --om-bg-hover: #262b34;
-  --om-bg-active: #2f3540;
-  --om-text: #dfe3e9;
-  --om-text-muted: #9aa3af;
-  /* Lighter than the light theme's faint colour: on a dark surface, contrast comes from being
-     brighter than the background, not darker. */
-  --om-text-faint: #8b95a3;
-  --om-border: #2b303a;
-  --om-border-strong: #3a414d;
-  --om-accent: #7fb3ff;
-  --om-accent-text: #10131a;
-  --om-accent-soft: #1d2836;
-  --om-success: #4ac26b;
-  --om-warning: #d4a72c;
-  --om-error: #ff6b6b;
-  --om-error-soft: #33201f;
-  --om-warning-soft: #322c1a;
-  --om-code-bg: #1b1e24;
+  --om-bg: #1b1a19;
+  --om-bg-subtle: #232120;
+  --om-bg-elevated: #2a2826;
+  --om-bg-hover: color-mix(in srgb, #e9e5e2 8%, transparent);
+  --om-bg-active: color-mix(in srgb, #e9e5e2 15%, transparent);
+  --om-text: #e9e5e2;
+  --om-text-muted: #bdb7b3;
+  --om-text-faint: #a29c98;
+  --om-border: color-mix(in srgb, #e9e5e2 16%, transparent);
+  --om-border-strong: #4a4644;
+  --om-accent: #62c5ee;
+  --om-accent-ink: #38a6cf;
+  --om-accent-hover: #99e0ff;
+  --om-accent-text: #0a303e;
+  --om-accent-soft: #0a303e;
+  --om-accent-tint: #004961;
+  --om-accent-2: #ff458e;
+  --om-accent-2-text: #ff90b1;
+  --om-accent-2-soft: #4b1528;
+  --om-accent-2-tint: #790e3d;
+  --om-success: #62c5ee;
+  --om-warning: #d7d3d3;
+  --om-error: #ff90b1;
+  --om-error-soft: #4b1528;
+  --om-warning-soft: #2d2b2b;
+  --om-code-bg: #232120;
   --om-mark-bg: #5c4d00;
-  --om-shadow: 0 1px 2px rgb(0 0 0 / 30%), 0 8px 24px rgb(0 0 0 / 40%);
+  --om-shadow-sm: 0 0 0 1px color-mix(in srgb, #e9e5e2 8%, transparent);
+  --om-shadow: 0 0 0 1px color-mix(in srgb, #e9e5e2 10%, transparent), 0 6px 18px rgb(0 0 0 / 45%);
+  --om-shadow-lg: 0 0 0 1px color-mix(in srgb, #e9e5e2 10%, transparent), 0 14px 36px rgb(0 0 0 / 55%);
 }
 
 /* Users who ask for maximum contrast get it, without a separate theme. */
@@ -119,13 +149,22 @@ body,
 
 body {
   font-family: var(--om-font-ui);
-  font-size: 14px;
+  font-size: 15px;
+  line-height: 1.55;
   color: var(--om-text);
   background: var(--om-bg);
   /* A desktop shell must not rubber-band or show a text caret on chrome. */
   overflow: hidden;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
 }
 
 /* The app is a native-feeling desktop window: no accidental text selection of chrome,
@@ -135,11 +174,15 @@ body {
 }
 
 ::selection {
-  background: color-mix(in srgb, var(--om-accent) 28%, transparent);
+  background: color-mix(in srgb, var(--om-accent-ink) 30%, transparent);
+}
+
+:focus {
+  outline: none;
 }
 
 :focus-visible {
-  outline: 2px solid var(--om-accent);
+  outline: 2px solid var(--om-accent-ink);
   outline-offset: 2px;
   border-radius: var(--om-radius-sm);
 }

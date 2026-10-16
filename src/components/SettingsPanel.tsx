@@ -104,8 +104,9 @@ export function SettingsPanel({ onChange }: SettingsPanelProps) {
           onChange={(imageAlign) => patchReading({ imageAlign: imageAlign as ImageAlign })}
         />
 
-        <Select
+        <Segmented
           label={t('settings.font')}
+          name="om-font"
           value={reading.fontFamily}
           options={[
             { value: 'serif', label: t('settings.font.serif') },
@@ -170,7 +171,7 @@ export function SettingsPanel({ onChange }: SettingsPanelProps) {
         />
         <button
           type="button"
-          className="om-button om-button--wide"
+          className="om-btn om-btn--ghost om-settings__reset"
           onClick={() => onChange(() => structuredClone(DEFAULT_SETTINGS))}
         >
           {t('settings.reset')}
@@ -240,11 +241,44 @@ interface ToggleProps {
   onChange: (checked: boolean) => void;
 }
 
+/** A checkbox drawn as Broadsheet's square: the native input stays, for focus and assistive tech. */
 function Toggle({ label, checked, onChange }: ToggleProps) {
   return (
-    <label className="om-field om-field--row om-field--toggle">
-      <span className="om-field__label">{label}</span>
+    <label className="om-chk">
       <input type="checkbox" checked={checked} onChange={(event) => onChange(event.target.checked)} />
+      <span className="om-chk__box" aria-hidden="true" />
+      {label}
     </label>
+  );
+}
+
+interface SegmentedProps {
+  label: string;
+  name: string;
+  value: string;
+  options: { value: string; label: string }[];
+  onChange: (value: string) => void;
+}
+
+/** A short exclusive choice, all options visible: a radio group drawn as one segmented strip. */
+function Segmented({ label, name, value, options, onChange }: SegmentedProps) {
+  return (
+    <div className="om-field" role="radiogroup" aria-label={label}>
+      <span className="om-field__label">{label}</span>
+      <div className="om-seg">
+        {options.map((option) => (
+          <label key={option.value} className="om-seg__opt">
+            <input
+              type="radio"
+              name={name}
+              value={option.value}
+              checked={value === option.value}
+              onChange={() => onChange(option.value)}
+            />
+            {option.label}
+          </label>
+        ))}
+      </div>
+    </div>
   );
 }

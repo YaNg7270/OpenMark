@@ -2,6 +2,16 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
 import { useStore } from './app/store';
+/*
+ * The Broadsheet type: Source Serif 4 (Latin, with its true italic) over Noto Serif SC. Bundled,
+ * never fetched — the app makes no network request. The CJK face is split by unicode-range, so
+ * WebView2 loads only the subsets a document actually uses.
+ */
+import '@fontsource/source-serif-4/latin-400.css';
+import '@fontsource/source-serif-4/latin-400-italic.css';
+import '@fontsource/source-serif-4/latin-600.css';
+import '@fontsource/noto-serif-sc/400.css';
+import '@fontsource/noto-serif-sc/600.css';
 import './styles/tokens.css';
 import './styles/app.css';
 import './styles/document.css';

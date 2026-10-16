@@ -46,10 +46,10 @@ export function DiagnosticsPanel({ diagnostics, onSelect }: DiagnosticsPanelProp
   const exportReport = useStore((s) => s.exportHealthReport);
   const actions = (
     <div className="om-diagnostics__actions">
-      <button type="button" className="om-button" data-om-testid="report-copy" onClick={() => void copyReport()}>
+      <button type="button" className="om-btn om-btn--secondary om-btn--sm" data-om-testid="report-copy" onClick={() => void copyReport()}>
         {t('panel.diagnostics.copyReport')}
       </button>
-      <button type="button" className="om-button" data-om-testid="report-export" onClick={() => void exportReport()}>
+      <button type="button" className="om-btn om-btn--ghost om-btn--sm" data-om-testid="report-export" onClick={() => void exportReport()}>
         {t('panel.diagnostics.exportReport')}
       </button>
     </div>
@@ -66,9 +66,14 @@ export function DiagnosticsPanel({ diagnostics, onSelect }: DiagnosticsPanelProp
 
   return (
     <div className="om-diagnostics">
-      {actions}
+      {/* The two counts set as display figures: the first thing to read is how bad it is. */}
       <p className="om-diagnostics__summary" data-om-testid="diagnostics-summary">
-        {t('panel.diagnostics.summary', { errors: counts.errors, warnings: counts.warnings })}
+        <span>
+          <b>{counts.errors}</b> {t('panel.diagnostics.errors')}
+        </span>
+        <span>
+          <b>{counts.warnings}</b> {t('panel.diagnostics.warnings')}
+        </span>
       </p>
       <ul className="om-diagnostics__list">
         {diagnostics.map((diagnostic, index) => (
@@ -92,6 +97,7 @@ export function DiagnosticsPanel({ diagnostics, onSelect }: DiagnosticsPanelProp
           </li>
         ))}
       </ul>
+      {actions}
     </div>
   );
 }
