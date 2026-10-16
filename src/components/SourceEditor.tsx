@@ -21,6 +21,7 @@ import { normalizeEol } from '@/core/fs/encoding';
 import { useStore, type DocumentState } from '@/app/store';
 import { imageMarkdown, saveImageAsset } from '@/core/fs/assets';
 import { t } from '@/i18n';
+import { markdownShortcutsExtension } from './markdownShortcuts';
 
 /**
  * Markdown source editor built on CodeMirror 6.
@@ -246,6 +247,7 @@ export function SourceEditor({ doc, onChange, readOnly }: SourceEditorProps) {
           // Built-in find/replace, active when the editor has focus. The sidebar search
           // serves the reading views; this one serves the source view.
           search({ top: true }),
+          markdownShortcutsExtension(),
           keymap.of([...defaultKeymap, ...historyKeymap, ...searchKeymap, indentWithTab]),
           markdown({ base: markdownLanguage, codeLanguages: languages, addKeymap: true }),
           syntaxHighlighting(highlightStyle),

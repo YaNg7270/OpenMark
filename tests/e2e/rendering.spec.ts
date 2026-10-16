@@ -458,6 +458,28 @@ test.describe('instant rendering', () => {
     expect(source).toBe(['# 标题', '', '第一段已经改写。', '', '第二段原文。', '', '- 列表项', ''].join('\n'));
   });
 
+  test('formatting shortcuts work in the block editor without switching mode', async ({ page }) => {
+    await openFixture(page, 'instant-shortcuts.md', DOC);
+    await page.getByTestId('mode-instant').click();
+
+    const paragraph = page.locator('.om-block[data-om-kind="paragraph"]').first();
+    await paragraph.locator('.om-block__rendered').click();
+    const editor = page.locator('.om-block__editor');
+    await editor.press('Control+a');
+    await editor.press('Control+b');
+    await editor.press('Control+1');
+    await expect(editor).toHaveValue('# **第一段原文。**');
+    await expect(page.getByTestId('mode-instant')).toHaveAttribute('aria-selected', 'true');
+
+    // The textarea's own undo still works, because the edit went through `insertText`.
+    await editor.press('Control+z');
+    await expect(editor).toHaveValue('**第一段原文。**');
+
+    await editor.blur();
+    const source = await page.evaluate(() => window.__openmark__!.getSource());
+    expect(source).toBe(['# 标题', '', '**第一段原文。**', '', '第二段原文。', '', '- 列表项', ''].join('\n'));
+  });
+
   test('an LF file stays LF after an edit', async ({ page }) => {
     const lf = '# 标题\n\n第一段原文。\n';
     await openFixture(page, 'instant-lf.md', lf);
@@ -548,6 +570,35 @@ test.describe('instant rendering', () => {
 
 test.describe('source editor', () => {
   const DOC = ['# 标题', '', '正文 with **bold** and `code`.', '', '```js', 'const x = 1;', '```', ''].join('\n');
+
+  /*
+   * The command logic is unit-tested in `tests/unit/edit-commands.test.ts`. What only a browser
+   * can show is that the keys reach it: CodeMirror's own defaults claim some of them (`Ctrl+I`,
+   * `Ctrl+Shift+K`), and the window claims `Ctrl+1..4` for switching view modes.
+   */
+  test('formatting shortcuts edit the text and stay inside the editor', async ({ page }) => {
+    await openFixture(page, 'editor-shortcuts.md', '');
+    await page.getByTestId('mode-source').click();
+
+    await page.locator('.om-source__host .cm-content').click();
+    await page.keyboard.type('word');
+    await page.keyboard.press('Shift+Home');
+    await page.keyboard.press('Control+b');
+    expect(await page.evaluate(() => window.__openmark__!.getSource())).toBe('**word**');
+
+    await page.keyboard.press('Control+i');
+    expect(await page.evaluate(() => window.__openmark__!.getSource())).toBe('***word***');
+    await page.keyboard.press('Control+i');
+
+    await page.keyboard.press('Control+2');
+    expect(await page.evaluate(() => window.__openmark__!.getSource())).toBe('## **word**');
+    // Ctrl+2 is also "instant mode" for the window; inside the editor it must only format.
+    await expect(page.getByTestId('mode-source')).toHaveAttribute('aria-selected', 'true');
+
+    // Each shortcut is one undo step.
+    await page.keyboard.press('Control+z');
+    expect(await page.evaluate(() => window.__openmark__!.getSource())).toBe('**word**');
+  });
 
   test('supports undo and redo with the keyboard', async ({ page }) => {
     await openFixture(page, 'editor-undo.md', DOC);

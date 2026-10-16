@@ -4,6 +4,7 @@ import { useStore, type DocumentState } from '@/app/store';
 import { useReadingProgress, useTypesetting } from './useTypesetting';
 import { MathTools } from './MathTools';
 import { TableEditor } from './TableEditor';
+import { applyShortcutToTextarea } from './markdownShortcuts';
 import { imageMarkdown, saveImageAsset } from '@/core/fs/assets';
 import { t } from '@/i18n';
 
@@ -262,6 +263,12 @@ function Block({
               });
           }}
           onKeyDown={(event) => {
+            // Formatting keys belong to the block being edited, not to the window: Ctrl+1..4
+            // would otherwise also switch the view mode.
+            if (applyShortcutToTextarea(event.nativeEvent, event.currentTarget)) {
+              event.stopPropagation();
+              return;
+            }
             if (event.key === 'Escape') {
               event.preventDefault();
               flush();
