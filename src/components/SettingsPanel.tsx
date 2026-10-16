@@ -1,4 +1,4 @@
-import { DEFAULT_SETTINGS, type AppSettings } from '@/app/settings';
+import { clampZoom, DEFAULT_SETTINGS, ZOOM_MAX, ZOOM_MIN, type AppSettings, type ImageAlign } from '@/app/settings';
 import { useStore } from '@/app/store';
 import { t } from '@/i18n';
 
@@ -83,6 +83,25 @@ export function SettingsPanel({ onChange }: SettingsPanelProps) {
           step={0.05}
           suffix="×"
           onChange={(imageScale) => patchReading({ imageScale })}
+        />
+        <Slider
+          label={t('settings.zoom')}
+          value={reading.zoom}
+          min={ZOOM_MIN}
+          max={ZOOM_MAX}
+          step={0.1}
+          suffix="×"
+          onChange={(zoom) => patchReading({ zoom: clampZoom(zoom) })}
+        />
+        <Select
+          label={t('settings.imageAlign')}
+          value={reading.imageAlign}
+          options={[
+            { value: 'left', label: t('settings.imageAlign.left') },
+            { value: 'center', label: t('settings.imageAlign.center') },
+            { value: 'right', label: t('settings.imageAlign.right') },
+          ]}
+          onChange={(imageAlign) => patchReading({ imageAlign: imageAlign as ImageAlign })}
         />
 
         <Select

@@ -1026,14 +1026,30 @@ export function createEngine(options: EngineOptions = {}): MarkdownItInstance {
    * nearest tagged block before a position.
    */
   md.core.ruler.push('openmark_source_lines', (state) => {
-    for (const token of state.tokens) {
+    for (const [i, token] of state.tokens.entries()) {
       if (token.level === 0 && token.nesting !== -1 && token.map && token.type !== 'om_frontmatter') {
         token.attrSet('data-om-line', String(token.map[0] + 1));
+      }
+      /*
+       * A paragraph holding nothing but one image (optionally linked) is a figure in all but
+       * name, and follows the image-alignment setting. CSS cannot tell it apart from an image
+       * inside a line of text — `:only-child` ignores text nodes — so it is marked here.
+       */
+      if (token.type === 'paragraph_open' && isStandaloneImage(state.tokens[i + 1]?.children ?? null)) {
+        token.attrSet('data-om-standalone-image', '');
       }
     }
   });
 
   return md;
+}
+
+/** True for inline content that is exactly one image, or one link wrapping one image. */
+function isStandaloneImage(children: readonly { type: string; content: string }[] | null): boolean {
+  if (!children) return false;
+  const meaningful = children.filter((child) => !(child.type === 'text' && child.content.trim() === '') && child.type !== 'softbreak');
+  const types = meaningful.map((child) => child.type).join(' ');
+  return types === 'image' || types === 'link_open image link_close';
 }
 
 export interface ParseOptions extends EngineOptions {

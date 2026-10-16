@@ -666,3 +666,13 @@ html[data-om-theme='dark'] .om-doc .shiki span {
     box-shadow: none;
   }
 }
+
+/* An image alone in its paragraph (marked by the engine) follows the reader's alignment
+   setting. An image inside a line of text stays where the text puts it. */
+[data-om-image-align='center'] .om-doc p[data-om-standalone-image] {
+  text-align: center;
+}
+
+[data-om-image-align='right'] .om-doc p[data-om-standalone-image] {
+  text-align: end;
+}

@@ -409,6 +409,63 @@ test.describe('critical path', () => {
     await expect(page.locator('.om-settings')).toBeVisible();
   });
 
+  test('zoom follows Ctrl+Shift+= / - / 0 and Ctrl+wheel, and the window still fits', async ({ page }) => {
+    await openFixture(page, 'zoom.md', '# 缩放\n\n正文。\n');
+    const zoom = () => page.evaluate(() => document.documentElement.dataset['omZoom']);
+
+    await page.keyboard.press('Control+Shift+Equal');
+    await page.keyboard.press('Control+Shift+Equal');
+    await expect.poll(zoom).toBe('1.2');
+    await page.keyboard.press('Control+Shift+Minus');
+    await expect.poll(zoom).toBe('1.1');
+
+    // The chrome really grew, and the status bar is still on screen: zoom rescales the window
+    // rather than overflowing it. (Client rects are already in zoomed coordinates.)
+    const layout = await page.evaluate(() => ({
+      toolbar: document.querySelector('.om-toolbar')!.getBoundingClientRect().height,
+      bar: document.querySelector('.om-statusbar')!.getBoundingClientRect().bottom,
+      inner: window.innerHeight,
+    }));
+    expect(layout.toolbar).toBeGreaterThan(42 * 1.05);
+    expect(layout.bar, 'zoomed layout overflows the window').toBeLessThanOrEqual(layout.inner + 1);
+
+    await page.mouse.move(400, 300);
+    await page.keyboard.down('Control');
+    await page.mouse.wheel(0, -120);
+    await page.keyboard.up('Control');
+    await expect.poll(zoom).toBe('1.2');
+
+    await page.keyboard.press('Control+Shift+Digit0');
+    await expect.poll(zoom).toBe('1');
+  });
+
+  test('F8 toggles focus mode and F11 toggles real fullscreen', async ({ page }) => {
+    await openFixture(page, 'keys.md', '# 键\n');
+    await page.keyboard.press('F8');
+    await expect(page.locator('html')).toHaveAttribute('data-om-focus', 'on');
+    await page.keyboard.press('F8');
+    await expect(page.locator('html')).toHaveAttribute('data-om-focus', 'off');
+
+    // F11 used to be bound to focus mode; it is now the window's fullscreen.
+    await page.keyboard.press('F11');
+    await expect.poll(() => page.evaluate(() => Boolean(document.fullscreenElement))).toBe(true);
+    await expect(page.locator('html')).toHaveAttribute('data-om-focus', 'off');
+    await page.keyboard.press('Escape');
+    await expect.poll(() => page.evaluate(() => Boolean(document.fullscreenElement))).toBe(false);
+  });
+
+  test('a standalone image follows the alignment setting; an inline one does not', async ({ page }) => {
+    const pixel = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+    await openFixture(page, 'align.md', `# 图\n\n![独立](${pixel})\n\n文字中的 ![行内](${pixel}) 图片。\n`);
+    await page.getByTestId('panel-settings').click();
+    await page.getByLabel('独立图片对齐').selectOption('center');
+
+    const align = (selector: string) =>
+      page.locator(selector).first().evaluate((el) => getComputedStyle(el).textAlign);
+    await expect.poll(() => align('.om-doc p[data-om-standalone-image]')).toBe('center');
+    expect(await align('.om-doc p:not([data-om-standalone-image])')).not.toBe('center');
+  });
+
   test('theme toggle switches the palette', async ({ page }) => {
     await openFixture(page, 'theme.md', '# 主题\n\n正文。\n');
     const html = page.locator('html');

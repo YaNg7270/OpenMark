@@ -11,6 +11,8 @@ import { TabBar } from './components/TabBar';
 import { isDirty, startDraftJournal, useStore, type ViewMode } from './app/store';
 import { DraftRecovery } from './components/DraftRecovery';
 import { isDesktop, openExternal } from './core/fs/fileService';
+import { isFullscreen, setFullscreen, toggleFullscreen } from './core/util/window';
+import { clampZoom } from './app/settings';
 import { imageMarkdown, saveImageAsset } from './core/fs/assets';
 import { setLanguage, t } from '@/i18n';
 import type { Diagnostic, OutlineEntry } from '@/core/markdown/types';
@@ -209,6 +211,34 @@ export function App() {
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       /*
+       * Window-level keys first: none of these mean anything to an editor, so they work even
+       * while the source editor has focus. The function keys follow Typora (F8 focus, F9
+       * typewriter, F11 fullscreen); zoom is Ctrl+Shift+= / - / 0, also as in Typora.
+       */
+      if (event.key === 'F11') {
+        event.preventDefault();
+        void toggleFullscreen().catch(() => notify('warning', t('window.fullscreenFailed')));
+        return;
+      }
+      if (event.key === 'F8' || event.key === 'F9') {
+        event.preventDefault();
+        const key = event.key === 'F8' ? 'focusMode' : 'typewriterMode';
+        updateSettings((draft) => ({ ...draft, reading: { ...draft.reading, [key]: !draft.reading[key] } }));
+        return;
+      }
+      if ((event.ctrlKey || event.metaKey) && event.shiftKey && !event.altKey) {
+        const step = event.code === 'Equal' ? 0.1 : event.code === 'Minus' ? -0.1 : event.code === 'Digit0' ? 0 : null;
+        if (step !== null) {
+          event.preventDefault();
+          updateSettings((draft) => ({
+            ...draft,
+            reading: { ...draft.reading, zoom: step === 0 ? 1 : clampZoom(draft.reading.zoom + step) },
+          }));
+          return;
+        }
+      }
+
+      /*
        * When the source editor has focus it owns the keyboard, including Ctrl+F for its own
        * find/replace panel and Ctrl+Z for its own undo stack. Intercepting those here would
        * make the editor feel broken, so the global handler stands down.
@@ -252,14 +282,7 @@ export function App() {
         if (useStore.getState().settings.reading.focusMode) {
           updateSettings((draft) => ({ ...draft, reading: { ...draft.reading, focusMode: false } }));
         }
-        return;
-      }
-      if (event.key === 'F11') {
-        event.preventDefault();
-        updateSettings((draft) => ({
-          ...draft,
-          reading: { ...draft.reading, focusMode: !draft.reading.focusMode },
-        }));
+        void isFullscreen().then((on) => (on ? setFullscreen(false) : undefined));
         return;
       }
       // Ctrl+1..4 select a view mode, skipping modes that are not implemented yet.
@@ -271,9 +294,25 @@ export function App() {
         }
       }
     };
+    /*
+     * Ctrl+wheel zooms the whole window. The listener must not be passive, or the browser's
+     * own zoom would run as well; capture phase so CodeMirror's scroller cannot swallow it.
+     */
+    const onWheel = (event: WheelEvent) => {
+      if (!(event.ctrlKey || event.metaKey) || event.deltaY === 0) return;
+      event.preventDefault();
+      const step = event.deltaY < 0 ? 0.1 : -0.1;
+      updateSettings((draft) => ({ ...draft, reading: { ...draft.reading, zoom: clampZoom(draft.reading.zoom + step) } }));
+    };
+    // Bubble phase for keys: an editor that handles a key (Ctrl+1 as a heading in the block
+    // editor) stops it before the window can treat it as a mode switch.
     window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [newDocument, openViaDialog, save, saveAs, setMode, setSidebar, updateSettings]);
+    window.addEventListener('wheel', onWheel, { passive: false, capture: true });
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('wheel', onWheel, { capture: true });
+    };
+  }, [newDocument, notify, openViaDialog, save, saveAs, setMode, setSidebar, updateSettings]);
 
   // --- drag and drop -------------------------------------------------------------
   const onDrop = useCallback(

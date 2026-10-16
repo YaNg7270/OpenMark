@@ -10,8 +10,11 @@
  * formula scale never re-renders a document.
  */
 
+import { setPageZoom } from '@/core/util/window';
+
 export type ThemePreference = 'light' | 'dark' | 'system';
 export type ContentFont = 'serif' | 'sans' | 'system';
+export type ImageAlign = 'left' | 'center' | 'right';
 
 export interface ReadingSettings {
   theme: ThemePreference;
@@ -34,6 +37,10 @@ export interface ReadingSettings {
   showOutline: boolean;
   /** Number headings automatically in the rendered output. */
   autoNumberHeadings: boolean;
+  /** Whole-window zoom factor (Ctrl+Shift+= / Ctrl+Shift+- / Ctrl+wheel). */
+  zoom: number;
+  /** Alignment of an image that stands alone in its paragraph. */
+  imageAlign: ImageAlign;
 }
 
 export interface EditorSettings {
@@ -82,6 +89,8 @@ export const DEFAULT_SETTINGS: AppSettings = {
     showReadingProgress: true,
     showOutline: true,
     autoNumberHeadings: false,
+    zoom: 1,
+    imageAlign: 'left',
   },
   editor: {
     autoSave: false,
@@ -111,13 +120,32 @@ export function loadSettings(): AppSettings {
     return {
       version: 1,
       language: parsed.language === 'en' ? 'en' : DEFAULT_SETTINGS.language,
-      reading: { ...DEFAULT_SETTINGS.reading, ...pickNumbers(parsed.reading, DEFAULT_SETTINGS.reading) },
+      reading: sanitizeReading({ ...DEFAULT_SETTINGS.reading, ...pickNumbers(parsed.reading, DEFAULT_SETTINGS.reading) }),
       editor: { ...DEFAULT_SETTINGS.editor, ...pickNumbers(parsed.editor, DEFAULT_SETTINGS.editor) },
       safety: { ...DEFAULT_SETTINGS.safety, ...pickNumbers(parsed.safety, DEFAULT_SETTINGS.safety) },
     };
   } catch {
     return DEFAULT_SETTINGS;
   }
+}
+
+export const ZOOM_MIN = 0.5;
+export const ZOOM_MAX = 2;
+
+/** Clamps a zoom factor to the supported range, on a 10% grid so repeated steps stay exact. */
+export function clampZoom(value: number): number {
+  if (!Number.isFinite(value)) return 1;
+  return Math.round(Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, value)) * 10) / 10;
+}
+
+/** Values that pass the type check but are still out of range or not one of the choices. */
+function sanitizeReading(reading: ReadingSettings): ReadingSettings {
+  const align: readonly string[] = ['left', 'center', 'right'];
+  return {
+    ...reading,
+    zoom: clampZoom(reading.zoom),
+    imageAlign: align.includes(reading.imageAlign) ? reading.imageAlign : DEFAULT_SETTINGS.reading.imageAlign,
+  };
 }
 
 /**
@@ -176,6 +204,7 @@ export function applySettingsToDocument(settings: AppSettings): void {
   root.dataset['omFocus'] = reading.focusMode ? 'on' : 'off';
   // Heading numbering is a CSS-counter feature, so this is a pure style toggle.
   root.dataset['omNumbered'] = reading.autoNumberHeadings ? 'on' : 'off';
+  root.dataset['omImageAlign'] = reading.imageAlign;
 
   root.style.setProperty('--om-font-size', `${reading.fontSize}px`);
   root.style.setProperty('--om-line-height', String(reading.lineHeight));
@@ -186,4 +215,5 @@ export function applySettingsToDocument(settings: AppSettings): void {
   root.style.setProperty('--om-content-font', FONT_STACKS[reading.fontFamily]);
   // Padding grows as the column narrows, so a narrow column still reads as a book page.
   root.style.setProperty('--om-content-padding', `${Math.max(1.5, 4 + (46 - reading.contentWidth) * 0.12)}rem`);
+  void setPageZoom(clampZoom(reading.zoom));
 }

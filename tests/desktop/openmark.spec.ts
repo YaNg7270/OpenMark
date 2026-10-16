@@ -311,3 +311,52 @@ describe('OpenMark desktop shell', () => {
     console.log(`[desktop-e2e] error nodes=${errorNodes}`);
   });
 });
+
+/*
+ * Fullscreen and zoom have a desktop path the browser suite cannot reach: the native window's
+ * fullscreen and WebView2's zoom factor, each behind its own capability grant. The keys are
+ * dispatched in the page (their routing is covered by Playwright); what is asserted here is the
+ * native result.
+ */
+describe('window controls', () => {
+  const press = (init: KeyboardEventInit) =>
+    browser.execute((options: KeyboardEventInit) => {
+      window.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, cancelable: true, ...options }));
+    }, init);
+
+  const nativeFullscreen = () =>
+    browser.execute(() => {
+      const tauri = window as unknown as { __TAURI__: { window: { getCurrentWindow(): { isFullscreen(): Promise<boolean> } } } };
+      return tauri.__TAURI__.window.getCurrentWindow().isFullscreen();
+    });
+
+  it('F11 puts the native window into fullscreen and back', async () => {
+    await waitFor(TOOLBAR, 'the OpenMark shell never mounted', LAUNCH_TIMEOUT_MS);
+    await press({ key: 'F11', code: 'F11' });
+    await browser.waitUntil(async () => (await nativeFullscreen()) === true, {
+      timeout: MOUNT_TIMEOUT_MS,
+      timeoutMsg: 'F11 did not make the window fullscreen',
+    });
+    await press({ key: 'F11', code: 'F11' });
+    await browser.waitUntil(async () => (await nativeFullscreen()) === false, {
+      timeout: MOUNT_TIMEOUT_MS,
+      timeoutMsg: 'F11 did not leave fullscreen',
+    });
+  });
+
+  it('Ctrl+Shift+= zooms the WebView2 page and Ctrl+Shift+0 restores it', async () => {
+    const ratio = () => browser.execute(() => window.devicePixelRatio);
+    const before = await ratio();
+    await press({ key: '+', code: 'Equal', ctrlKey: true, shiftKey: true });
+    await press({ key: '+', code: 'Equal', ctrlKey: true, shiftKey: true });
+    await browser.waitUntil(async () => (await ratio()) > before * 1.15, {
+      timeout: MOUNT_TIMEOUT_MS,
+      timeoutMsg: `the webview zoom did not change (devicePixelRatio stayed ${before})`,
+    });
+    await press({ key: ')', code: 'Digit0', ctrlKey: true, shiftKey: true });
+    await browser.waitUntil(async () => Math.abs((await ratio()) - before) < 0.01, {
+      timeout: MOUNT_TIMEOUT_MS,
+      timeoutMsg: 'Ctrl+Shift+0 did not restore 100%',
+    });
+  });
+});
