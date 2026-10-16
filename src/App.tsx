@@ -10,7 +10,8 @@ import { Toolbar, AVAILABLE_MODES } from './components/Toolbar';
 import { TabBar } from './components/TabBar';
 import { isDirty, startDraftJournal, useStore, type ViewMode } from './app/store';
 import { DraftRecovery } from './components/DraftRecovery';
-import { isDesktop, openExternal } from './core/fs/fileService';
+import { isDesktop, openExternal, pathExists } from './core/fs/fileService';
+import { fragmentCandidates, resolveLink } from './core/markdown/links';
 import { isFullscreen, setFullscreen, toggleFullscreen } from './core/util/window';
 import { clampZoom } from './app/settings';
 import { imageMarkdown, saveImageAsset } from './core/fs/assets';
@@ -184,27 +185,66 @@ export function App() {
     [getDocumentRoot],
   );
 
+  /** Scrolls the current document to a fragment; true when the target exists. */
+  const scrollToFragment = useCallback(
+    (fragment: string): boolean => {
+      const root = getDocumentRoot();
+      if (!root) return false;
+      for (const id of fragmentCandidates(fragment)) {
+        const target = root.ownerDocument.getElementById(id);
+        if (target && root.contains(target)) {
+          target.scrollIntoView({ block: 'start', behavior: 'smooth' });
+          return true;
+        }
+      }
+      return false;
+    },
+    [getDocumentRoot],
+  );
+
   const handleLink = useCallback(
     (href: string) => {
-      if (href.startsWith('#')) {
-        const target = getDocumentRoot()?.querySelector<HTMLElement>(`#${CSS.escape(href.slice(1))}`);
-        target?.scrollIntoView({ block: 'start', behavior: 'smooth' });
-        return;
+      const target = resolveLink(useStore.getState().doc.path, href);
+      switch (target.kind) {
+        case 'fragment':
+          if (!scrollToFragment(target.fragment)) notify('warning', t('link.fragmentMissing', { fragment: target.fragment }));
+          return;
+        case 'external':
+          void openExternal(target.url).catch(() => notify('warning', t('link.openFailed', { href: target.url })));
+          return;
+        case 'document':
+          void (async () => {
+            if (!(await pathExists(target.path).catch(() => false))) {
+              notify('warning', t('link.missing', { path: target.path }));
+              return;
+            }
+            await openPath(target.path);
+            const fragment = target.fragment;
+            if (!fragment) return;
+            /*
+             * The linked document renders after `openPath` resolves, and its reading-position
+             * restore runs then too. Retrying for a short while lands on the fragment once the
+             * element exists, after anything that would move the scroll position.
+             */
+            const deadline = Date.now() + 1500;
+            const attempt = () => {
+              if (scrollToFragment(fragment)) return;
+              if (Date.now() < deadline) window.setTimeout(attempt, 60);
+              else notify('warning', t('link.fragmentMissing', { fragment }));
+            };
+            window.setTimeout(attempt, 60);
+          })();
+          return;
+        case 'file':
+          // Never launched: a link in a received document must not be able to start a program.
+          notify('info', t('link.fileNotOpened', { path: target.path }));
+          return;
+        case 'unsupported':
+          notify('warning', t('link.unsupported', { href: target.href }));
+          return;
       }
-      if (/^https?:|^mailto:/i.test(href)) {
-        void openExternal(href).catch(() => notify('warning', `无法打开链接：${href}`));
-        return;
-      }
-      // `decodeURI` throws on an escape that is not valid UTF-8; show such a link as written.
-      let shown = href;
-      try {
-        shown = decodeURI(href);
-      } catch {
-        // keep the authored form
-      }
-      notify('info', `本地链接：${shown}（编辑里程碑中实现文件跳转）`);
     },
-    [getDocumentRoot, notify],
+    [notify, openPath, scrollToFragment],
   );
 
   // --- keyboard shortcuts --------------------------------------------------------

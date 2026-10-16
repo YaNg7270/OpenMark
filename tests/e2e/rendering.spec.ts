@@ -219,6 +219,34 @@ test.describe('critical path', () => {
     }
   });
 
+  test('an \\eqref written before its \\label still resolves', async ({ page }) => {
+    await openFixture(
+      page,
+      'forward-ref.md',
+      [
+        '# 前向引用',
+        '',
+        '见 $\\eqref{eq:late}$。',
+        '',
+        '$$\\begin{equation}a\\end{equation}$$',
+        '',
+        '$$\\begin{equation}b \\label{eq:late}\\end{equation}$$',
+      ].join('\n'),
+    );
+    await expect(page.locator('.om-math[data-om-state="ok"]')).toHaveCount(3);
+    const glyphs = () =>
+      page.locator('.om-math').evaluateAll((nodes) =>
+        nodes.map((node) => Array.from(node.querySelectorAll('[data-c]')).map((g) => g.getAttribute('data-c')).join(',')),
+      );
+    // `?` is 3F: the reference must not be left as (???), and must name equation (2).
+    await expect.poll(async () => (await glyphs())[0]).toContain('32');
+    expect((await glyphs())[0]).not.toContain('3F');
+    // Re-rendering the reference must not renumber the equations themselves.
+    const [, first, second] = await glyphs();
+    expect(first).toContain('28,31,29');
+    expect(second).toContain('28,32,29');
+  });
+
   test('a broken formula keeps its source and is reported', async ({ page }) => {
     await openFixture(
       page,
@@ -893,6 +921,47 @@ test.describe('session state', () => {
     await page.getByTestId('mode-instant').click();
     await expect.poll(renderedTopLine).toBeGreaterThanOrEqual(sectionLine(120) - 4);
     expect(await renderedTopLine()).toBeLessThanOrEqual(sectionLine(121));
+  });
+
+  test('local links open the Markdown file they point to, at the linked heading', async ({ page }) => {
+    const filler = Array.from({ length: 60 }, (_, i) => `段落 ${i + 1}。`).join('\n\n');
+    await page.addInitScript(
+      (files) => {
+        window.__OPENMARK_TEST_FILES__ = files;
+      },
+      {
+        'notes/a.md': `# 甲\n\n[下一篇](./b.md#第二节)\n\n[去结尾](#结尾)\n\n[程序](./tool.exe)\n\n[缺失](./gone.md)\n\n${filler}\n\n## 结尾\n`,
+        'notes/b.md': `# 乙\n\n${filler}\n\n## 第二节\n\n这里。\n`,
+      },
+    );
+    await page.goto('/');
+    await page.waitForFunction(() => Boolean(window.__openmark__));
+    await page.evaluate(() => window.__openmark__!.openPath('notes/a.md'));
+
+    // Visible in the viewport — the last heading of a document cannot scroll to the very top.
+    const headingAtTop = (id: string) =>
+      page.evaluate((target) => {
+        const scroller = document.querySelector('.om-doc-scroll')!;
+        const heading = document.getElementById(target);
+        if (!heading) return false;
+        const offset = heading.getBoundingClientRect().top - scroller.getBoundingClientRect().top;
+        return offset > -5 && offset < scroller.clientHeight - 20 && scroller.scrollTop > 0;
+      }, id);
+
+    // An in-document fragment written GitHub-style reaches the `om-h-` heading id.
+    await page.locator('.om-doc a', { hasText: '去结尾' }).click();
+    await expect.poll(() => headingAtTop('om-h-结尾')).toBe(true);
+
+    // A non-Markdown file is never launched, only reported.
+    await page.locator('.om-doc a', { hasText: '程序' }).click();
+    await expect(page.locator('.om-toast')).toContainText('tool.exe');
+    await page.locator('.om-doc a', { hasText: '缺失' }).click();
+    await expect(page.locator('.om-toast')).toContainText('gone.md');
+    await expect(page.getByTestId('document-name')).toHaveText('a.md');
+
+    await page.locator('.om-doc a', { hasText: '下一篇' }).click();
+    await expect(page.getByTestId('document-name')).toHaveText('b.md');
+    await expect.poll(() => headingAtTop('om-h-第二节')).toBe(true);
   });
 
   test('remembers recently opened files, most recent first', async ({ page }) => {

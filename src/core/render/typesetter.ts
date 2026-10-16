@@ -59,10 +59,13 @@ export async function typesetPlaceholders(options: TypesetOptions): Promise<numb
   const codeById = new Map(options.code.map((c) => [c.id, c]));
 
   const targets: { node: HTMLElement; fill: () => Promise<void> }[] = [];
+  const mathTargets: { node: HTMLElement; expr: MathExpression }[] = [];
 
   for (const node of queryAll(root, 'data-om-math')) {
     const expr = mathById.get(node.dataset['omMath'] ?? '');
-    if (expr) targets.push({ node, fill: () => fillMath(node, expr, options) });
+    if (!expr) continue;
+    targets.push({ node, fill: () => fillMath(node, expr, options) });
+    mathTargets.push({ node, expr });
   }
   for (const node of queryAll(root, 'data-om-mermaid')) {
     const diagram = mermaidById.get(node.dataset['omMermaid'] ?? '');
@@ -85,6 +88,21 @@ export async function typesetPlaceholders(options: TypesetOptions): Promise<numb
       if (signal?.aborted) break;
       await target.fill();
       filled++;
+    }
+
+    /*
+     * Each formula is converted on its own, so a `\eqref` written before the equation it names
+     * found no label yet and rendered as `(???)`. Now that the first pass has seen every
+     * label, formulas that only *refer* to labels are rendered again. Those are the only safe
+     * ones to redo: a formula that defines a label or a numbered line would advance the
+     * equation counter a second time and be renumbered.
+     */
+    for (const { node, expr } of mathTargets) {
+      if (signal?.aborted) break;
+      if (!isPureReference(expr.tex)) continue;
+      delete node.dataset['omFilled'];
+      node.classList.remove('om-math--error');
+      await fillMath(node, expr, options);
     }
     return filled;
   }
@@ -155,6 +173,12 @@ function scheduleLazily(
 
     options.signal?.addEventListener('abort', () => finish(observer), { once: true });
   });
+}
+
+/** A formula that cites a label but defines no label, tag or numbered environment. */
+function isPureReference(tex: string): boolean {
+  if (!/\\(?:eq)?ref\s*\{/.test(tex)) return false;
+  return !/\\(?:label|tag)\b|\\begin\s*\{(?:equation|align|gather|multline|eqnarray|alignat|flalign|xalignat)\b/.test(tex);
 }
 
 function queryAll(root: HTMLElement, attribute: string): HTMLElement[] {
