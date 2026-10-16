@@ -7,7 +7,8 @@ Living ledger for the OpenMark build. Updated at the end of every work session.
 - **Stack as built:** Tauri 2.12 (Rust 1.99) + React 19 + TypeScript 7 + Vite 8,
   `markdown-it@15` + GFM plugins, MathJax 4.1.3 (SVG output, mhchem), Mermaid 12, Shiki 4,
   DOMPurify 3.4.
-- **Last updated:** 2026-10-16 (session 1, final)
+- **Last updated:** 2026-10-16 (session 2 — a field-reported defect in the external-change
+  probe, plus the two harness faults it exposed; see §2.9-2.12)
 
 ---
 
@@ -21,8 +22,13 @@ and health checks, HTML and PDF export, and Windows installers plus a portable p
 test layers pass against the shipping artefacts.
 
 What remains is not implementation work but the honest gaps recorded in
-`docs/TEST_REPORT.md` §8 — chiefly that neither installer is code-signed and the MSI was not
+`docs/TEST_REPORT.md` §9 — chiefly that neither installer is code-signed and the MSI was not
 install-tested.
+
+Session 2 fixed a defect reported from real use — the «文件已被其他程序修改» banner appeared on
+every document — and, in verifying it, found two faults in the test harness itself that had been
+making the desktop layer's green runs mean less than they appeared to. §2.9-2.12 record all
+three, and the correction note there supersedes the previous desktop number.
 
 ### Verified in this session (current evidence, not carried-over claims)
 

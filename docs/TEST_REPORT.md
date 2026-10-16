@@ -26,9 +26,9 @@ estimated.
 | Installers | `pnpm desktop:build` | NSIS **9,523,349 B**, MSI **10,383,360 B** |
 | Portable | `pnpm desktop:build:portable` | **10,061,234 B** zip (`openmark.exe` + `README.txt`), verified to keep app data in `./data` |
 
-Installer byte counts move by a few hundred bytes between builds (the packages embed a build
-timestamp); these are the values from the artifacts under test, not invariants. The portable
-zip is reproducible to the byte.
+Installer byte counts move between builds (the packages embed a build timestamp); these are the
+values from the artifacts under test, not invariants. The portable zip produced the same size in
+two consecutive builds, which is suggestive but was not checked by hash.
 
 All four test layers are green against the shipping artefacts, not against mocks: Playwright
 drives the minified production bundle in the same engine family as the app runtime, and
