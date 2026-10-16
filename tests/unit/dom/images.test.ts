@@ -132,6 +132,25 @@ describe('resolveLocalImages', () => {
     expect(String(call?.args['relativePath'])).toBe('./img/中文.png');
   });
 
+  /*
+   * `decodeURI` throws on an escape that is not valid UTF-8, and markdown-it passes
+   * `![x](%FF.png)` through untouched. The call sat outside the `try`, so one such reference
+   * rejected the whole pass: every image after it stayed unresolved, and the caller's promise
+   * chain — which has no `catch` — dropped the runtime diagnostics it had already collected.
+   */
+  it('survives a malformed percent-escape and still resolves the images after it', async () => {
+    stubDesktop((path) => `C:/docs/${path.replace('./', '')}`);
+    const root = makeRoot('<img src="%FF.png"><img src="./img/figure-1.png">');
+
+    const report = await resolveLocalImages(root, 'C:/docs/notes.md');
+
+    const [broken, good] = Array.from(root.querySelectorAll('img'));
+    expect(good!.getAttribute('src')).toContain('asset://localhost/');
+    expect(report.rewritten).toBe(1);
+    expect(broken!.dataset['omMissing']).toBe('true');
+    expect(report.missingPaths).toEqual(['%FF.png']);
+  });
+
   it('does nothing when there is no document path to resolve against', async () => {
     stubDesktop((path) => `C:/docs/${path}`);
     const root = makeRoot('<img src="./img/a.png">');

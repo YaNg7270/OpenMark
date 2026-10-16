@@ -43,8 +43,12 @@ export async function resolveLocalImages(root: HTMLElement, documentPath: string
       continue;
     }
 
+    // `decodeURI` throws on an escape that is not valid UTF-8 (`%FF.png`); such a reference
+    // cannot name a file on disk, so it is missing — not a reason to abandon the whole pass.
+    const decoded = safeDecodeURI(source);
+
     // Refused before the filesystem is touched, matching the health check's rule.
-    if (classifyRelativePath(decodeURI(source)) === 'escapes') {
+    if (decoded === null || classifyRelativePath(decoded) === 'escapes') {
       image.dataset['omMissing'] = 'true';
       image.alt = image.alt || source;
       report.missing++;
@@ -53,7 +57,7 @@ export async function resolveLocalImages(root: HTMLElement, documentPath: string
     }
 
     try {
-      const resolved = await resolveAssetUrl(documentPath, decodeURI(source));
+      const resolved = await resolveAssetUrl(documentPath, decoded);
       if (resolved) {
         image.src = resolved;
         report.rewritten++;
@@ -67,4 +71,12 @@ export async function resolveLocalImages(root: HTMLElement, documentPath: string
   }
 
   return report;
+}
+
+function safeDecodeURI(value: string): string | null {
+  try {
+    return decodeURI(value);
+  } catch {
+    return null;
+  }
 }

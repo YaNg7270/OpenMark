@@ -189,7 +189,14 @@ export function App() {
         void openExternal(href).catch(() => notify('warning', `无法打开链接：${href}`));
         return;
       }
-      notify('info', `本地链接：${decodeURI(href)}（编辑里程碑中实现文件跳转）`);
+      // `decodeURI` throws on an escape that is not valid UTF-8; show such a link as written.
+      let shown = href;
+      try {
+        shown = decodeURI(href);
+      } catch {
+        // keep the authored form
+      }
+      notify('info', `本地链接：${shown}（编辑里程碑中实现文件跳转）`);
     },
     [getDocumentRoot, notify],
   );
