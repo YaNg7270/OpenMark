@@ -661,6 +661,65 @@ test.describe('source editor', () => {
 });
 
 test.describe('session state', () => {
+  /*
+   * A crash is simulated by reloading the page *after* the journal has been written, which is
+   * checked directly in storage first: the `beforeunload` flush that a reload also triggers is
+   * not available after a real crash, so the test must not depend on it.
+   */
+  test('offers back unsaved work after a crash, and restores it as unsaved changes', async ({ page }) => {
+    await page.addInitScript(() => {
+      window.__OPENMARK_TEST_FILES__ = { 'crash.md': '# 原文\n' };
+    });
+    await page.goto('/');
+    await page.waitForFunction(() => Boolean(window.__openmark__));
+    await page.evaluate(() => window.__openmark__!.openPath('crash.md'));
+    await page.getByTestId('mode-source').click();
+    await page.locator('.om-source__host .cm-content').click();
+    await page.keyboard.press('Control+End');
+    await page.keyboard.type('\n还没保存的一段。');
+    const edited = await page.evaluate(() => window.__openmark__!.getSource());
+
+    await page.waitForFunction(
+      (text) => (localStorage.getItem('openmark.drafts.v1') ?? '').includes(JSON.stringify(text).slice(1, -1)),
+      edited,
+    );
+    await page.reload();
+    await page.waitForFunction(() => Boolean(window.__openmark__));
+
+    const recovery = page.getByTestId('draft-recovery');
+    await expect(recovery).toBeVisible();
+    await expect(recovery.getByTestId('draft-item')).toHaveCount(1);
+    await expect(recovery).toContainText('crash.md');
+
+    await recovery.getByTestId('draft-restore').click();
+    await expect(page.getByTestId('draft-recovery')).toHaveCount(0);
+    await expect(page.getByTestId('document-name')).toHaveText('crash.md');
+    expect(await page.evaluate(() => window.__openmark__!.getSource())).toBe(edited);
+    // Restored text is unsaved work, not something already on disk.
+    await expect(page).toHaveTitle(/^• crash\.md/);
+  });
+
+  test('a discarded draft is gone for good', async ({ page }) => {
+    await page.addInitScript(() => {
+      window.__OPENMARK_TEST_FILES__ = { 'discard.md': '# 原文\n' };
+    });
+    await page.goto('/');
+    await page.waitForFunction(() => Boolean(window.__openmark__));
+    await page.evaluate(() => window.__openmark__!.openPath('discard.md'));
+    await page.getByTestId('mode-source').click();
+    await page.locator('.om-source__host .cm-content').click();
+    await page.keyboard.type('x');
+    await page.waitForFunction(() => (localStorage.getItem('openmark.drafts.v1') ?? '').includes('discard.md'));
+    await page.reload();
+
+    await page.getByTestId('draft-discard').click();
+    await expect(page.getByTestId('draft-recovery')).toHaveCount(0);
+    await page.waitForFunction(() => localStorage.getItem('openmark.drafts.v1') === null);
+    await page.reload();
+    await page.waitForFunction(() => Boolean(window.__openmark__));
+    await expect(page.getByTestId('draft-recovery')).toHaveCount(0);
+  });
+
   test('remembers recently opened files, most recent first', async ({ page }) => {
     await page.addInitScript(() => {
       window.__OPENMARK_TEST_FILES__ = {

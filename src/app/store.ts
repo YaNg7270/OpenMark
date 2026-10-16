@@ -10,6 +10,7 @@ import type { ImageReference } from '@/core/markdown/types';
 import { sanitizeHtml } from '@/core/markdown/sanitize';
 import * as files from '@/core/fs/fileService';
 import { applyEol, contentHash, normalizeEol, type EolStyle } from '@/core/fs/encoding';
+import { collectDrafts, loadDrafts, sameDrafts, saveDrafts, type Draft, type JournalDocument } from './drafts';
 import { applySettingsToDocument, loadSettings, saveSettings, resolveTheme, type AppSettings } from './settings';
 import {
   forgetFile,
@@ -117,6 +118,11 @@ interface AppStore {
   session: SessionState;
   /** Diagnostics from the last render, surfaced to the panel and the status bar. */
   diagnostics: Diagnostic[];
+  /**
+   * Unsaved work found in the draft journal at startup — what the previous session never wrote
+   * to disk. Offered back until the user restores or discards each one.
+   */
+  pendingDrafts: Draft[];
 
   openViaDialog: () => Promise<void>;
   openPath: (path: string) => Promise<void>;
@@ -219,6 +225,14 @@ interface AppStore {
   addRuntimeDiagnostics: (items: readonly Diagnostic[]) => void;
 
   updateSettings: (mutate: (draft: AppSettings) => AppSettings) => void;
+
+  /**
+   * Reopens a recovered draft in its own tab, as unsaved changes on top of the file (or as a new
+   * untitled document). Nothing is written to disk: the user decides whether to save.
+   */
+  restoreDraft: (id: string) => Promise<void>;
+  /** Forgets a recovered draft for good. */
+  discardDraft: (id: string) => void;
 }
 
 /**
@@ -372,6 +386,7 @@ export const useStore = create<AppStore>((set, get) => ({
   },
   diagnostics: [],
   session: initialSession,
+  pendingDrafts: loadDrafts(),
 
   openViaDialog: async () => {
     const path = await files.pickOpenPath();
@@ -761,6 +776,43 @@ export const useStore = create<AppStore>((set, get) => ({
     set({ session: next });
   },
 
+  restoreDraft: async (id) => {
+    const draft = get().pendingDrafts.find((candidate) => candidate.id === id);
+    if (!draft) return;
+
+    if (draft.path) {
+      try {
+        await get().openPath(draft.path);
+      } catch {
+        // Fall through: an unreadable file still leaves the draft's text worth having.
+      }
+    }
+    const opened = get().doc;
+    const onDisk = draft.path !== null && opened.path === draft.path && !opened.error;
+    if (!onDisk) {
+      // The file is gone (or the draft was never saved): the text comes back as a new document.
+      get().newDocument();
+      set((s) => ({ doc: { ...s.doc, name: draft.name } }));
+    } else {
+      // Restoring is an explicit request to edit this file, so the safe read-only default yields.
+      get().unlockEditing();
+    }
+    get().setSource(draft.source);
+    set((s) => ({ pendingDrafts: s.pendingDrafts.filter((candidate) => candidate.id !== id) }));
+
+    if (draft.path && !onDisk) {
+      get().notify('warning', `未找到原文件，已作为新文档恢复：${draft.path}`);
+    } else if (onDisk && contentHash(opened.savedSource) !== draft.basisHash) {
+      get().notify('warning', '原文件在崩溃后被修改过；已恢复的内容覆盖在当前文件之上，保存前请核对。');
+    } else {
+      get().notify('info', `已恢复未保存的内容：${draft.name}`);
+    }
+  },
+
+  discardDraft: (id) => {
+    set((s) => ({ pendingDrafts: s.pendingDrafts.filter((candidate) => candidate.id !== id) }));
+  },
+
   unlockEditing: () => {
     set((s) => ({ doc: { ...s.doc, readOnly: false, readOnlyReason: null } }));
     get().notify('info', '已解除只读限制，保存将写入源文件。');
@@ -829,3 +881,64 @@ export function outlineOf(doc: DocumentState): OutlineEntry[] {
 }
 
 export { resolveTheme };
+
+/** Every open document, in the shape the draft journal reads. */
+function journalDocuments(state: AppStore): JournalDocument[] {
+  return state.tabOrder.flatMap((tabId) => {
+    const doc = tabId === state.activeTabId ? state.doc : state.parkedTabs[tabId];
+    if (!doc) return [];
+    return [{ tabId, path: doc.path, name: doc.name, source: doc.source, savedSource: doc.savedSource, savedHash: contentHash(doc.savedSource) }];
+  });
+}
+
+/** How long after the last change the journal is written. Short: this is the crash window. */
+export const DRAFT_JOURNAL_DELAY_MS = 800;
+
+/**
+ * Starts writing the draft journal (see `app/drafts.ts`). Returns a stop function.
+ *
+ * Writes are debounced, and flushed immediately when the page is about to go away. The first
+ * write happens straight away, so drafts from the previous session survive into the journal
+ * even if this session dies before anything changes.
+ */
+export function startDraftJournal(): () => void {
+  let written: Draft[] = [];
+  let warned = false;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+
+  const flush = () => {
+    clearTimeout(timer);
+    timer = undefined;
+    const state = useStore.getState();
+    const next = collectDrafts(journalDocuments(state), state.pendingDrafts, written, Date.now());
+    if (sameDrafts(next, written)) return;
+    if (saveDrafts(next)) {
+      written = next;
+    } else if (!warned) {
+      warned = true;
+      state.notify('warning', '未保存内容过大，无法写入崩溃恢复副本；请尽快保存。');
+    }
+  };
+
+  flush();
+  const unsubscribe = useStore.subscribe((state, previous) => {
+    if (
+      state.doc === previous.doc &&
+      state.parkedTabs === previous.parkedTabs &&
+      state.tabOrder === previous.tabOrder &&
+      state.pendingDrafts === previous.pendingDrafts
+    ) {
+      return;
+    }
+    clearTimeout(timer);
+    timer = setTimeout(flush, DRAFT_JOURNAL_DELAY_MS);
+  });
+  const onUnload = () => flush();
+  globalThis.addEventListener?.('beforeunload', onUnload);
+
+  return () => {
+    flush();
+    unsubscribe();
+    globalThis.removeEventListener?.('beforeunload', onUnload);
+  };
+}

@@ -1212,3 +1212,52 @@ html[data-om-focus='on'] .om-statusbar {
   white-space: nowrap;
   border: 0;
 }
+
+/* ---- crash recovery -------------------------------------------------------- */
+
+.om-recovery {
+  position: absolute;
+  top: 50px;
+  right: 16px;
+  z-index: 41;
+  max-width: min(460px, calc(100vw - 32px));
+  padding: 10px 14px;
+  border-radius: var(--om-radius);
+  border: 1px solid color-mix(in srgb, var(--om-warning) 50%, transparent);
+  background: var(--om-bg-elevated);
+  color: var(--om-text);
+  box-shadow: var(--om-shadow);
+  font-size: 12.5px;
+}
+
+.om-recovery__title {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.om-recovery__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 6px;
+}
+
+.om-recovery__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.om-recovery__name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.om-recovery__time {
+  color: var(--om-text-muted);
+  font-variant-numeric: tabular-nums;
+}

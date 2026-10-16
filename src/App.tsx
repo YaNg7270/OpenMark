@@ -8,7 +8,8 @@ import { SourceEditor } from './components/SourceEditor';
 import { StatusBar } from './components/StatusBar';
 import { Toolbar, AVAILABLE_MODES } from './components/Toolbar';
 import { TabBar } from './components/TabBar';
-import { isDirty, useStore, type ViewMode } from './app/store';
+import { isDirty, startDraftJournal, useStore, type ViewMode } from './app/store';
+import { DraftRecovery } from './components/DraftRecovery';
 import { isDesktop, openExternal } from './core/fs/fileService';
 import { imageMarkdown, saveImageAsset } from './core/fs/assets';
 import { setLanguage, t } from '@/i18n';
@@ -102,6 +103,9 @@ export function App() {
   useEffect(() => {
     setLanguage(settings.language);
   }, [settings.language]);
+
+  // --- crash recovery: journal every unsaved document ------------------------------
+  useEffect(() => startDraftJournal(), []);
 
   // --- window title reflects the document and its dirty state -------------------
   useEffect(() => {
@@ -423,6 +427,8 @@ export function App() {
       </div>
       {body}
       <StatusBar />
+
+      <DraftRecovery />
 
       {doc.externalChange && (
         <div className="om-banner" role="alert">
