@@ -47,6 +47,28 @@ afterEach(() => {
 });
 
 describe('resolveLocalImages', () => {
+  /*
+   * The argument names are part of the IPC contract, not an implementation detail: Tauri
+   * deserialises a command's arguments by name and refuses the call when a required key is
+   * absent. `resolve_asset_url` takes `(document_path, relative_path)`, and this call once sent
+   * `{ documentPath, relativePath }` to a command that declared a single `path` — the invoke
+   * rejected, `resolveLocalImages` caught it, and every relative image in every document was
+   * marked missing. The stub below cannot notice that on its own, because it computes the answer
+   * itself; only a real binary can. This assertion pins the side that is visible from here, and
+   * `tests/desktop/openmark.spec.ts` pins the other.
+   */
+  it('sends the argument names the Rust command declares', async () => {
+    stubDesktop((path) => `C:/docs/${path.replace('./', '')}`);
+    const root = makeRoot('<img src="./img/figure-1.png">');
+
+    await resolveLocalImages(root, 'C:/docs/notes.md');
+
+    const call = invokes.find((entry) => entry.cmd === 'resolve_asset_url');
+    expect(call).toBeDefined();
+    expect(Object.keys(call!.args).sort()).toEqual(['documentPath', 'relativePath']);
+    expect(call!.args['documentPath']).toBe('C:/docs/notes.md');
+  });
+
   it('rewrites a relative source into a loadable asset URL', async () => {
     stubDesktop((path) => `C:/docs/${path.replace('./', '')}`);
     const root = makeRoot('<img src="./img/figure-1.png" alt="图 1">');

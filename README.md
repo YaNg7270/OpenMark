@@ -164,7 +164,7 @@ node node_modules/.bin/tauri.CMD build
 | `pnpm tauri` | 透传 Tauri CLI（`pnpm tauri <子命令>`） |
 | `pnpm desktop:dev` | `tauri dev`，开发态桌面窗口 |
 | `pnpm desktop:build` | `tauri build`，产出 NSIS 安装包与 MSI（目标 `nsis`/`msi`/`app`） |
-| `pnpm desktop:build:portable` | `tauri build --no-bundle`，只出可执行文件；**未传 `--config`，因此不会启用 `tauri.portable.conf.json`** |
+| `pnpm desktop:build:portable` | `tauri build --no-bundle -c src-tauri/tauri.portable.conf.json`，再打包成便携 zip：可执行文件把配置与 WebView2 数据写在自身同目录的 `data/` 下 |
 | `pnpm verify` | `typecheck && lint && test` 串行 |
 
 ---
@@ -230,7 +230,7 @@ node node_modules/.bin/tauri.CMD build
 │  ├─ env.sh                     项目本地工具链环境变量
 │  ├─ verify-corpus.mjs          语料校验器
 │  ├─ gen-corpus-stress.mjs      确定性压力语料生成器
-│  ├─ perf-parse.mjs             解析性能测量脚本（`node scripts/perf-parse.mjs`，未接入 pnpm 脚本）
+│  ├─ perf-parse.mjs             解析性能测量脚本（`pnpm perf` = `node --expose-gc scripts/perf-parse.mjs`）
 │  ├─ run-desktop-e2e.mjs        `pnpm test:desktop` 的包装脚本（注入工具链 PATH）
 │  ├─ lib/corpus-scan.mjs        expect 计数规则的唯一实现
 │  ├─ generate-icon.mjs  probe-fixture.mjs  probe-page.mjs
@@ -265,9 +265,9 @@ pnpm test:desktop                              # WebdriverIO，见下方说明
 | DOM（Vitest，jsdom） | `pnpm test`（`dom` project） | DOMPurify 清洗边界。这是安全边界，因此直接测，而不是只靠浏览器套件间接覆盖。 |
 | 往返保真（Vitest + fast-check） | `pnpm test`（`tests/unit/roundtrip.test.ts`） | 「打开→保存」不改变字节：对全部 148 份语料在 LF/CRLF/CR/BOM 组合下断言 `decode→encode→decode` 逐字节一致，并断言单字符插入只改一个字。 |
 | 浏览器渲染（Playwright） | `pnpm test:e2e` | 真实 DOM 与真实 MathJax/Mermaid/Shiki：**离线**渲染、公式产生真实字形、失败公式保留源码、XSS 被中和、即时渲染按块编辑、CRLF 文件编辑后仍是 CRLF、导出产物自包含。这一层是唯一能诚实宣称公式「渲染出来了」的地方（断言的是 MathJax 自己的错误报告与字形元素，不是 DOM 里有没有节点）。 |
-| 桌面端 E2E（WebdriverIO） | `pnpm test:desktop` | 真实 Windows 二进制：启动外壳、通过 `openmark://open-file` 打开文档、切到源码模式、公式排版。本环境已留下过一次运行的驱动日志（tauri-driver 就绪、msedgedriver 版本匹配、会话跑到了最后一个用例），但日志里没有 mocha 汇总，**我无法据此声称全绿**；详见 KNOWN_ISSUES P3-1。 |
+| 桌面端 E2E（WebdriverIO） | `pnpm test:desktop` | 真实 Windows 二进制：启动外壳、通过 `openmark://open-file` 打开文档、切到源码模式、公式排版，以及**外部修改探测在无人改动的文件上保持沉默**。8 个用例全绿，跑在发布版二进制上。 |
 | 语料校验 | `pnpm corpus:verify` | 清单与磁盘一致：文件齐全、UTF-8/LF/单个结尾换行、`expect` 计数与内容吻合、数学用例分片完整、语言配比达标。 |
-| 解析性能（非测试层） | `node scripts/perf-parse.mjs` | 只测流水线的同步部分（打开文档、每次按键都要跑的那段）：对 5 个压力语料计时。**没有**门限断言、**没有**接入 `pnpm` 脚本、也**不测**排版与布局，因此预算尚未被固定为回归。 |
+| 解析性能（非测试层） | `pnpm perf` | 只测流水线的同步部分（打开文档、每次按键都要跑的那段）：对 5 个压力语料计时。**没有**门限断言、也**不测**排版与布局，因此预算尚未被固定为回归。 |
 
 `tests/corpus/` 的规模（`node scripts/verify-corpus.mjs` 实测）：148 份 markdown 文档、
 355 个公式用例（40 个预期报错）、5 个生成的压力文件。
@@ -290,9 +290,8 @@ Windows 路径交给 `import()`，而 `import()` 需要 `file://` URL，因此�
 
 本仓库的代码以 MIT 许可发布（`package.json` 与 `src-tauri/Cargo.toml` 均为 `MIT`）。
 
-第三方组件及其许可证清单见 [`docs/LICENSE_NOTICES.md`](docs/LICENSE_NOTICES.md)。该文件由
-依赖许可证审计流程生成；在它尚未生成之前，许可证事实仍可直接从 `package.json` 的
-`dependencies` / `devDependencies` 与 `src-tauri/Cargo.toml` 追溯。
+第三方组件及其许可证清单见 [`docs/LICENSE_NOTICES.md`](docs/LICENSE_NOTICES.md)，由依赖许可证审计流程生成。
+许可证事实也可直接从 `package.json` 的 `dependencies` / `devDependencies` 与 `src-tauri/Cargo.toml` 追溯。
 
 需要特别注意的是：`public/mathjax/`、`public/mathjax-fonts/` 下的 MathJax 4 与其字体数据
 （`@mathjax/mathjax-newcm-font`、`@mathjax/mathjax-mhchem-font-extension`）随应用一起分发，

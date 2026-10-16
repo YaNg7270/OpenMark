@@ -7,7 +7,7 @@
  * fixture is opened through the application's own "a file was opened by the OS" event.
  */
 
-import { writeFileSync, utimesSync } from 'node:fs';
+import { mkdirSync, writeFileSync, utimesSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -143,6 +143,63 @@ describe('external change detection', () => {
       interval: 500,
       timeoutMsg: 'the external-change banner never appeared after the file was touched',
     });
+  });
+});
+
+describe('local images', () => {
+  before(async () => {
+    const [handle] = await browser.getWindowHandles();
+    if (handle) await browser.switchToWindow(handle);
+  });
+
+  /*
+   * Regression test for a defect that no unit test could see.
+   *
+   * `resolve_asset_url` takes `path`, but both call sites in `fileService.ts` invoke it with
+   * `{ documentPath, relativePath }`. Tauri refuses to deserialise a command whose required
+   * argument is absent, so the call rejected, `resolveLocalImages` caught it and marked the
+   * image missing — every relative image in every document rendered as a broken placeholder,
+   * and the health check called it absent.
+   *
+   * `tests/unit/dom/images.test.ts` could not catch it: its stub reads `args['relativePath']`
+   * and returns a path it computes itself, so it agrees with the caller about a contract the
+   * real command does not share. Only the real binary can disagree.
+   */
+  it('resolves a relative image reference through the real command', async () => {
+    const dir = join(tmpdir(), 'openmark-e2e-images');
+    mkdirSync(dir, { recursive: true });
+    // A 1x1 PNG: the bytes never matter, only that the file exists and is an image.
+    const png = Buffer.from(
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+      'base64',
+    );
+    writeFileSync(join(dir, 'pixel.png'), png);
+    const docPath = join(dir, 'figure.md');
+    writeFileSync(docPath, '# Figure\n\n![a pixel](./pixel.png)\n', 'utf8');
+
+    await openFixture(docPath);
+    await waitFor('.om-doc img', 'the document never rendered an image');
+
+    await browser.waitUntil(
+      async () => {
+        const src = await browser.execute(
+          () => document.querySelector('.om-doc img')?.getAttribute('src') ?? '',
+        );
+        return /^https?:\/\/asset\.localhost\//.test(src);
+      },
+      {
+        timeout: 20_000,
+        interval: 500,
+        timeoutMsg:
+          'the relative image was never rewritten to an asset URL — resolve_asset_url likely rejected the call',
+      },
+    );
+
+    // And it must not have been declared missing, which is what the failing path does.
+    const missing = await browser.execute(
+      () => document.querySelector('.om-doc img')?.hasAttribute('data-om-missing') ?? false,
+    );
+    expect(missing).toBe(false);
   });
 });
 

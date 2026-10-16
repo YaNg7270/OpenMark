@@ -47,9 +47,13 @@ chrono = { version = "0.4.45", default-features = false, features = ["clock", "s
 
 # The WebView2 COM interop behind PDF export
 # (`src-tauri/src/export.rs`, `ICoreWebView2_7::PrintToPdf` reached through
-# `Webview::with_webview`). Pinned to exactly the versions Tauri 2.12's own
-# WebView2 layer is built against: `with_webview` hands the closure those very
-# interface types, so a second copy of the crate would be a type error.
+# `Webview::with_webview`). These must resolve to the same versions Tauri 2.12's own WebView2
+# layer uses: `with_webview` hands the closure those very interface types, so a second copy of
+# the crate would be a type error.
+#
+# Caret requirements, so the guarantee is carried by `Cargo.lock`, not by this file. Treat a
+# `cargo update` that moves either crate as a change that needs a rebuild and a PDF export test;
+# a minor bump of `webview2-com` is not the harmless patch it looks like.
 [target.'cfg(windows)'.dependencies]
 webview2-com = "0.39.1"
 windows = { version = "0.62.2", features = [

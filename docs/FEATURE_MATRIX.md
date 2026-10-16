@@ -21,13 +21,18 @@ tests: relative images never loaded because nothing called the resolver, New and
 and the write command ignored the caller's expected mtime so the documented clobber guard was not enforced.
 Split-pane scroll sync was one of them; it is implemented and tested as well.
 
-The test layers are real: 434 Vitest tests in 9 files, 53 Playwright tests (`tests/e2e/rendering.spec.ts`,
-`tests/e2e/visual.spec.ts`) including 7 screenshot baselines, 6 WebdriverIO tests driving the compiled
-binary (`tests/desktop/openmark.spec.ts`), and a 148-fixture corpus (`tests/corpus/`, validator
-`scripts/verify-corpus.mjs`).
+A later report from real use found that the first of those three — relative images — was not actually fixed:
+the resolver was now called, but `resolve_asset_url` was invoked with an argument shape the command did not
+accept, so the call failed and every relative image was marked missing. See `PROGRESS.md` §2.13.
 
-**Code-signing, MSI install testing, auto-update and an accessibility audit are not done.** They are the
-remaining Known Issues (`docs/KNOWN_ISSUES.md`), not hidden scope.
+The test layers are real: 441 Vitest tests in 10 files, 59 Playwright tests (`tests/e2e/rendering.spec.ts`,
+`tests/e2e/visual.spec.ts`) including 7 screenshot baselines and 6 axe-core audits, 9 WebdriverIO tests
+driving the compiled binary (`tests/desktop/openmark.spec.ts`), and a 148-fixture corpus
+(`tests/corpus/`, validator `scripts/verify-corpus.mjs`).
+
+**Code-signing, MSI install testing and auto-update are not done.** They are the remaining Known Issues
+(`docs/KNOWN_ISSUES.md`), not hidden scope. The accessibility audit *is* done: axe-core runs in the browser
+layer (`tests/e2e/a11y.spec.ts`) and found seven real problems, all fixed.
 
 **Diagnostics.** `src/core/markdown/types.ts` declares 26 `DiagnosticCode` values and **all 26 are emitted**:
 `engine.ts` produces the structural/asset/math-shape codes, `core/diagnostics/encoding.ts` the encoding
@@ -69,7 +74,7 @@ Counted from the rows below. Every row carries exactly one status, so the four c
 | `` ```mermaid `` diagrams | yes (opt-in; mermaid 11.13.0) | **Implemented** | `src/core/render/mermaid.ts` (`securityLevel:'strict'`, cache by theme+source); `src/core/render/typesetter.ts` fills placeholders; `tests/e2e/rendering.spec.ts` "renders a Mermaid diagram to SVG" |
 | `$…$`, `$$…$$`, `\(…\)`, `\[…\]`, `` ```math `` | yes | **Implemented** | `src/core/markdown/math-plugin.ts`, `MATH_FENCES` in `engine.ts`; `tests/unit/corpus.test.ts` math layer |
 | KaTeX as an alternative engine | no (MathJax only) | **Out-of-scope** | single-engine decision, RESEARCH §10 D4 |
-| Images with relative paths | yes (`typora-root-url`, drag&drop, resize) | **Implemented** | `core/render/images.ts` rewrites every relative `<img src>` to an `asset://` URL after typesetting, so `![](./img/x.png)` loads in `read` and `instant`; absolute URLs and `data:` URIs are left alone. Health check in `core/diagnostics/assets.ts` emits `image-missing`/`image-path-escapes-root`, and an unresolvable image is marked `data-om-missing` so the reading surface shows a placeholder rather than a blank. Covered by `tests/unit/dom/images.test.ts`. Drag-and-drop resize is not implemented. |
+| Images with relative paths | yes (`typora-root-url`, drag&drop, resize) | **Implemented** | `core/render/images.ts` rewrites every relative `<img src>` to an `asset://` URL after typesetting, so `![](./img/x.png)` loads in `read` and `instant`; absolute URLs and `data:` URIs are left alone. Health check in `core/diagnostics/assets.ts` emits `image-missing`/`image-path-escapes-root`, and an unresolvable image is marked `data-om-missing` so the reading surface shows a placeholder rather than a blank. Covered by `tests/unit/dom/images.test.ts`, plus `tests/desktop/openmark.spec.ts` "resolves a relative image reference through the real command" — the unit test stubs the bridge and cannot see a mismatch between the arguments sent and the ones the command declares. Drag-and-drop resize is not implemented. |
 | Image alignment control | not supported (CSS `<center>` workaround) | **Planned** | PRD R-E-6 settings surface |
 | Footnotes (incl. multi-paragraph) | yes (MultiMarkdown) | **Implemented** | `engine.ts` `md.use(footnote)`; `tests/e2e/rendering.spec.ts` asserts the footnote block |
 | Definition lists | not documented as a supported extension | **Implemented** | `engine.ts` `md.use(deflist)` (OpenMark is a superset here) |
@@ -239,7 +244,8 @@ Counted from the rows below. Every row carries exactly one status, so the four c
 7. **Frontmatter and raw HTML comments preserved verbatim** through the parse-and-edit path — Typora's own YAML
    parser is documented as "flexible/fault-tolerant" with no preservation promise.
 
-**Deliberate gaps** (documented, not to be mistaken for completeness): code signing, MSI install testing,
-auto-update and an accessibility audit are not done (`docs/KNOWN_ISSUES.md`); relative-image loading in the
-reading surface was a gap when this table was first audited; both were fixed and are covered by tests, and
-the table has been corrected, as has split-pane scroll sync. No item from that audit remains open.
+**Deliberate gaps** (documented, not to be mistaken for completeness): code signing, MSI install testing and
+auto-update are not done (`docs/KNOWN_ISSUES.md`). Relative-image loading in the reading surface was a gap at
+the first audit and was still a gap after it — the resolver was called, but with an argument shape the command
+did not accept, so the fix did not actually work until the desktop layer was made to check a real image. That,
+the three rows in the honesty statement above, and split-pane scroll sync are all fixed and covered by tests.

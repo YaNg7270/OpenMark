@@ -369,12 +369,39 @@ pub fn list_dir(path: String) -> Result<Vec<DirEntryInfo>, String> {
 ///
 /// The returned string is always absolute and symlink-resolved, which is what
 /// the `asset:` protocol scope check compares against.
+/// Resolves an image reference authored relative to a document into an absolute path.
+///
+/// Takes the two halves rather than a pre-joined path because the join is the part that is easy
+/// to get wrong: the document is written by hand, so the reference may use forward slashes, a
+/// leading `./`, or `..` segments, and `canonicalize` is what actually resolves them (and any
+/// symlink on the way) into the path the asset protocol is handed.
+///
+/// This signature is the contract both call sites in `src/core/fs/fileService.ts` already
+/// assumed — `resolveAssetUrl` and `resolveAssetStatus` both pass `{documentPath, relativePath}`.
+/// It previously took a single `path`, which Tauri refused to deserialise, so the invoke rejected,
+/// `resolveLocalImages` caught it and marked the image missing, and every relative image in every
+/// document rendered as a broken placeholder.
 #[tauri::command]
-pub fn resolve_asset_url(path: String) -> Result<String, String> {
-    let canonical = fs::canonicalize(&path).map_err(|err| {
+pub fn resolve_asset_url(document_path: String, relative_path: String) -> Result<String, String> {
+    let relative = relative_path.trim();
+    if relative.is_empty() {
+        return Err(AppError::Io(std::io::Error::new(
+            std::io::ErrorKind::InvalidInput,
+            "the image reference is empty",
+        ))
+        .into());
+    }
+
+    let document = PathBuf::from(&document_path);
+    let base = document.parent().unwrap_or_else(|| Path::new(""));
+    // `join` replaces the base entirely when `relative` is itself absolute, which is the correct
+    // reading of an absolute reference and matches what the frontend already filters for.
+    let joined = base.join(relative);
+
+    let canonical = fs::canonicalize(&joined).map_err(|err| {
         AppError::Io(std::io::Error::new(
             err.kind(),
-            format!("cannot resolve {path}: {err}"),
+            format!("cannot resolve {relative} against {document_path}: {err}"),
         ))
     })?;
     to_display_string(&canonical).map_err(Into::into)
@@ -436,6 +463,59 @@ mod tests {
      * A TypeScript test cannot catch this — the compiler trusts the hand-written interface —
      * so the assertion lives on the side that produces the bytes.
      */
+
+    /*
+     * `resolve_asset_url` takes the document and the reference separately, because that is what
+     * both call sites in `fileService.ts` pass. It used to take a single `path`, which Tauri
+     * refused to deserialise, so the invoke rejected and every relative image in every document
+     * was marked missing. The frontend test suite could not see it: its stub fabricates the
+     * resolved path from `relativePath` alone, so it agrees with a contract the real command does
+     * not have. These tests exercise the join for real.
+     */
+
+    /// Creates a scratch directory holding a document and one image beside it.
+    fn scratch_document(name: &str) -> (PathBuf, PathBuf) {
+        let dir = std::env::temp_dir().join(format!("openmark-{name}-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(dir.join("img")).expect("scratch directory");
+        fs::write(dir.join("img").join("figure-1.png"), b"\x89PNG").expect("scratch image");
+        let document = dir.join("notes.md");
+        fs::write(&document, b"# notes").expect("scratch document");
+        (dir, document)
+    }
+
+    #[test]
+    fn resolve_asset_url_joins_the_reference_against_the_document_directory() {
+        let (dir, document) = scratch_document("join");
+        let resolved = resolve_asset_url(
+            to_display_string(&document).expect("document path"),
+            "./img/figure-1.png".into(),
+        )
+        .expect("the reference resolves");
+
+        let expected = fs::canonicalize(dir.join("img").join("figure-1.png")).expect("canonical");
+        assert_eq!(resolved, to_display_string(&expected).expect("expected path"));
+        assert!(resolved.replace('\\', "/").ends_with("img/figure-1.png"));
+    }
+
+    #[test]
+    fn resolve_asset_url_refuses_an_empty_reference() {
+        let (_dir, document) = scratch_document("empty");
+        let err = resolve_asset_url(to_display_string(&document).expect("document path"), "  ".into())
+            .expect_err("an empty reference has nothing to resolve");
+        assert!(err.contains("empty"), "unexpected error: {err}");
+    }
+
+    #[test]
+    fn resolve_asset_url_reports_a_missing_image_by_name() {
+        let (_dir, document) = scratch_document("missing");
+        let err = resolve_asset_url(
+            to_display_string(&document).expect("document path"),
+            "./img/absent.png".into(),
+        )
+        .expect_err("a file that is not there cannot resolve");
+        assert!(err.contains("absent.png"), "unexpected error: {err}");
+    }
 
     #[test]
     fn file_payload_uses_camel_case() {

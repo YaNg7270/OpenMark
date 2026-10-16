@@ -8,7 +8,7 @@ Living ledger for the OpenMark build. Updated at the end of every work session.
   `markdown-it@15` + GFM plugins, MathJax 4.1.3 (SVG output, mhchem), Mermaid 12, Shiki 4,
   DOMPurify 3.4.
 - **Last updated:** 2026-10-16 (session 2 — a field-reported defect in the external-change
-  probe, plus the two harness faults it exposed; see §2.9-2.12)
+  probe, plus two harness faults, and a broken image resolver; see §2.9-2.13)
 
 ---
 
@@ -26,9 +26,11 @@ What remains is not implementation work but the honest gaps recorded in
 install-tested.
 
 Session 2 fixed a defect reported from real use — the «文件已被其他程序修改» banner appeared on
-every document — and, in verifying it, found two faults in the test harness itself that had been
-making the desktop layer's green runs mean less than they appeared to. §2.9-2.12 record all
-three, and the correction note there supersedes the previous desktop number.
+every document — and, in verifying it, found two faults in the harness that had been making the
+desktop layer's green runs mean less than they appeared to, plus a second user-visible defect:
+relative images never loaded, because the resolver was called with an argument shape the command
+did not accept. §2.9-2.13 record all four; the correction note there supersedes the previous
+desktop number.
 
 ### Verified in this session (current evidence, not carried-over claims)
 
@@ -37,13 +39,13 @@ three, and the correction note there supersedes the previous desktop number.
 | Rust toolchain | `cargo -V` (project-local) | 1.99.0, MSVC 14.44 linker verified with a smoke build |
 | Type check | `tsc --noEmit` | clean |
 | Frontend build | `vite build` | exit 0 |
-| Windows binary | `tauri build` | `src-tauri/target/release/openmark.exe`, 14,484,992 bytes, boots |
+| Windows binary | `tauri build` | `src-tauri/target/release/openmark.exe`, 14,486,016 bytes, boots |
 | Rust check | `cargo check` | zero warnings |
 | Browser E2E | `playwright test` | **59 passed** (incl. 7 screenshot baselines and 6 axe-core accessibility audits) |
-| Desktop E2E | `pnpm test:desktop` | **8 passed** (custom-protocol debug binary, WebView2 149, no dev server running) |
-| Rust unit | `cargo test --lib` | **9 passed** (3 export + 6 IPC wire-format contract) |
-| Unit + DOM tests | `vitest run` | **440 passed** (incl. 300 corpus-conformance assertions and 6 external-change races) |
-| Windows installers | `pnpm desktop:build` | NSIS 9,523,349 B, MSI 10,383,360 B; portable zip 10,061,234 B via `desktop:build:portable` |
+| Desktop E2E | `pnpm test:desktop` | **9 passed** (custom-protocol binary, WebView2 149, no dev server running) |
+| Rust unit | `cargo test --lib` | **12 passed** (3 export + 6 wire-format contract + 3 asset-resolution) |
+| Unit + DOM tests | `vitest run` | **441 passed** (incl. 300 corpus-conformance assertions and 6 external-change races) |
+| Windows installers | `pnpm desktop:build` | NSIS 9,521,072 B, MSI 10,383,360 B; portable zip 10,061,771 B via `desktop:build:portable` |
 | Desktop binary | direct launch | debug build boots and stays alive; release build verified |
 | Corpus validation | `node scripts/verify-corpus.mjs` | OK — manifest matches disk |
 | Corpus diagnostics | `vitest run corpus.test.ts` | **148/148 fixtures emit every declared diagnostic** |
@@ -171,13 +173,37 @@ Each of these was found by a test, not by inspection. All have regression covera
     against `dist/` and then reading `is_dev()`. Recorded because it is invisible: the build
     succeeds, the app launches, and the window is simply empty.
 
+13. **`resolve_asset_url` was called with arguments the command does not accept — every relative
+    image was broken.** `commands.rs` declared `resolve_asset_url(path: String)`, but both call
+    sites in `fileService.ts` invoke it with `{documentPath, relativePath}`. Tauri deserialises a
+    command's arguments by name and refuses the call when a required key is absent, so the invoke
+    rejected, `resolveLocalImages` caught it, and the image was marked `data-om-missing`: the broken
+    placeholder a reader sees as 破图. The health check reported every relative image as absent for
+    the same reason.
+
+    This is the *second* time this feature was believed fixed. A previous audit found the resolver
+    was never called; the caller was added, and the argument shape was not checked against the
+    command. The row in `FEATURE_MATRIX.md` was marked Implemented on the strength of
+    `tests/unit/dom/images.test.ts` — which could not catch it, because that test's stub reads
+    `args['relativePath']` and **computes the resolved path itself**. A stub that fabricates the
+    answer will always agree with its caller; only a real binary can disagree.
+
+    Found by an independent read of the two sides while auditing the IPC surface for defect 9 (same
+    family: the wire contract is hand-written on both sides and nothing checks it). `commands.rs`
+    now takes `(document_path, relative_path)` and performs the join and `canonicalize` itself;
+    three Rust tests exercise the join for real, a frontend test pins the argument-key set, and
+    `tests/desktop/openmark.spec.ts` opens a document with a real PNG beside it and asserts the
+    image resolves to an asset URL and is *not* marked missing — the only test here that can see the
+    two sides disagree. Reproduced before the fix (it failed with "the relative image was never
+    rewritten to an asset URL") and passing after.
+
 ### Correction: earlier desktop evidence was against a dev-server binary
 
 Defect 12 invalidates part of the previous session's desktop run. `6 passed` was real, but the
 binary under test was loading `http://localhost:1420` from a Vite dev server rather than the
 `dist/` it appeared to be testing, so it exercised current *source* instead of a packaged build.
 That is not the claim the layer advertises, and the number is superseded below by a run against
-a `custom-protocol` binary with no dev server listening. The `8 passed` recorded in §1 is the
+a `custom-protocol` binary with no dev server listening. The `9 passed` recorded in §1 is the
 first desktop result in this project that is what it says it is.
 
 ### Session note: the wire-format audit

@@ -15,16 +15,16 @@ estimated.
 
 | Layer | Command | Result |
 |---|---|---|
-| Unit + DOM (Vitest) | `pnpm test` | **440 passed / 0 failed** (10 files) |
+| Unit + DOM (Vitest) | `pnpm test` | **441 passed / 0 failed** (10 files) |
 | Browser E2E (Playwright) | `pnpm test:e2e` | **59 passed / 0 failed** (incl. 7 screenshot baselines and 6 accessibility audits) |
-| Desktop E2E (WebdriverIO) | `pnpm test:desktop` | **8 passed / 0 failed** (custom-protocol binary, no dev server running) |
-| Rust unit | `cargo test --lib` | **9 passed / 0 failed** (3 export + 6 IPC wire-format contract) |
+| Desktop E2E (WebdriverIO) | `pnpm test:desktop` | **9 passed / 0 failed** (custom-protocol binary, no dev server running) |
+| Rust unit | `cargo test --lib` | **12 passed / 0 failed** (3 export + 6 IPC wire-format contract + 3 asset-resolution) |
 | Corpus validation | `pnpm corpus:verify` | **OK** — manifest matches disk |
 | Corpus conformance | part of `pnpm test` | **300 assertions, 148/148 fixtures emit every declared diagnostic** |
 | Type check | `pnpm typecheck` | clean |
 | Frontend build | `pnpm build` | exit 0 |
-| Installers | `pnpm desktop:build` | NSIS **9,523,349 B**, MSI **10,383,360 B** |
-| Portable | `pnpm desktop:build:portable` | **10,061,234 B** zip (`openmark.exe` + `README.txt`), verified to keep app data in `./data` |
+| Installers | `pnpm desktop:build` | NSIS **9,521,072 B**, MSI **10,383,360 B** |
+| Portable | `pnpm desktop:build:portable` | **10,061,771 B** zip (`openmark.exe` + `README.txt`), verified to keep app data in `./data` |
 
 Installer byte counts move between builds (the packages embed a build timestamp); these are the
 values from the artifacts under test, not invariants. The portable zip produced the same size in
@@ -36,7 +36,7 @@ WebdriverIO drives the compiled `openmark.exe` over WebView2.
 
 ---
 
-## 2. Unit and DOM tests — 440
+## 2. Unit and DOM tests — 441
 
 | File | Tests | What it establishes |
 |---|---:|---|
@@ -100,7 +100,7 @@ WebView2.
 
 ---
 
-## 4. Desktop E2E — 8
+## 4. Desktop E2E — 9
 
 Drives the compiled `openmark.exe` over WebDriver via `tauri-driver` and `msedgedriver`,
 attaching to WebView2 149.0.4022.62. The binary under test must be a **`custom-protocol`**
@@ -112,16 +112,20 @@ than only a development build.
 Running against src-tauri/target/release/openmark.exe:
 ✓ does not report an external change when nothing has touched the file
 ✓ reports an external change once the file is actually touched
+✓ resolves a relative image reference through the real command
 ✓ launches the real binary and renders the application shell
 ✓ renders the toolbar with its document name element
 ✓ opens the fixture through the shell open-file event
 ✓ switches to source mode and shows the raw markdown
 ✓ typesets a display formula into real MathJax glyphs
 ✓ flags a broken formula as an error without losing its source
-8 passing (14.2s)
+9 passing (14.2s)
 ```
 
-The first two are the regression tests for the false «文件已被其他程序修改» banner (defect 22).
+The first two are the regression tests for the false «文件已被其他程序修改» banner (defect 22); the
+third is the regression test for relative images never loading (defect 25), and it is the only test
+in the repository that can catch a mismatch between the arguments the frontend sends and the ones a
+command declares — the unit test stubs the bridge and computes the answer itself.
 The first opens a scratch document that nothing touches and asserts no banner appears across
 three poll intervals; the second pushes the file's mtime forward from outside the application
 and asserts the banner **does** appear — so an attempt to fix the first by disabling the probe
@@ -219,6 +223,7 @@ or a review, not by inspection, and every one has regression coverage.
 | 22 | Four IPC response structs serialised `snake_case` while the TypeScript layer read `camelCase` | **Reported from real use.** `mtimeMs`/`isDir`/`backupPath` arrived as `undefined`, so «文件已被其他程序修改» was raised on every document seconds after opening it — and because the mtime returned by a save was `undefined` too, defect 21's clobber guard silently disarmed itself after the first save. Found by the user, not by the suite: no layer asserted the wire format until the tests added for it |
 | 23 | `checkExternalChange()` compared against a pre-`await` snapshot of `doc` | An autosave completing mid-probe re-raised the banner over a document the save handler had just cleared, and left it standing. The comparison now runs inside the state updater against the live document |
 | 24 | The desktop E2E could drive a binary that did not contain the code under test | `tauri_build::build()` does not watch `frontendDist`, so rebuilding `dist/` left the binary stale while cargo reported success — a stale binary launches, renders and passes. Separately, `dev = !custom_protocol` means a plain `cargo build` yields a dev-server binary that renders nothing at all. Both made this layer's earlier green runs mean less than they appeared to |
+| 25 | `resolve_asset_url` took `path`; both call sites send `{documentPath, relativePath}` | **Every relative image in every document rendered as a broken placeholder**, and the health check reported each one as missing — the required "local relative path" reading feature did not work. Tauri refuses to deserialise a command whose required argument is absent, so the invoke rejected and `resolveLocalImages` marked the image missing. The unit test could not see it: its stub reads `relativePath` and fabricates the resolved path itself, so it agreed with a contract the command did not have |
 
 Corpus corrections: three fixtures or manifest entries were themselves wrong (an "unclosed
 fence" fixture that contained a closing fence; a manifest entry pinning a code the parser no
