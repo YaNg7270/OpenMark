@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import type { Diagnostic } from '@/core/markdown/types';
+import { useStore } from '@/app/store';
 import { t } from '@/i18n';
 
 /**
@@ -41,12 +42,31 @@ export function DiagnosticsPanel({ diagnostics, onSelect }: DiagnosticsPanelProp
     return { errors, warnings };
   }, [diagnostics]);
 
+  const copyReport = useStore((s) => s.copyHealthReport);
+  const exportReport = useStore((s) => s.exportHealthReport);
+  const actions = (
+    <div className="om-diagnostics__actions">
+      <button type="button" className="om-button" data-om-testid="report-copy" onClick={() => void copyReport()}>
+        {t('panel.diagnostics.copyReport')}
+      </button>
+      <button type="button" className="om-button" data-om-testid="report-export" onClick={() => void exportReport()}>
+        {t('panel.diagnostics.exportReport')}
+      </button>
+    </div>
+  );
+
   if (diagnostics.length === 0) {
-    return <p className="om-panel__empty">{t('panel.diagnostics.empty')}</p>;
+    return (
+      <>
+        <p className="om-panel__empty">{t('panel.diagnostics.empty')}</p>
+        {actions}
+      </>
+    );
   }
 
   return (
     <div className="om-diagnostics">
+      {actions}
       <p className="om-diagnostics__summary" data-om-testid="diagnostics-summary">
         {t('panel.diagnostics.summary', { errors: counts.errors, warnings: counts.warnings })}
       </p>

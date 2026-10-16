@@ -165,15 +165,34 @@ fn create_backup(target: &Path) -> Result<Option<String>, AppError> {
     to_display_string(&backup_path).map(Some)
 }
 
+/// True when `entry` is `<file_name>.<YYYYmmdd-HHMMSS.fff>.bak` — exactly a timestamp between
+/// the name and the extension, so the backups of `notes.md.md` are not mistaken for those of
+/// `notes.md`. The frontend's `parseBackupName` applies the same rule when listing versions.
+fn is_backup_of(entry: &str, file_name: &str) -> bool {
+    let Some(rest) = entry.strip_prefix(file_name).and_then(|r| r.strip_prefix('.')) else {
+        return false;
+    };
+    let Some(stamp) = rest.strip_suffix(".bak") else {
+        return false;
+    };
+    let bytes = stamp.as_bytes();
+    bytes.len() == 19
+        && bytes[8] == b'-'
+        && bytes[15] == b'.'
+        && bytes
+            .iter()
+            .enumerate()
+            .all(|(i, b)| i == 8 || i == 15 || b.is_ascii_digit())
+}
+
 fn prune_backups(backup_dir: &Path, file_name: &str) -> Result<(), AppError> {
-    let prefix = format!("{file_name}.");
     let mut copies: Vec<PathBuf> = fs::read_dir(backup_dir)?
         .flatten()
         .map(|entry| entry.path())
         .filter(|path| {
             path.file_name()
                 .and_then(|n| n.to_str())
-                .is_some_and(|n| n.starts_with(&prefix) && n.ends_with(".bak"))
+                .is_some_and(|n| is_backup_of(n, file_name))
         })
         .collect();
 
@@ -515,6 +534,33 @@ mod tests {
         )
         .expect_err("a file that is not there cannot resolve");
         assert!(err.contains("absent.png"), "unexpected error: {err}");
+    }
+
+    /*
+     * Backups of `notes.md.md` are named `notes.md.md.<stamp>.bak`, which also starts with
+     * `notes.md.`. Pruning used to count them as copies of `notes.md` and could delete them
+     * when `notes.md` passed its limit.
+     */
+    #[test]
+    fn prune_backups_leaves_another_files_backups_alone() {
+        let dir = std::env::temp_dir().join(format!("openmark-prune-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(&dir).expect("scratch directory");
+        for i in 0..BACKUP_KEEP + 3 {
+            fs::write(dir.join(format!("notes.md.20260101-0000{:02}.000.bak", i)), b"x").expect("own backup");
+        }
+        let other = dir.join("notes.md.md.20250101-000000.000.bak");
+        fs::write(&other, b"y").expect("other backup");
+
+        prune_backups(&dir, "notes.md").expect("prune");
+
+        assert!(other.exists(), "a backup of notes.md.md was deleted while pruning notes.md");
+        let own = fs::read_dir(&dir)
+            .expect("list")
+            .flatten()
+            .filter(|e| is_backup_of(e.file_name().to_str().unwrap_or(""), "notes.md"))
+            .count();
+        assert_eq!(own, BACKUP_KEEP);
     }
 
     #[test]

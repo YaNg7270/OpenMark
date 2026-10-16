@@ -93,7 +93,9 @@ export const DEFAULT_SETTINGS: AppSettings = {
     imageAlign: 'left',
   },
   editor: {
-    autoSave: false,
+    // On by default (PRD R-C-8). Autosaves take a backup at most every ten minutes, so the
+    // rotating backup set still spans real history; see `save` in store.ts.
+    autoSave: true,
     autoSaveDelayMs: 4000,
     tabSize: 2,
     showLineNumbers: false,

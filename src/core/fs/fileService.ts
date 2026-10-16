@@ -337,3 +337,22 @@ function downloadText(path: string, text: string, options: { bom: boolean; eol: 
   // Revoke on the next task so the download has started.
   setTimeout(() => URL.revokeObjectURL(url), 0);
 }
+
+export interface DirectoryEntry {
+  name: string;
+  path: string;
+  isDir: boolean;
+  size: number;
+  mtimeMs: number;
+}
+
+/** Lists a directory through `list_dir`. Empty outside the desktop shell, or when it is missing. */
+export async function listDirectory(path: string): Promise<DirectoryEntry[]> {
+  const invoke = tauriInvoke();
+  if (!invoke) return [];
+  try {
+    return await invoke<DirectoryEntry[]>('list_dir', { path });
+  } catch {
+    return [];
+  }
+}

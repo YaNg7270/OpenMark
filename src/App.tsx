@@ -143,9 +143,11 @@ export function App() {
 
   // --- auto save -----------------------------------------------------------------
   useEffect(() => {
-    if (!settings.editor.autoSave || doc.readOnly || !doc.path) return;
+    // Desktop only: outside the shell a save is a download, and autosave would start one every
+    // few seconds.
+    if (!settings.editor.autoSave || doc.readOnly || !doc.path || !isDesktop()) return;
     if (!isDirty(doc)) return;
-    const timer = window.setTimeout(() => void save(), settings.editor.autoSaveDelayMs);
+    const timer = window.setTimeout(() => void save({ auto: true }), settings.editor.autoSaveDelayMs);
     return () => window.clearTimeout(timer);
   }, [doc, save, settings.editor.autoSave, settings.editor.autoSaveDelayMs]);
 
@@ -278,6 +280,20 @@ export function App() {
         }
       }
 
+      // Open, save and new are file commands, not editing keys: they must work from inside the
+      // source editor too, which binds none of them.
+      if ((event.ctrlKey || event.metaKey) && !event.altKey) {
+        const key = event.key.toLowerCase();
+        if (key === 'o' || key === 's' || key === 'n') {
+          event.preventDefault();
+          if (key === 'o') void openViaDialog();
+          // Ctrl+Shift+S is save-as, matching every editor.
+          else if (key === 's') void (event.shiftKey ? saveAs() : save());
+          else newDocument();
+          return;
+        }
+      }
+
       /*
        * When the source editor has focus it owns the keyboard, including Ctrl+F for its own
        * find/replace panel and Ctrl+Z for its own undo stack. Intercepting those here would
@@ -286,23 +302,6 @@ export function App() {
       if (event.target instanceof Element && event.target.closest('[data-om-editor]')) return;
 
       const mod = event.ctrlKey || event.metaKey;
-      if (mod && event.key.toLowerCase() === 'o') {
-        event.preventDefault();
-        void openViaDialog();
-        return;
-      }
-      if (mod && event.key.toLowerCase() === 's') {
-        event.preventDefault();
-        // Ctrl+Shift+S is save-as, matching every editor.
-        if (event.shiftKey) void saveAs();
-        else void save();
-        return;
-      }
-      if (mod && event.key.toLowerCase() === 'n') {
-        event.preventDefault();
-        newDocument();
-        return;
-      }
       if (mod && event.key.toLowerCase() === 'f') {
         event.preventDefault();
         setSidebar('search');

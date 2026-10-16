@@ -11,7 +11,7 @@ import { mkdirSync, writeFileSync, utimesSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { $, browser, expect } from '@wdio/globals';
+import { $, $$, browser, expect } from '@wdio/globals';
 
 // Mocha injects these as globals. The repository's tsconfig pins `types` to
 // ["vite/client", "node"], and @types/mocha is only a transitive dependency, so the two
@@ -358,5 +358,51 @@ describe('window controls', () => {
       timeout: MOUNT_TIMEOUT_MS,
       timeoutMsg: 'Ctrl+Shift+0 did not restore 100%',
     });
+  });
+});
+
+/*
+ * Version history reads the real `.openmark-backups` folder that `write_text_file_atomic`
+ * fills, so only the real binary can show the two halves agree: the backup naming in Rust and
+ * the listing and restore in the frontend.
+ */
+describe('version history', () => {
+  it('lists the backups taken by saves and loads an earlier version', async () => {
+    const dir = join(tmpdir(), `openmark-e2e-history-${Date.now()}`);
+    mkdirSync(dir, { recursive: true });
+    const path = join(dir, 'history.md');
+    writeFileSync(path, '# 第一版\n', 'utf8');
+    await openFixture(path);
+    await browser.waitUntil(async () => (await $(DOCUMENT_NAME).getText()).includes('history'), {
+      timeout: MOUNT_TIMEOUT_MS,
+      timeoutMsg: 'the history fixture never opened',
+    });
+
+    await $(MODE_SOURCE).click();
+    for (const addition of ['第二版', '第三版']) {
+      await $(SOURCE_CONTENT).click();
+      await browser.keys(['Control', 'End']);
+      await browser.keys(addition.split(''));
+      await $(SAVE_BUTTON).click();
+      // Each save backs up what was on disk before it; give the write time to land.
+      await browser.pause(400);
+    }
+
+    await $('[data-om-testid="panel-recent"]').click();
+    await browser.waitUntil(async () => (await $$('[data-om-testid="version-item"]').length) >= 2, {
+      timeout: MOUNT_TIMEOUT_MS,
+      timeoutMsg: 'the backups taken by the two saves were not listed',
+    });
+
+    // Newest first, so the last entry is the file as it was before the first save.
+    const restoreButtons = await $$('[data-om-testid="version-restore"]').getElements();
+    await restoreButtons[restoreButtons.length - 1]!.click();
+    await browser.waitUntil(
+      async () => {
+        const text = await browser.execute(() => document.querySelector('.cm-content')?.textContent ?? '');
+        return text.includes('第一版') && !text.includes('第二版');
+      },
+      { timeout: MOUNT_TIMEOUT_MS, timeoutMsg: 'loading the oldest version did not bring back the original text' },
+    );
   });
 });

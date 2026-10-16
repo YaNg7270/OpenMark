@@ -219,6 +219,35 @@ test.describe('critical path', () => {
     }
   });
 
+  test('the health report can be copied and exported', async ({ page, context }) => {
+    await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+    await openFixture(
+      page,
+      'report.md',
+      ['# 报告', '', '未定义宏：$\\thisMacroDoesNotExist{1}$', '', '```js', 'const x = 1;', ''].join('\n'),
+    );
+    await page.getByTestId('panel-diagnostics').click();
+    await expect(page.locator('.om-diagnostic[data-code="math-unknown-macro"]').first()).toBeVisible();
+
+    await page.getByTestId('report-copy').click();
+    const copied = await page.evaluate(() => navigator.clipboard.readText());
+    expect(copied).toContain('# 文档健康报告');
+    expect(copied).toContain('math-unknown-macro');
+    expect(copied).toContain('unclosed-fence');
+
+    // In a browser the report is handed to the download manager; the desktop writes it to disk.
+    const download = page.waitForEvent('download');
+    await page.getByTestId('report-export').click();
+    const file = await download;
+    expect(file.suggestedFilename()).toBe('report.health.md');
+    const exported = await file.createReadStream().then(async (stream) => {
+      const chunks: Buffer[] = [];
+      for await (const chunk of stream) chunks.push(chunk as Buffer);
+      return Buffer.concat(chunks).toString('utf8');
+    });
+    expect(exported).toContain('math-unknown-macro');
+  });
+
   test('an \\eqref written before its \\label still resolves', async ({ page }) => {
     await openFixture(
       page,
@@ -725,6 +754,24 @@ test.describe('source editor', () => {
     // Each shortcut is one undo step.
     await page.keyboard.press('Control+z');
     expect(await page.evaluate(() => window.__openmark__!.getSource())).toBe('**word**');
+  });
+
+  /*
+   * The window's key handler stood down for the source editor *before* it looked at Ctrl+S, and
+   * CodeMirror has no binding for it — so in source mode, the mode for editing, Ctrl+S did
+   * nothing at all. In a browser a save is a download, which is what is awaited here.
+   */
+  test('Ctrl+S saves while the source editor has focus', async ({ page }) => {
+    await openFixture(page, 'editor-save.md', '# 保存\n');
+    await page.getByTestId('mode-source').click();
+    await page.locator('.om-source__host .cm-content').click();
+    await page.keyboard.type('x');
+    const download = page.waitForEvent('download', { timeout: 5_000 });
+    await page.keyboard.press('Control+s');
+    expect((await download).suggestedFilename()).toBe('editor-save.md');
+    // Ctrl+F still belongs to the editor's own search panel.
+    await page.keyboard.press('Control+f');
+    await expect(page.locator('.cm-search')).toBeVisible();
   });
 
   test('Tab nests an ordered list item and renumbers the list', async ({ page }) => {

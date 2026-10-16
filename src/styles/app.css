@@ -1283,3 +1283,51 @@ html[data-om-focus='on'] .om-statusbar {
   background: var(--om-bg-elevated);
   color: var(--om-text);
 }
+
+.om-diagnostics__actions {
+  display: flex;
+  gap: 6px;
+  margin: 0 0 8px;
+}
+
+/* ---- version history (recent panel) ---------------------------------------------- */
+
+.om-history {
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--om-border);
+}
+
+.om-history__title {
+  margin: 0 0 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--om-text-muted);
+}
+
+.om-history__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 4px;
+  max-height: 40vh;
+  overflow: auto;
+}
+
+.om-history__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.om-history__time {
+  flex: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.om-history__size {
+  color: var(--om-text-muted);
+  font-variant-numeric: tabular-nums;
+}

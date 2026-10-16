@@ -6,6 +6,7 @@ import { rebuildMathSource } from '@/core/markdown/math-source';
 import { tryExportStandaloneHtml, tryExportPdf } from '@/core/export';
 import { assetDiagnostics, type AssetStatus } from '@/core/diagnostics/assets';
 import { encodingDiagnostics } from '@/core/diagnostics/encoding';
+import { formatHealthReport } from '@/core/diagnostics/report';
 import type { ImageReference } from '@/core/markdown/types';
 import { sanitizeHtml } from '@/core/markdown/sanitize';
 import * as files from '@/core/fs/fileService';
@@ -172,7 +173,19 @@ interface AppStore {
   exportHtml: () => Promise<void>;
   /** Writes a PDF, printed from the same self-contained HTML by the desktop shell. */
   exportPdf: () => Promise<void>;
-  save: () => Promise<void>;
+  /**
+   * Writes the document to its path.
+   *
+   * `auto` marks an autosave: it is silent, and it keeps a backup at most every
+   * `AUTOSAVE_BACKUP_INTERVAL_MS` per file — otherwise saving every few seconds would push every
+   * older version out of the rotating backup set within minutes.
+   */
+  save: (options?: { auto?: boolean }) => Promise<void>;
+  /**
+   * Loads a backup's text into the current document as unsaved changes. Nothing is written to
+   * disk; saving (or undoing) is the user's choice.
+   */
+  restoreVersion: (backupPath: string) => Promise<void>;
   saveAs: () => Promise<void>;
   checkExternalChange: () => Promise<void>;
   /**
@@ -233,6 +246,12 @@ interface AppStore {
   restoreDraft: (id: string) => Promise<void>;
   /** Forgets a recovered draft for good. */
   discardDraft: (id: string) => void;
+
+  /** The diagnostics panel as a Markdown report (see `core/diagnostics/report.ts`). */
+  healthReport: () => string;
+  copyHealthReport: () => Promise<void>;
+  /** Saves the report as `<name>.health.md`, chosen through the save dialog. */
+  exportHealthReport: () => Promise<void>;
 }
 
 /**
@@ -357,6 +376,11 @@ function findTabByPath(state: AppStore, path: string): string | null {
   }
   return null;
 }
+
+/** How often an autosave may also take a backup, per file. Manual saves always do. */
+export const AUTOSAVE_BACKUP_INTERVAL_MS = 10 * 60 * 1000;
+/** Per path, when a save last produced a backup in this session. */
+const lastBackupAt = new Map<string, number>();
 
 /** Monotonic, so a closed tab's id is never handed to a later one. */
 let nextTabId = 1;
@@ -673,7 +697,8 @@ export const useStore = create<AppStore>((set, get) => ({
     get().notify('info', `已导出 PDF：${baseName(target)}${outcome.result.pageCount ? `（${outcome.result.pageCount} 页）` : ''}`);
   },
 
-  save: async () => {
+  save: async (options) => {
+    const auto = options?.auto === true;
     const { doc, settings } = get();
     if (doc.readOnly) {
       get().notify('warning', '安全只读模式下不会写入源文件。');
@@ -684,15 +709,21 @@ export const useStore = create<AppStore>((set, get) => ({
       return;
     }
     try {
-      const result = await files.writeFile(doc.path, doc.source, {
+      const path = doc.path;
+      const lastBackup = lastBackupAt.get(path) ?? 0;
+      const makeBackup = settings.safety.keepBackups && (!auto || Date.now() - lastBackup >= AUTOSAVE_BACKUP_INTERVAL_MS);
+      const savedSource = doc.source;
+      const result = await files.writeFile(path, savedSource, {
         bom: doc.encoding.bom,
         eol: doc.encoding.eol,
-        makeBackup: settings.safety.keepBackups,
+        makeBackup,
         ...(doc.mtimeMs !== null ? { expectedMtimeMs: doc.mtimeMs } : {}),
       });
+      if (result.backupPath) lastBackupAt.set(path, Date.now());
       set((s) => ({
-        doc: { ...s.doc, savedSource: s.doc.source, mtimeMs: result.mtimeMs, size: result.size, externalChange: null },
-        ui: { ...s.ui, notice: { kind: 'info', message: result.backupPath ? '已保存（已创建备份）' : '已保存' } },
+        // Only what was written counts as saved: typing during the write stays unsaved.
+        doc: s.doc.path === path ? { ...s.doc, savedSource, mtimeMs: result.mtimeMs, size: result.size, externalChange: null } : s.doc,
+        ui: auto ? s.ui : { ...s.ui, notice: { kind: 'info', message: result.backupPath ? '已保存（已创建备份）' : '已保存' } },
       }));
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
@@ -806,6 +837,55 @@ export const useStore = create<AppStore>((set, get) => ({
       get().notify('warning', '原文件在崩溃后被修改过；已恢复的内容覆盖在当前文件之上，保存前请核对。');
     } else {
       get().notify('info', `已恢复未保存的内容：${draft.name}`);
+    }
+  },
+
+  restoreVersion: async (backupPath) => {
+    const { doc } = get();
+    if (doc.readOnly) {
+      get().notify('warning', '当前文档处于安全只读模式，编辑已禁用。');
+      return;
+    }
+    try {
+      const version = await files.readFile(backupPath);
+      // Kept in the document's own line-ending style, so restoring does not rewrite every EOL.
+      get().setSource(applyEol(normalizeEol(version.text), doc.encoding.eol));
+      get().notify('info', '已载入该历史版本（尚未保存，可撤销或另存）。');
+    } catch (error) {
+      get().notify('error', `无法读取历史版本：${error instanceof Error ? error.message : String(error)}`);
+    }
+  },
+
+  healthReport: () => {
+    const { doc, diagnostics, settings } = get();
+    return formatHealthReport({
+      name: doc.name,
+      path: doc.path,
+      generatedAt: new Date(),
+      diagnostics,
+      language: settings.language,
+    });
+  },
+
+  copyHealthReport: async () => {
+    try {
+      await navigator.clipboard.writeText(get().healthReport());
+      get().notify('info', '健康报告已复制到剪贴板。');
+    } catch {
+      get().notify('error', '无法写入剪贴板。');
+    }
+  },
+
+  exportHealthReport: async () => {
+    const report = get().healthReport();
+    const base = get().doc.name.replace(/\.(?:md|markdown)$/i, '');
+    const path = await files.pickSavePath(`${base}.health.md`, 'markdown');
+    if (!path) return;
+    try {
+      await files.writeFile(path, report, { bom: false, eol: 'lf', makeBackup: false });
+      get().notify('info', `健康报告已保存：${path}`);
+    } catch (error) {
+      get().notify('error', `保存健康报告失败：${error instanceof Error ? error.message : String(error)}`);
     }
   },
 
