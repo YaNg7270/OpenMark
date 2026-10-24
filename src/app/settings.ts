@@ -54,6 +54,13 @@ export interface EditorSettings {
   autoSaveDelayMs: number;
   tabSize: number;
   showLineNumbers: boolean;
+  /**
+   * Close `*`, `~~`, `` ` `` and `$` as you type, leaving the caret between the pair.
+   *
+   * On by default because it is what the editor this app replaces does; off is one toggle away
+   * for anyone who writes a lot of arithmetic or snake_case identifiers.
+   */
+  autoPair: boolean;
 }
 
 export interface SafetySettings {
@@ -106,6 +113,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
     autoSaveDelayMs: 4000,
     tabSize: 2,
     showLineNumbers: false,
+    autoPair: true,
   },
   safety: {
     safeReadOnlyForComplexFiles: true,
@@ -129,9 +137,9 @@ export function loadSettings(): AppSettings {
     return {
       version: 1,
       language: parsed.language === 'en' ? 'en' : DEFAULT_SETTINGS.language,
-      reading: sanitizeReading({ ...DEFAULT_SETTINGS.reading, ...pickNumbers(parsed.reading, DEFAULT_SETTINGS.reading) }),
-      editor: { ...DEFAULT_SETTINGS.editor, ...pickNumbers(parsed.editor, DEFAULT_SETTINGS.editor) },
-      safety: { ...DEFAULT_SETTINGS.safety, ...pickNumbers(parsed.safety, DEFAULT_SETTINGS.safety) },
+      reading: sanitizeReading({ ...DEFAULT_SETTINGS.reading, ...pickMatchingTypes(parsed.reading, DEFAULT_SETTINGS.reading) }),
+      editor: { ...DEFAULT_SETTINGS.editor, ...pickMatchingTypes(parsed.editor, DEFAULT_SETTINGS.editor) },
+      safety: { ...DEFAULT_SETTINGS.safety, ...pickMatchingTypes(parsed.safety, DEFAULT_SETTINGS.safety) },
     };
   } catch {
     return DEFAULT_SETTINGS;
@@ -161,8 +169,12 @@ function sanitizeReading(reading: ReadingSettings): ReadingSettings {
  * Keeps only entries whose runtime type matches the default's, which rejects both
  * corrupted JSON and values of a plausible-but-wrong type (a string where a number
  * belongs would otherwise end up in a CSS calc).
+ *
+ * Named for the rule, not for numbers: booleans go through here too, so a hand-edited
+ * `"autoPair": "no"` falls back to the default instead of being passed to a toggle as a
+ * truthy string.
  */
-function pickNumbers<T extends object>(source: unknown, defaults: T): Partial<T> {
+function pickMatchingTypes<T extends object>(source: unknown, defaults: T): Partial<T> {
   if (!source || typeof source !== 'object') return {};
   const out: Partial<T> = {};
   for (const [key, value] of Object.entries(source as Record<string, unknown>)) {

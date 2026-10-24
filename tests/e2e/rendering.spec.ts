@@ -1703,3 +1703,143 @@ test.describe('split view', () => {
       .toBeGreaterThan(0.5);
   });
 });
+
+/**
+ * Auto-pairing, driven by real keystrokes.
+ *
+ * `page.keyboard.type` dispatches the same `beforeinput`/`input` pair a physical key does, which
+ * is the whole point: the unit tests pin the rules as pure functions, but only this can show that
+ * the extension is actually installed in the editor and that CodeMirror accepted the edit.
+ */
+test.describe('auto-pairing', () => {
+  /*
+   * Every case types *inside* the existing paragraph, not on a fresh line: a lone `*` at the
+   * start of a line is a bullet list marker and is deliberately left unpaired. That distinction
+   * is pinned in the unit tests; here the point is that the extension is installed at all.
+   */
+  async function typeInSource(page: Page, fixture: string, keys: string): Promise<ReturnType<Page['locator']>> {
+    await openFixture(page, fixture, 'hello world\n');
+    await page.getByTestId('mode-source').click();
+    const content = page.locator('.om-source__host .cm-content');
+    await content.click();
+    // End of the first line: after `hello world`, inside a paragraph.
+    await page.keyboard.press('Control+Home');
+    await page.keyboard.press('End');
+    await page.keyboard.type(keys, { delay: 30 });
+    return content;
+  }
+
+  test('closes * as it is typed, leaving the caret inside', async ({ page }) => {
+    const content = await typeInSource(page, 'pair.md', '*');
+    await expect(content).toHaveText(/hello world\*\*/);
+
+    // The caret must be between the halves, so the next characters land inside the pair.
+    await page.keyboard.type('it', { delay: 30 });
+    await expect(content).toHaveText(/hello world\*it\*/);
+  });
+
+  test('lengthens the pair into bold rather than nesting one', async ({ page }) => {
+    const content = await typeInSource(page, 'pair2.md', '**');
+    await page.keyboard.type('bold', { delay: 30 });
+    // `**bold**`, not `******` or a doubly nested pair.
+    await expect(content).toHaveText(/hello world\*\*bold\*\*/);
+  });
+
+  test('leaves a fence alone, so a code block can still be opened', async ({ page }) => {
+    await openFixture(page, 'pair3.md', 'hello world\n');
+    await page.getByTestId('mode-source').click();
+    const content = page.locator('.om-source__host .cm-content');
+    await content.click();
+    await page.keyboard.press('Control+End');
+    await page.keyboard.press('Enter');
+    await page.keyboard.type('```', { delay: 30 });
+
+    // Exactly three backticks: pairing would make a four-backtick fence.
+    await expect(content).toHaveText(/```/);
+    await expect(content).not.toHaveText(/````/);
+  });
+
+  test('does nothing when the setting is turned off', async ({ page }) => {
+    await page.addInitScript(() => {
+      localStorage.setItem(
+        'openmark.settings.v1',
+        JSON.stringify({ version: 1, editor: { autoPair: false } }),
+      );
+    });
+    const content = await typeInSource(page, 'pair4.md', '*');
+    // One character typed, one character landed — nothing was closed.
+    await expect(content).toHaveText(/hello world\*$/);
+  });
+});
+
+/**
+ * Auto-pairing in the instant-mode block editor.
+ *
+ * A separate mechanism from the source editor — a native `beforeinput` listener on the textarea
+ * rather than a CodeMirror input handler — so it needs its own proof, including the round trip
+ * into the authoritative source. The caret assertion is the one that matters: a version that
+ * inserts both halves but leaves the caret after the closing one produces the same text and is
+ * useless to type in.
+ */
+test.describe('auto-pairing in instant mode', () => {
+  test('closes the pair, keeps the caret inside, and commits to the source', async ({ page }) => {
+    await openFixture(page, 'instant-pair.md', '第一段原文。\n');
+    await page.getByTestId('mode-instant').click();
+
+    const paragraph = page.locator('.om-block[data-om-kind="paragraph"]').first();
+    await paragraph.locator('.om-block__rendered').click();
+    const editor = paragraph.locator('.om-block__editor');
+    await editor.waitFor();
+
+    await editor.click();
+    await page.keyboard.press('End');
+    await page.keyboard.type('*', { delay: 30 });
+    // Both halves are present...
+    await expect(editor).toHaveValue('第一段原文。**');
+
+    // ...and the caret is between them, which is what makes the next keystroke land inside.
+    await page.keyboard.type('it', { delay: 30 });
+    await expect(editor).toHaveValue('第一段原文。*it*');
+
+    // Typing the closer steps over it instead of doubling it.
+    await page.keyboard.type('*', { delay: 30 });
+    await expect(editor).toHaveValue('第一段原文。*it*');
+
+    // Leaving the block commits through the splice, so the source sees exactly this.
+    await editor.blur();
+    await expect
+      .poll(() => page.evaluate(() => window.__openmark__!.getSource()), { timeout: 5_000 })
+      .toBe('第一段原文。*it*\n');
+  });
+});
+
+/**
+ * Input-method safety.
+ *
+ * A Chinese-first app cannot survive a pairing rule that misfires mid-composition: WebView2
+ * delivers `zhong` one letter at a time while the user is still choosing a character, and a
+ * delimiter inserted then would land between two pinyin letters and break the candidate window.
+ * Driven through CDP because that is the only way to produce genuine composition events —
+ * `keyboard.type` sends complete characters and never enters the composing state.
+ */
+test.describe('auto-pairing and input methods', () => {
+  test('stays inert during composition and does not corrupt the committed character', async ({ page }) => {
+    await openFixture(page, 'ime.md', 'hello world\n');
+    await page.getByTestId('mode-source').click();
+    const content = page.locator('.om-source__host .cm-content');
+    await content.click();
+    await page.keyboard.press('Control+Home');
+    await page.keyboard.press('End');
+
+    const cdp = await page.context().newCDPSession(page);
+    // Composition in progress: the pending pinyin must appear untouched.
+    await cdp.send('Input.imeSetComposition', { text: 'zhong', selectionStart: 5, selectionEnd: 5 });
+    await expect(content).toHaveText(/hello worldzhong/);
+    // No delimiter may have been inserted while the candidate window is open.
+    await expect(content).not.toHaveText(/\*/);
+
+    // Committing the character must leave the text intact and still unpaired.
+    await cdp.send('Input.insertText', { text: '中' });
+    await expect(content).toHaveText(/hello world中/);
+  });
+});

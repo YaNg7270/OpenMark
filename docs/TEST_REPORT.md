@@ -36,7 +36,7 @@ WebdriverIO drives the compiled `openmark.exe` over WebView2.
 
 ---
 
-## 2. Unit and DOM tests — 441
+## 2. Unit and DOM tests — 544
 
 | File | Tests | What it establishes |
 |---|---:|---|
@@ -50,6 +50,8 @@ WebdriverIO drives the compiled `openmark.exe` over WebView2.
 | `tests/unit/markdown-blocks.test.ts` | 13 | Block decomposition and the splice invariant the instant editor depends on |
 | `tests/unit/math-source.test.ts` | 11 | Formula source reconstruction for every delimiter form |
 | `tests/unit/roundtrip.test.ts` | 4 | Identity, edit, block-edit and property-based (fast-check) preservation |
+| `tests/unit/auto-pair.test.ts` | 20 | Typing-time pairing as a pure function: the delimiter table, lengthening a run rather than nesting one, stepping over a closing run, wrapping a selection, and the refusals — inside a word (`snake_case`, `2*3`), before a space, at the start of a line (bullet/fence/display-math openers), inside a fence, when a delimiter is already open in the paragraph, and on any input that is not exactly one delimiter |
+| `tests/unit/dom/settings.test.ts` | 6 | Zoom clamping, image-alignment validation, and the `autoPair` preference including a wrong-typed stored value falling back to the default |
 
 ### What the corpus is
 

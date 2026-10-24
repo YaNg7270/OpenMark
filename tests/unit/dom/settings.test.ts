@@ -29,3 +29,28 @@ describe('zoom and image alignment settings', () => {
     expect(zoom).toBe(1);
   });
 });
+
+describe('auto-pair setting', () => {
+  function storedEditor(editor: Record<string, unknown>): void {
+    localStorage.setItem('openmark.settings.v1', JSON.stringify({ version: 1, editor }));
+  }
+
+  it('is on by default, so typing * closes it without being asked', () => {
+    expect(loadSettings().editor.autoPair).toBe(true);
+  });
+
+  it('survives a round trip through storage', () => {
+    storedEditor({ autoPair: false });
+    expect(loadSettings().editor.autoPair).toBe(false);
+    storedEditor({ autoPair: true });
+    expect(loadSettings().editor.autoPair).toBe(true);
+  });
+
+  it('rejects a hand-edited value of the wrong type', () => {
+    // A string must not reach a checkbox as a truthy value.
+    storedEditor({ autoPair: 'no' });
+    expect(loadSettings().editor.autoPair).toBe(true);
+    storedEditor({ autoPair: 0 });
+    expect(loadSettings().editor.autoPair).toBe(true);
+  });
+});

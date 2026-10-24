@@ -296,6 +296,43 @@ Each of these was found by a test, not by inspection. All have regression covera
     (and the new version list) now require exactly a timestamp between name and `.bak`. Rust test
     `prune_backups_leaves_another_files_backups_alone`, shown failing on the old filter.
 
+22. **Auto-pairing never fired in the instant-mode block editor.** The handler was wired to
+    React's `onBeforeInput`, which React synthesises from the legacy `textInput` event — that
+    object has `data` but no `inputType` and no `isComposing`, so the guard read `undefined`,
+    the handler returned false, and the feature looked switched off while its setting said on.
+    Found by a probe that logged the event's constructor (`TextEvent`, not `InputEvent`). Now a
+    native `beforeinput` listener on the textarea. `rendering.spec.ts` › auto-pairing in
+    instant mode.
+23. **The caret landed after the closing half instead of between the halves.** `execCommand
+    ('insertText')` applies its selection change asynchronously, so the `setSelectionRange`
+    immediately after it was overwritten. The text looked right — `**` was there — which is why
+    only typing a *second* character exposed it. Replaced with `setRangeText` plus an explicit
+    `input` event. Both the unit and E2E tests assert the caret, not just the text.
+24. **Typing `*` at the end of a line did not pair.** The "not immediately before whitespace"
+    rule matched `\n`, and end-of-line is where trailing emphasis is most often typed; the rule
+    now means space and tab only. `tests/unit/auto-pair.test.ts` pins it.
+25. **Two unit expectations in this work were wrong, not the code.** `a ‸` + `` ` `` was
+    expected to drop a space, and a lone `~` before the caret was expected to pair although a
+    single `~` is not Markdown. Both corrected in the test file. Recorded because a test that
+    agrees with a wrong implementation is worse than no test.
+
+### The auto-pair rules, and why they are shaped that way
+
+Pairing is measured on the **run** of characters at the caret, not per keystroke, which is what
+makes `*` `*` `*` produce `***|***` rather than three nested pairs.
+
+Five refusals exist because each one would otherwise corrupt common input: a lone `*` at the
+start of a line is a bullet (as are a lone `` ` `` and `$`, being a fence and display math);
+`*` inside a word breaks `snake_case` and `2*3`; a delimiter already open in the paragraph
+means the next one closes rather than opens (`*text` + `*` must not become `*text**`); text
+inside a fence or inline code is literal; and IME composition delivers provisional pinyin that
+a delimiter must never be inserted into. The last one is proved through CDP, since
+`keyboard.type` never enters the composing state.
+
+Brackets and quotes are deliberately **not** paired. `[` also opens a reference definition, a
+footnote and a task list, and a stray `]` in prose costs a keystroke to delete — the opposite
+trade from emphasis delimiters, which users rarely type without intending a pair.
+
 ### Correction: earlier desktop evidence was against a dev-server binary
 
 Defect 12 invalidates part of the previous session's desktop run. `6 passed` was real, but the

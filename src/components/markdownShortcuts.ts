@@ -1,5 +1,6 @@
-import { Prec, type Extension } from '@codemirror/state';
+import { Prec, type EditorState, type Extension } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
+import { syntaxTree } from '@codemirror/language';
 import {
   insertBlock,
   insertLink,
@@ -10,7 +11,9 @@ import {
   type EditResult,
   type TextSelection,
 } from '@/core/markdown/edit-commands';
+import { autoPairEdit } from '@/core/markdown/auto-pair';
 import { continueList, shiftListItems } from '@/core/markdown/list-commands';
+import { useStore } from '@/app/store';
 
 /**
  * The Markdown formatting shortcuts, shared by the source editor and the instant-mode block
@@ -160,5 +163,127 @@ export function applyShortcutToTextarea(event: KeyboardEvent, area: HTMLTextArea
     }
   }
   area.setSelectionRange(result.selection.from, result.selection.to);
+  return true;
+}
+
+/**
+ * The auto-pairing rules, gated on the `editor.autoPair` setting.
+ *
+ * Reads the store at call time rather than taking the setting as an argument: the extension is
+ * installed once with the view, and a compartment would rebuild the editor for a boolean that
+ * one keystroke reads anyway — the same trade the typewriter-mode listener makes.
+ */
+export function autoPairEnabled(): boolean {
+  return useStore.getState().settings.editor.autoPair;
+}
+
+/**
+ * CodeMirror adapter for auto-pairing.
+ *
+ * Uses `EditorView.inputHandler` rather than `domEventHandlers({ keydown })` because a keydown
+ * handler sees the key, not the resulting edit: it cannot tell a `*` typed over a selection from
+ * one typed at a caret, and it would have to re-implement CodeMirror's own selection replacement.
+ * The input handler receives the range and the text actually being inserted, which is exactly the
+ * input `autoPairEdit` is written against. It also runs for input that never produced a keydown at
+ * all, such as a synthetic insert.
+ *
+ * **Composition is the reason this is not a plain `input` listener.** During IME composition
+ * (Chinese, Japanese, Korean) WebView2 delivers intermediate text with the pinyin still in it; a
+ * pair inserted then lands in the middle of a syllable. CodeMirror's own `closeBrackets` bails out
+ * on `composing` for the same reason, and this does too.
+ */
+/**
+ * True when `pos` sits inside a code block, an inline code span or a fence — places where
+ * Markdown emphasis does not apply and an inserted pair would be literal text.
+ *
+ * Read from the syntax tree the editor already maintains, so there is no second parser and no
+ * regular-expression guesswork. `resolveInner` with the default side lands on the innermost node
+ * that actually contains the position.
+ */
+function inCode(state: EditorState, pos: number): boolean {
+  // Typed structurally rather than imported from `@lezer/common`: that package is a transitive
+  // dependency, and pnpm's strict layout does not expose it to this workspace.
+  // The walk needs no type import: `parent` is `null` at the root, which typing infers from
+  // `resolveInner` itself once the loop variable is left unannotated.
+  for (let node = syntaxTree(state).resolveInner(pos, -1) as ReturnType<typeof syntaxTree>['topNode'] | null;
+       node;
+       node = node.parent) {
+    if (CODE_NODES.has(node.name)) return true;
+  }
+  return false;
+}
+
+/** Node names that mean "literal text": emphasis delimiters typed here are not markup. */
+const CODE_NODES: ReadonlySet<string> = new Set(['FencedCode', 'CodeBlock', 'InlineCode', 'CodeText']);
+
+export function autoPairExtension(): Extension {
+  return Prec.high(
+    EditorView.inputHandler.of((view, from, to, insert) => {
+      if (!autoPairEnabled() || view.state.readOnly) return false;
+      // Mid-composition text is provisional: the user is still choosing a character.
+      if (view.composing || view.compositionStarted) return false;
+      // Inside code a delimiter is literal, so a closing half would corrupt the listing.
+      if (inCode(view.state, from)) return false;
+      const result = autoPairEdit({ text: view.state.doc.toString(), from, to, insert });
+      if (!result) return false;
+      view.dispatch({
+        changes: result.changes,
+        selection: { anchor: result.selection.from, head: result.selection.to },
+        scrollIntoView: true,
+        userEvent: 'input.type',
+      });
+      return true;
+    }),
+  );
+}
+
+/**
+ * Textarea adapter for the instant-mode block editor. Returns true when the event was handled.
+ *
+ * Installed on `beforeinput`, not on `input`: the browser has already committed the character by
+ * the time `input` fires, and compensating for it afterwards means a visible flicker and a fight
+ * with the undo stack. `beforeinput` can still be cancelled, and `execCommand('insertText')`
+ * replaces the keystroke with the balanced pair in a single undoable step — the same mechanism
+ * `applyShortcutToTextarea` uses, for the same reason.
+ *
+ * `insertCompositionText` is skipped: that is the IME mid-composition event, and pairing there
+ * would insert delimiters between pinyin letters.
+ */
+export function applyAutoPairToTextarea(event: InputEvent, area: HTMLTextAreaElement): boolean {
+  if (!autoPairEnabled() || area.readOnly) return false;
+  if (event.inputType !== 'insertText' || event.isComposing) return false;
+  const result = autoPairEdit({
+    text: area.value,
+    from: area.selectionStart,
+    to: area.selectionEnd,
+    insert: event.data ?? '',
+  });
+  if (!result) return false;
+
+  /*
+   * `preventDefault` on `beforeinput` stops the character from landing, so the pair is the only
+   * thing inserted. The edit is written through `setRangeText` rather than `execCommand`:
+   * `execCommand('insertText')` is asynchronous with respect to the DOM — it returns before the
+   * selection it implies is applied — so a `setSelectionRange` straight afterwards is silently
+   * overwritten and the caret ends up after the closing half instead of between the halves,
+   * which is the entire point of the feature.
+   */
+  event.preventDefault();
+  const text = area.value;
+  const from = Math.min(...result.changes.map((c) => c.from));
+  const to = Math.max(...result.changes.map((c) => c.to));
+  let replacement = '';
+  let cursor = from;
+  for (const change of [...result.changes].sort((a, b) => a.from - b.from)) {
+    replacement += text.slice(cursor, change.from) + change.insert;
+    cursor = change.to;
+  }
+  replacement += text.slice(cursor, to);
+
+  area.setRangeText(replacement, from, to, 'preserve');
+  area.setSelectionRange(result.selection.from, result.selection.to);
+  // The block editor commits on `input`, so one is dispatched explicitly: `setRangeText` does
+  // not fire it, and without it the edit would sit in the textarea until the next keystroke.
+  area.dispatchEvent(new Event('input', { bubbles: true }));
   return true;
 }

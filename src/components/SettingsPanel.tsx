@@ -151,6 +151,11 @@ export function SettingsPanel({ onChange }: SettingsPanelProps) {
           onChange={(autoSave) => patchEditor({ autoSave })}
         />
         <Toggle
+          label={t('settings.autoPair')}
+          checked={editor.autoPair}
+          onChange={(autoPair) => patchEditor({ autoPair })}
+        />
+        <Toggle
           label={t('settings.keepBackups')}
           checked={safety.keepBackups}
           onChange={(keepBackups) => patchSafety({ keepBackups })}

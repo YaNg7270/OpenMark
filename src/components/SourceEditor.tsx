@@ -21,7 +21,7 @@ import { normalizeEol } from '@/core/fs/encoding';
 import { useStore, type DocumentState } from '@/app/store';
 import { imageMarkdown, saveImageAsset } from '@/core/fs/assets';
 import { t } from '@/i18n';
-import { markdownShortcutsExtension } from './markdownShortcuts';
+import { autoPairExtension, markdownShortcutsExtension } from './markdownShortcuts';
 import { anchorKey, anchorLineFor, rememberTopLine } from './viewAnchor';
 
 /**
@@ -249,6 +249,7 @@ export function SourceEditor({ doc, onChange, readOnly }: SourceEditorProps) {
           // serves the reading views; this one serves the source view.
           search({ top: true }),
           markdownShortcutsExtension(),
+          autoPairExtension(),
           keymap.of([...defaultKeymap, ...historyKeymap, ...searchKeymap, indentWithTab]),
           markdown({ base: markdownLanguage, codeLanguages: languages, addKeymap: true }),
           syntaxHighlighting(highlightStyle),

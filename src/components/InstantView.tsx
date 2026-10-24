@@ -5,7 +5,7 @@ import { useReadingProgress, useTypesetting } from './useTypesetting';
 import { MathTools } from './MathTools';
 import { anchorKey, useViewAnchor } from './viewAnchor';
 import { TableEditor } from './TableEditor';
-import { applyShortcutToTextarea } from './markdownShortcuts';
+import { applyAutoPairToTextarea, applyShortcutToTextarea } from './markdownShortcuts';
 import { readFenceLanguage, setFenceLanguage } from '@/core/markdown/edit-commands';
 import { imageMarkdown, saveImageAsset } from '@/core/fs/assets';
 import { t } from '@/i18n';
@@ -162,6 +162,25 @@ function Block({
   const timer = useRef(0);
   const latest = useRef(block.source);
   const areaRef = useRef<HTMLTextAreaElement | null>(null);
+
+  /*
+   * Auto-pairing listens to the *native* `beforeinput`, not React's `onBeforeInput`.
+   *
+   * React synthesises that prop from the legacy `textInput` event, whose object carries the
+   * text but no `inputType` and no `isComposing` — the two fields that decide whether a
+   * keystroke may be paired. Reading them off the synthetic event yields `undefined`, which
+   * looks exactly like "pairing is switched off". The native event has both.
+   */
+  useEffect(() => {
+    const area = areaRef.current;
+    if (!area) return;
+    const onBeforeInput = (event: Event) => {
+      if (event instanceof InputEvent) applyAutoPairToTextarea(event, area);
+    };
+    area.addEventListener('beforeinput', onBeforeInput);
+    return () => area.removeEventListener('beforeinput', onBeforeInput);
+  }, [active]);
+
   const [language, setLanguage] = useState(() => readFenceLanguage(block.source));
 
   // Clear a pending commit if the block unmounts mid-edit, so a stale splice cannot land

@@ -25,7 +25,7 @@ A later report from real use found that the first of those three — relative im
 the resolver was now called, but `resolve_asset_url` was invoked with an argument shape the command did not
 accept, so the call failed and every relative image was marked missing. See `PROGRESS.md` §2.13.
 
-The test layers are real: 441 Vitest tests in 10 files, 59 Playwright tests (`tests/e2e/rendering.spec.ts`,
+The test layers are real: 544 Vitest tests in 21 files, 84 Playwright tests (`tests/e2e/rendering.spec.ts`,
 `tests/e2e/visual.spec.ts`) including 7 screenshot baselines and 6 axe-core audits, 9 WebdriverIO tests
 driving the compiled binary (`tests/desktop/openmark.spec.ts`), and a 148-fixture corpus
 (`tests/corpus/`, validator `scripts/verify-corpus.mjs`).
@@ -146,7 +146,7 @@ Counted from the rows below. Every row carries exactly one status, so the four c
 | Caret/scroll stability across mode switches and re-render | yes (scroll preserved source↔hybrid since 1.13) | **Implemented** | PRD R-C-10. Top-level blocks carry `data-om-line` (`engine.ts`, stripped on export); every view records the source line at the top of its viewport and a newly mounted view for the same tab and file starts there (`src/components/viewAnchor.ts`, `SourceEditor.tsx` also puts the caret on that line). Lazy typesetting above the anchor is absorbed by re-aligning until the reader interacts. `tests/e2e/rendering.spec.ts` "a mode switch keeps the same part of the document on screen" (read → source → instant) |
 | Never silently drop unrecognised extensions / comments / frontmatter / macros | **no** — extension renamed to `.md` on save (#6324); "export" reformats reference links | **Implemented** | Range-splice editing means only the touched block changes (`store.applyBlockEdit`, `tests/unit/markdown-blocks.test.ts`, `tests/unit/roundtrip.test.ts` byte-identical no-op); frontmatter/comments/raw-HTML preserved by `rules.ts`/`engine.ts`; CRLF preserved (`tests/e2e/rendering.spec.ts`) |
 | Authoritative source + non-destructive model | text edited in place | **Implemented** | `doc.source` is the only write target (`store.ts`, `fileService.ts`); `normalizeEol` never touches the file (ARCHITECTURE §3 S1/S2) |
-| Granular autocomplete settings | no — macOS predictive text cannot be disabled (#6198) | **Planned** | PRD R-E-6 (settings surface) |
+| Auto-close Markdown delimiters, with its own setting | no — pairs brackets and quotes instead, and cannot be turned off | **Implemented** | `src/core/markdown/auto-pair.ts` (pure rules: `*`, `~~`, `` ` ``, `$`; lengthens a run rather than nesting, steps over a closing run, wraps a selection, refuses inside code and mid-word, refuses a lone line-start delimiter because that is a bullet/fence/display-math opener), `tests/unit/auto-pair.test.ts` (20 cases). Adapters: `autoPairExtension()` in `src/components/markdownShortcuts.ts` for CodeMirror (source mode) and `applyAutoPairToTextarea()` for the instant-mode textarea, which listens to the **native** `beforeinput` because React's synthetic `onBeforeInput` carries no `inputType`. Both bail out during IME composition. `editor.autoPair` (default on) with a toggle in `SettingsPanel.tsx`; `tests/e2e/rendering.spec.ts` auto-pairing group (5 tests, real keystrokes, both editors) plus the CDP composition test. PRD R-E-6's broader reading-settings surface is separate and still tracked below |
 | Wiki links / `#tags` as syntax | no | **Out-of-scope** | `[[…]]` is left as literal text (matching Typora) |
 
 ---

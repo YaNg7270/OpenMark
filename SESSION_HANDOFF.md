@@ -186,7 +186,7 @@ Every acceptance criterion in the goal's section 6 is evidenced in `docs/TEST_RE
 | Four modes switch | E2E asserts all four buttons and their panes |
 | The corpus renders correctly | 148/148 fixtures, 355 formula cases, 300 conformance assertions |
 | Round-trip loses nothing | `tests/unit/roundtrip.test.ts`, plus CRLF preservation in both editors |
-| Main E2E passes | 59 Playwright + 9 WebdriverIO |
+| Main E2E passes | 84 Playwright + 9 WebdriverIO |
 | P0/P1 resolved | no P0; the remaining P1s are the two items below |
 | Performance checked | `scripts/perf-parse.mjs`, figures in `TEST_REPORT.md` §5 |
 | Installer + portable built | NSIS, MSI and a portable zip, all from the current source |
