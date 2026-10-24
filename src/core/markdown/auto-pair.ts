@@ -73,12 +73,24 @@ const RULES: Readonly<Record<string, DelimiterRule>> = {
   $: { min: 1, max: 1, emphasis: false },
 };
 
+/** True when a single typed character is one this module can pair. */
+export function isPairDelimiter(insert: string): boolean {
+  return insert.length === 1 && RULES[insert] !== undefined;
+}
+
 export interface AutoPairInput {
-  /** The whole text the caret is in, before the typed character lands. */
+  /**
+   * The text the caret is in, before the typed character lands.
+   *
+   * Callers editing a very large document may pass a window around the caret instead of the
+   * whole text, as long as it reaches back past the start of the caret's paragraph and forward
+   * past the closing run. Nothing here looks further than that, which is what keeps the cost
+   * off the keystroke path for a multi-megabyte file.
+   */
   text: string;
-  /** Selection start, in `text`. */
+  /** Selection start, an offset within `text`. */
   from: number;
-  /** Selection end, in `text`. Equal to `from` for a caret. */
+  /** Selection end, an offset within `text`. Equal to `from` for a caret. */
   to: number;
   /** Exactly what is about to be inserted. Anything but one delimiter is ignored. */
   insert: string;

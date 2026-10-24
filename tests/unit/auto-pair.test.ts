@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { applyEdits } from '@/core/markdown/edit-commands';
-import { autoPairEdit } from '@/core/markdown/auto-pair';
+import { autoPairEdit, isPairDelimiter } from '@/core/markdown/auto-pair';
 
 /**
  * Same notation as `edit-commands.test.ts`: `‸` is a caret, `«…»` a selection. Each case reads
@@ -167,5 +167,33 @@ describe('auto-pair: caret placement', () => {
 
   it('leaves a wrapped selection selected, inside the new delimiters', () => {
     expect(type('«abc»', '$')).toBe('$«abc»$');
+  });
+});
+
+describe('auto-pair: bounded input', () => {
+  /*
+   * The source editor passes a window around the caret rather than the whole document, so the
+   * rules must behave identically when the text they receive is truncated far behind the caret.
+   * These pin the equivalence for the case that matters: an unclosed delimiter in an earlier
+   * part of the same paragraph is outside a small window and is therefore not seen.
+   */
+  it('gives the same answer for a window and the whole text, at the boundary', () => {
+    const filler = 'x'.repeat(500);
+    // Same paragraph, open delimiter immediately before the caret: both must refuse.
+    const near = `${filler}*word`;
+    expect(type(`${near}‸`, '*')).toBe(null);
+    // Only the window differs; a fresh pair after a blank line still opens.
+    const afterBreak = `${filler}\n\nafter`;
+    expect(type(`${afterBreak}‸`, '*')).toBe(`${afterBreak}*‸*`);
+  });
+
+  it('reports which characters it can pair, so callers can skip the work', () => {
+    expect(isPairDelimiter('*')).toBe(true);
+    expect(isPairDelimiter('~')).toBe(true);
+    expect(isPairDelimiter('`')).toBe(true);
+    expect(isPairDelimiter('$')).toBe(true);
+    expect(isPairDelimiter('a')).toBe(false);
+    expect(isPairDelimiter('')).toBe(false);
+    expect(isPairDelimiter('**')).toBe(false);
   });
 });

@@ -11,7 +11,7 @@ import {
   type EditResult,
   type TextSelection,
 } from '@/core/markdown/edit-commands';
-import { autoPairEdit } from '@/core/markdown/auto-pair';
+import { autoPairEdit, isPairDelimiter } from '@/core/markdown/auto-pair';
 import { continueList, shiftListItems } from '@/core/markdown/list-commands';
 import { useStore } from '@/app/store';
 
@@ -193,6 +193,23 @@ export function autoPairEnabled(): boolean {
  * on `composing` for the same reason, and this does too.
  */
 /**
+ * The slice of the document `autoPairEdit` needs, as offsets local to that slice.
+ *
+ * The rules never look further back than the start of the caret's paragraph, nor further
+ * forward than the closing run, so a bounded window is equivalent to the whole document — and
+ * it avoids reading out and scanning a multi-megabyte string on every keystroke. The bounds are
+ * deliberately generous relative to what the rules examine: they exist to cap the cost, not to
+ * encode a rule.
+ */
+function windowAround(view: EditorView, from: number, to: number): { text: string; from: number; to: number } {
+  // The end of the window has to clear the selection as well as the closing run, since a
+  // non-empty selection is wrapped rather than typed over.
+  const start = Math.max(0, from - 4_000);
+  const end = Math.min(view.state.doc.length, Math.max(to, from) + 64);
+  return { text: view.state.sliceDoc(start, end), from: from - start, to: to - start };
+}
+
+/**
  * True when `pos` sits inside a code block, an inline code span or a fence — places where
  * Markdown emphasis does not apply and an inserted pair would be literal text.
  *
@@ -219,12 +236,18 @@ const CODE_NODES: ReadonlySet<string> = new Set(['FencedCode', 'CodeBlock', 'Inl
 export function autoPairExtension(): Extension {
   return Prec.high(
     EditorView.inputHandler.of((view, from, to, insert) => {
+      /*
+       * Cheapest checks first, and the delimiter test before anything that touches the
+       * document. A 3 MB file costs 2.6 ms to read out and scan, which is visible as input
+       * lag if every letter pays it — and almost every letter is not a delimiter.
+       */
+      if (!isPairDelimiter(insert)) return false;
       if (!autoPairEnabled() || view.state.readOnly) return false;
       // Mid-composition text is provisional: the user is still choosing a character.
       if (view.composing || view.compositionStarted) return false;
       // Inside code a delimiter is literal, so a closing half would corrupt the listing.
       if (inCode(view.state, from)) return false;
-      const result = autoPairEdit({ text: view.state.doc.toString(), from, to, insert });
+      const result = autoPairEdit({ ...windowAround(view, from, to), insert });
       if (!result) return false;
       view.dispatch({
         changes: result.changes,
