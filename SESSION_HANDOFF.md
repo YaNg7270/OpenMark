@@ -129,6 +129,16 @@ scripts/             prepare-mathjax.mjs, env.sh, verify-corpus.mjs, gen-corpus-
   commands write `src-tauri/target/debug/openmark.exe`, so a plain `cargo build` silently replaces
   a working binary. The symptom is misleading: every desktop E2E test fails with "element wasn't
   found", which reads as a frontend fault.
+- **React's `onBeforeInput` is not the `beforeinput` event.** React synthesises it from the
+  legacy `textInput` event, whose object has `data` but no `inputType` and no `isComposing`.
+  A handler gated on `inputType` therefore reads `undefined` and never runs — the symptom is
+  indistinguishable from a disabled setting. Attach a native listener with
+  `addEventListener('beforeinput', …)` when input semantics matter.
+- **`document.execCommand('insertText')` applies its selection change asynchronously.** A
+  `setSelectionRange` immediately afterwards is overwritten, so the caret ends up after text
+  that looks correct. Use `setRangeText` and dispatch `input` yourself.
+- **`grep` for a feature name in `dist/assets/*.js` before blaming the source.** `vite preview`
+  serves the last build, so a browser suite can test code that is two edits old.
 - **`tauri_build::build()` does not watch `frontendDist`.** Rebuilding `dist/` alone used to leave
   the binary stale while cargo reported "Finished" — so a green desktop run could be testing the
   previous UI. `src-tauri/build.rs` now declares `rerun-if-changed=../dist`, and
@@ -172,8 +182,10 @@ item in `PROGRESS.md` §5:
    it was not offered.
 3. **A code-signing certificate**, which is the only way to remove the SmartScreen warning for
    downloaded installers, and **an MSI install test** on a machine with elevation.
-4. **An accessibility audit**, then re-enabling MathJax's semantic enrichment once the SRE
-   worker lifecycle is handled explicitly.
+4. **Re-enabling MathJax's semantic enrichment** once the SRE worker lifecycle is handled
+   explicitly. The accessibility audit itself is **done** — axe-core runs in
+   `tests/e2e/a11y.spec.ts` and found seven real problems, all fixed; an earlier revision of
+   this file listed the audit as outstanding, which was stale.
 
 ## 8. Final state
 
@@ -181,12 +193,12 @@ Every acceptance criterion in the goal's section 6 is evidenced in `docs/TEST_RE
 
 | Criterion | Evidence |
 |---|---|
-| The desktop app launches | release binary boots, window titled `OpenMark`; 6 WebdriverIO tests drive it |
+| The desktop app launches | release binary boots, window titled `OpenMark`; 14 WebdriverIO tests drive it |
 | Reading, editing, maths and saving work | `docs/FEATURE_MATRIX.md` (96 Implemented / 6 core-only / 12 planned / 9 out-of-scope) |
 | Four modes switch | E2E asserts all four buttons and their panes |
 | The corpus renders correctly | 148/148 fixtures, 355 formula cases, 300 conformance assertions |
 | Round-trip loses nothing | `tests/unit/roundtrip.test.ts`, plus CRLF preservation in both editors |
-| Main E2E passes | 84 Playwright + 9 WebdriverIO |
+| Main E2E passes | 84 Playwright + 14 WebdriverIO |
 | P0/P1 resolved | no P0; the remaining P1s are the two items below |
 | Performance checked | `scripts/perf-parse.mjs`, figures in `TEST_REPORT.md` §5 |
 | Installer + portable built | NSIS, MSI and a portable zip, all from the current source |

@@ -133,6 +133,19 @@ describe('auto-pair: where it must stay out of the way', () => {
     expect(type('*a\n\nb‸', '*')).toBe('*a\n\nb*‸*');
   });
 
+  it('restarts the count at the *nearest* blank line, not the first one', () => {
+    /*
+     * Three paragraphs after the stray delimiter. The scope has to be the paragraph the caret
+     * is in, so a stray `*` two paragraphs back cannot veto every later pair.
+     */
+    expect(type('a\n\n*b\n\nc\n\nd‸', '*')).toBe('a\n\n*b\n\nc\n\nd*‸*');
+    expect(type('a\n\n*b\n\nc\n\nd\n\ne‸', '*')).toBe('a\n\n*b\n\nc\n\nd\n\ne*‸*');
+    // A stray delimiter two paragraphs back does not leak into this one...
+    expect(type('a\n\n*b\n\nc‸', '*')).toBe('a\n\n*b\n\nc*‸*');
+    // ...but one in the *same* paragraph still blocks, which is the rule's whole point.
+    expect(type('a\n\n*b\nc‸', '*')).toBe(null);
+  });
+
   it('leaves an asymmetric run alone rather than guessing', () => {
     // `*|**` is ambiguous; inserting a close would pick one reading for the user.
     expect(type('*‸**', '*')).toBe(null);

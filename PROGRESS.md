@@ -316,6 +316,18 @@ Each of these was found by a test, not by inspection. All have regression covera
     single `~` is not Markdown. Both corrected in the test file. Recorded because a test that
     agrees with a wrong implementation is worse than no test.
 
+26. **The paragraph scope used the first blank line, not the nearest one.** `paragraphBefore`
+    used `String.search`, which returns the leftmost match, so the scanned scope was every
+    paragraph from the first blank line onward. A stray `*` in paragraph two therefore vetoed
+    pairing in paragraph four — with three or more paragraphs the feature degraded with each
+    one. Found by review, then reproduced: the fix is `matchAll` over blank-line pairs taking
+    the last index. `tests/unit/auto-pair.test.ts` "restarts the count at the nearest blank
+    line" fails on the old implementation.
+27. **The desktop auto-pair test could never pass.** It compared the tab label to
+    `auto-pair.md`, but `writeScratchDocument` prefixes the scratch name with
+    `openmark-e2e-`, so the label was `openmark-e2e-auto-pair.md`. Every other desktop test
+    matches by substring for that reason; this one now does too.
+
 ### The auto-pair rules, and why they are shaped that way
 
 Pairing is measured on the **run** of characters at the caret, not per keystroke, which is what

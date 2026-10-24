@@ -319,6 +319,47 @@ describe('OpenMark desktop shell', () => {
  * dispatched in the page (their routing is covered by Playwright); what is asserted here is the
  * native result.
  */
+describe('auto-pairing', () => {
+  /*
+   * The browser suite already proves the rules and the adapters. This runs the same keystrokes
+   * through the packaged binary, which is the only place the WebView2 build of CodeMirror and
+   * the real focus path are exercised — the two defects this feature had (a synthetic-event
+   * guard reading `undefined`, and a caret left outside the pair) were both invisible to the
+   * unit tests and only showed up when characters were actually typed.
+   */
+  it('closes a single asterisk and keeps the caret between the halves', async () => {
+    const target = writeScratchDocument('auto-pair.md', 'hello world\n');
+    // Opened once, then waited for: re-emitting inside a retry loop restarts the load each
+    // time, so the document name never settles.
+    await openFixture(target);
+    // `writeScratchDocument` prefixes the name, so the tab shows
+    // `openmark-e2e-auto-pair.md`; match the distinctive part like every other test here.
+    await browser.waitUntil(
+      async () => (await $(DOCUMENT_NAME).getText()).includes('auto-pair'),
+      { timeout: 15_000, timeoutMsg: 'the fixture never opened' },
+    );
+
+    await $('[data-om-testid="mode-source"]').click();
+    const content = await $('.om-source__host .cm-content');
+    await content.waitForDisplayed({ timeout: 10_000 });
+    await content.click();
+    // End of the first line: inside the paragraph, not at the start of an empty one.
+    await browser.keys(['Control', 'Home']);
+    await browser.keys(['End']);
+    await browser.keys(['*']);
+
+    // Both halves present...
+    await browser.waitUntil(async () => (await content.getText()).includes('hello world**'), {
+      timeout: 5_000,
+      timeoutMsg: `expected a closed pair, got: ${await content.getText()}`,
+    });
+
+    // ...and the caret is between them, which only shows when the next key lands inside.
+    await browser.keys(['i', 't']);
+    await expect(content).toHaveText(expect.stringContaining('hello world*it*'));
+  });
+});
+
 describe('window controls', () => {
   const press = (init: KeyboardEventInit) =>
     browser.execute((options: KeyboardEventInit) => {

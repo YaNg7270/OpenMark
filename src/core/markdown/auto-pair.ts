@@ -103,10 +103,18 @@ function atLineStart(text: string, at: number): boolean {
   return /^[ \t]*$/.test(text.slice(text.lastIndexOf('\n', at - 1) + 1, at));
 }
 
-/** The text between the previous blank line and `at`. */
+/**
+ * The text between the *nearest* previous blank line and `at`.
+ *
+ * The nearest one, not the first: `String.search` returns the leftmost match, so a document
+ * with three or more paragraphs would otherwise make a stray delimiter in an early paragraph
+ * veto pairing in every later one. Only the paragraph the caret is actually in may do that.
+ */
 function paragraphBefore(text: string, at: number): string {
-  const start = text.slice(0, at).search(/\n[ \t]*\n(?=[^]*$)/);
-  return start === -1 ? text.slice(0, at) : text.slice(start, at);
+  const before = text.slice(0, at);
+  let start = -1;
+  for (const match of before.matchAll(/\n[ \t]*\n/g)) start = match.index;
+  return start === -1 ? before : before.slice(start);
 }
 
 /** Total occurrences of `char` in `text`. */
