@@ -116,24 +116,34 @@ function atLineStart(text: string, at: number): boolean {
 }
 
 /**
- * The text between the *nearest* previous blank line and `at`.
+ * How many `char` sit in the caret's paragraph, excluding the run immediately before the caret.
  *
- * The nearest one, not the first: `String.search` returns the leftmost match, so a document
- * with three or more paragraphs would otherwise make a stray delimiter in an early paragraph
- * veto pairing in every later one. Only the paragraph the caret is actually in may do that.
+ * Scans backwards from `from` and stops at the nearest blank line — the paragraph boundary —
+ * rather than slicing the text and iterating a substring. Emphasis may span a soft line break
+ * (`*a\nb*` is italic) but never a blank line, so the paragraph is the right scope, and stopping
+ * there means the cost is bounded by the paragraph rather than by the document.
+ *
+ * The run immediately before the caret is skipped: that is the pair being extended, and counting
+ * it would make the length of an existing run veto its own continuation.
  */
-function paragraphBefore(text: string, at: number): string {
-  const before = text.slice(0, at);
-  let start = -1;
-  for (const match of before.matchAll(/\n[ \t]*\n/g)) start = match.index;
-  return start === -1 ? before : before.slice(start);
-}
-
-/** Total occurrences of `char` in `text`. */
-function countIn(text: string, char: string): number {
-  let n = 0;
-  for (const c of text) if (c === char) n++;
-  return n;
+function openersInParagraph(text: string, from: number, char: string, skipRun: number): number {
+  let count = 0;
+  let i = from - skipRun - 1;
+  // Walk back over the paragraph, one character at a time.
+  while (i >= 0) {
+    // A blank line ends the paragraph. The caret sits after the newline that closes its own
+    // line, so a `\n` followed by nothing but spaces/tabs going back to a `\n` is a boundary.
+    if (text[i] === '\n') {
+      let j = i - 1;
+      while (j >= 0 && (text[j] === ' ' || text[j] === '\t')) j--;
+      if (j < 0 || text[j] === '\n') return count;
+      i = j;
+      continue;
+    }
+    if (text[i] === char) count++;
+    i--;
+  }
+  return count;
 }
 
 /** A letter, digit or underscore: a character an opening `*` should not split. */
@@ -210,7 +220,7 @@ export function autoPairEdit({ text, from, to, insert }: AutoPairInput): EditRes
   // The count excludes the run immediately before the caret, which is the pair being extended,
   // and is then read in units of `min`: for `*` a lone earlier `*` blocks, while for `~~` it
   // takes a whole earlier `~~` to block, so a half-typed `~~text~` can still be closed.
-  const openersBefore = countIn(paragraphBefore(text, from), char) - before;
+  const openersBefore = openersInParagraph(text, from, char, before);
   if (openersBefore > 0 && Math.floor(openersBefore / rule.min) % 2 === 1) return null;
 
   // ---- open a fresh pair

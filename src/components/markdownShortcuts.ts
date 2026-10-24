@@ -178,28 +178,16 @@ export function autoPairEnabled(): boolean {
 }
 
 /**
- * CodeMirror adapter for auto-pairing.
- *
- * Uses `EditorView.inputHandler` rather than `domEventHandlers({ keydown })` because a keydown
- * handler sees the key, not the resulting edit: it cannot tell a `*` typed over a selection from
- * one typed at a caret, and it would have to re-implement CodeMirror's own selection replacement.
- * The input handler receives the range and the text actually being inserted, which is exactly the
- * input `autoPairEdit` is written against. It also runs for input that never produced a keydown at
- * all, such as a synthetic insert.
- *
- * **Composition is the reason this is not a plain `input` listener.** During IME composition
- * (Chinese, Japanese, Korean) WebView2 delivers intermediate text with the pinyin still in it; a
- * pair inserted then lands in the middle of a syllable. CodeMirror's own `closeBrackets` bails out
- * on `composing` for the same reason, and this does too.
- */
-/**
  * The slice of the document `autoPairEdit` needs, as offsets local to that slice.
  *
- * The rules never look further back than the start of the caret's paragraph, nor further
- * forward than the closing run, so a bounded window is equivalent to the whole document — and
- * it avoids reading out and scanning a multi-megabyte string on every keystroke. The bounds are
- * deliberately generous relative to what the rules examine: they exist to cap the cost, not to
- * encode a rule.
+ * It avoids reading out and scanning a multi-megabyte string on every keystroke.
+ *
+ * **The window is not exactly equivalent to the whole document, and cannot be.** It reaches
+ * back 4,000 characters; a paragraph longer than that — a single unbroken paragraph, no blank
+ * line — loses the "a delimiter is already open" veto if the stray delimiter sits further back
+ * than the window. The consequence is a redundant closing half, which the user deletes, not
+ * corrupted text: every other rule is local to the caret and unaffected. Raising the bound
+ * trades that rare case against paying more per keystroke on a large file.
  */
 function windowAround(view: EditorView, from: number, to: number): { text: string; from: number; to: number } {
   // The end of the window has to clear the selection as well as the closing run, since a
@@ -233,6 +221,21 @@ function inCode(state: EditorState, pos: number): boolean {
 /** Node names that mean "literal text": emphasis delimiters typed here are not markup. */
 const CODE_NODES: ReadonlySet<string> = new Set(['FencedCode', 'CodeBlock', 'InlineCode', 'CodeText']);
 
+/**
+ * CodeMirror adapter for auto-pairing.
+ *
+ * Uses `EditorView.inputHandler` rather than `domEventHandlers({ keydown })` because a keydown
+ * handler sees the key, not the resulting edit: it cannot tell a `*` typed over a selection from
+ * one typed at a caret, and it would have to re-implement CodeMirror's own selection replacement.
+ * The input handler receives the range and the text actually being inserted, which is exactly the
+ * input `autoPairEdit` is written against. It also runs for input that never produced a keydown at
+ * all, such as a synthetic insert.
+ *
+ * **Composition is the reason this is not a plain `input` listener.** During IME composition
+ * (Chinese, Japanese, Korean) WebView2 delivers intermediate text with the pinyin still in it; a
+ * pair inserted then lands in the middle of a syllable. CodeMirror's own `closeBrackets` bails out
+ * on `composing` for the same reason, and this does too.
+ */
 export function autoPairExtension(): Extension {
   return Prec.high(
     EditorView.inputHandler.of((view, from, to, insert) => {

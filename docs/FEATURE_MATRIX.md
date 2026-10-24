@@ -25,7 +25,7 @@ A later report from real use found that the first of those three — relative im
 the resolver was now called, but `resolve_asset_url` was invoked with an argument shape the command did not
 accept, so the call failed and every relative image was marked missing. See `PROGRESS.md` §2.13.
 
-The test layers are real: 547 Vitest tests in 21 files, 84 Playwright tests (`tests/e2e/rendering.spec.ts`,
+The test layers are real: 553 Vitest tests in 21 files, 85 Playwright tests (`tests/e2e/rendering.spec.ts`,
 `tests/e2e/visual.spec.ts`) including 7 screenshot baselines and 6 axe-core audits, 14 WebdriverIO tests
 driving the compiled binary (`tests/desktop/openmark.spec.ts`), and a 148-fixture corpus
 (`tests/corpus/`, validator `scripts/verify-corpus.mjs`).

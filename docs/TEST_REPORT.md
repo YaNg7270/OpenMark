@@ -15,20 +15,26 @@ estimated.
 
 | Layer | Command | Result |
 |---|---|---|
-| Unit + DOM (Vitest) | `pnpm test` | **521 passed / 0 failed** (20 files) |
-| Browser E2E (Playwright) | `pnpm test:e2e` | **79 passed / 0 failed** (incl. 7 screenshot baselines, regenerated for the Broadsheet interface, and 6 accessibility audits) |
-| Desktop E2E (WebdriverIO) | `pnpm test:desktop` | **13 passed / 0 failed** (custom-protocol debug binary, no dev server running) |
+| Unit + DOM (Vitest) | `pnpm test` | **553 passed / 0 failed** (21 files) |
+| Browser E2E (Playwright) | `pnpm test:e2e` | **85 passed / 0 failed** (incl. 7 screenshot baselines, regenerated for the Broadsheet interface, and 6 accessibility audits) |
+| Desktop E2E (WebdriverIO) | `pnpm test:desktop` | **14 passed / 0 failed** (custom-protocol debug binary, no dev server running) |
 | Rust unit | `cargo test --lib` | **16 passed / 0 failed** (3 export + 3 export-boundary + 6 IPC wire-format contract + 3 asset-resolution + 1 backup pruning) |
 | Corpus validation | `pnpm corpus:verify` | **OK** — manifest matches disk |
 | Corpus conformance | part of `pnpm test` | **300 assertions, 148/148 fixtures emit every declared diagnostic** |
 | Type check | `pnpm typecheck` | clean |
 | Frontend build | `pnpm build` | exit 0 |
-| Installers | `pnpm desktop:build` | NSIS **9,521,072 B**, MSI **10,383,360 B** |
-| Portable | `pnpm desktop:build:portable` | **10,061,771 B** zip (`openmark.exe` + `README.txt`), verified to keep app data in `./data` |
+| Installers | `pnpm desktop:build` | NSIS **16,143,016 B**, MSI **16,924,672 B** |
+| Portable | `pnpm desktop:build:portable` | **16,592,039 B** zip (`openmark.exe` 21,017,600 B + `README.txt`), verified to keep app data in `./data` |
 
 Installer byte counts move between builds (the packages embed a build timestamp); these are the
 values from the artifacts under test, not invariants. The portable zip produced the same size in
 two consecutive builds, which is suggestive but was not checked by hash.
+
+**The installers are ~6.5 MB larger than the 9.5 / 10.4 MB recorded in earlier revisions of this
+report, and that is expected, not a regression.** The frontend is embedded compressed, and `dist/`
+now carries the vendored MathJax runtime (9.8 MB) plus its SVG font data as JavaScript (11.0 MB),
+which gzip to about 14.6 MB of the 20 MB executable. The growth is third-party font coverage, not
+new application code: the main chunk went *down* over the same period (2.30 MB → 1.09 MB).
 
 All four test layers are green against the shipping artefacts, not against mocks: Playwright
 drives the minified production bundle in the same engine family as the app runtime, and
@@ -36,7 +42,7 @@ WebdriverIO drives the compiled `openmark.exe` over WebView2.
 
 ---
 
-## 2. Unit and DOM tests — 547
+## 2. Unit and DOM tests — 553
 
 | File | Tests | What it establishes |
 |---|---:|---|
@@ -50,7 +56,7 @@ WebdriverIO drives the compiled `openmark.exe` over WebView2.
 | `tests/unit/markdown-blocks.test.ts` | 13 | Block decomposition and the splice invariant the instant editor depends on |
 | `tests/unit/math-source.test.ts` | 11 | Formula source reconstruction for every delimiter form |
 | `tests/unit/roundtrip.test.ts` | 4 | Identity, edit, block-edit and property-based (fast-check) preservation |
-| `tests/unit/auto-pair.test.ts` | 23 | Typing-time pairing as a pure function: the delimiter table, lengthening a run rather than nesting one, stepping over a closing run, wrapping a selection, and the refusals — inside a word (`snake_case`, `2*3`), before a space, at the start of a line (bullet/fence/display-math openers), inside a fence, when a delimiter is already open in the paragraph, and on any input that is not exactly one delimiter |
+| `tests/unit/auto-pair.test.ts` | 29 | Typing-time pairing as a pure function: the delimiter table, lengthening a run rather than nesting one, stepping over a closing run, wrapping a selection, and the refusals — inside a word (`snake_case`, `2*3`), before a space, at the start of a line (bullet/fence/display-math openers), inside a fence, when a delimiter is already open in the paragraph, and on any input that is not exactly one delimiter |
 | `tests/unit/dom/settings.test.ts` | 6 | Zoom clamping, image-alignment validation, and the `autoPair` preference including a wrong-typed stored value falling back to the default |
 
 ### What the corpus is

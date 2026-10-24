@@ -172,19 +172,38 @@ describe('auto-pair: caret placement', () => {
 
 describe('auto-pair: bounded input', () => {
   /*
-   * The source editor passes a window around the caret rather than the whole document, so the
-   * rules must behave identically when the text they receive is truncated far behind the caret.
-   * These pin the equivalence for the case that matters: an unclosed delimiter in an earlier
-   * part of the same paragraph is outside a small window and is therefore not seen.
+   * The source editor passes the whole document here — these tests call `autoPairEdit`
+   * directly — but the adapter hands it a 4,000-character window instead. That window is *not*
+   * equivalent to the whole document, and the difference is documented in `windowAround`: in a
+   * single paragraph longer than the window, an unclosed delimiter before it is invisible and a
+   * pair opens that should have closed. Pin the boundary so the limit is deliberate.
    */
-  it('gives the same answer for a window and the whole text, at the boundary', () => {
-    const filler = 'x'.repeat(500);
-    // Same paragraph, open delimiter immediately before the caret: both must refuse.
-    const near = `${filler}*word`;
-    expect(type(`${near}‸`, '*')).toBe(null);
-    // Only the window differs; a fresh pair after a blank line still opens.
-    const afterBreak = `${filler}\n\nafter`;
-    expect(type(`${afterBreak}‸`, '*')).toBe(`${afterBreak}*‸*`);
+  it('loses the open-delimiter veto past the window, and says so', () => {
+    /*
+     * The stray `*` has to sit *further back than the window* for truncation to matter — that
+     * is the whole point. `long` has it 4,500 characters before the caret.
+     */
+    const long = `*${'x'.repeat(4_500)}`;
+
+    // Whole text: the unclosed `*` is in the same paragraph, so no second pair opens.
+    expect(type(`${long}‸`, '*')).toBe(null);
+
+    // What the adapter actually passes — the trailing 4,000 characters — does not contain it,
+    // so the pair opens. A redundant closing half the user deletes; not corrupted text.
+    const windowed = long.slice(-4_000);
+    expect(type(`${windowed}‸`, '*')).toBe(`${windowed}*‸*`);
+  });
+
+  it('sees the stray delimiter when it is inside the window', () => {
+    // Just inside the bound: the veto applies, which is what makes 4,000 the real threshold.
+    const inside = `*${'x'.repeat(3_900)}`;
+    expect(type(`${inside}‸`, '*')).toBe(null);
+  });
+
+  it('still refuses a delimiter in the same paragraph inside a small window', () => {
+    // The window bound is the only thing that changes; paragraph scoping is independent of it.
+    const near = `*word\n\n${'y'.repeat(200)}`;
+    expect(type(`${near}‸`, '*')).toBe(`${near}*‸*`);
   });
 
   it('reports which characters it can pair, so callers can skip the work', () => {
@@ -195,5 +214,27 @@ describe('auto-pair: bounded input', () => {
     expect(isPairDelimiter('a')).toBe(false);
     expect(isPairDelimiter('')).toBe(false);
     expect(isPairDelimiter('**')).toBe(false);
+  });
+});
+
+describe('auto-pair: paragraph scan boundaries', () => {
+  it('treats an indented blank line as a paragraph break', () => {
+    // `\n   \n` is still a blank line, so the earlier `*` is in another paragraph.
+    expect(type('*a\n   \nb‸', '*')).toBe('*a\n   \nb*‸*');
+  });
+
+  it('does not treat a soft line break as a paragraph break', () => {
+    expect(type('*a\nb‸', '*')).toBe(null);
+  });
+
+  it('handles the very start of a document', () => {
+    // A lone `*` there is a bullet marker, so it is refused like any other line start.
+    expect(type('‸', '*')).toBe(null);
+    expect(type('a‸', '*')).toBe('a*‸*');
+  });
+
+  it('ignores the run immediately before the caret when counting openers', () => {
+    // `**` is the pair being extended, not an unclosed opener.
+    expect(type('a**‸', '*')).toBe('a***‸***');
   });
 });

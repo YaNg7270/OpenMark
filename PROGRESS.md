@@ -39,12 +39,12 @@ desktop number.
 | Rust toolchain | `cargo -V` (project-local) | 1.99.0, MSVC 14.44 linker verified with a smoke build |
 | Type check | `tsc --noEmit` | clean |
 | Frontend build | `vite build` | exit 0 |
-| Windows binary | `tauri build` | `src-tauri/target/release/openmark.exe`, 14,486,016 bytes, boots |
+| Windows binary | `tauri build` | `src-tauri/target/release/openmark.exe`, 21,017,600 bytes, boots |
 | Rust check | `cargo check` | zero warnings |
-| Browser E2E | `playwright test` | **79 passed** (incl. 7 screenshot baselines — regenerated for the Broadsheet interface — and 6 axe-core accessibility audits) |
-| Desktop E2E | `pnpm test:desktop` | **13 passed** (custom-protocol binary, WebView2 149, no dev server running; incl. native fullscreen, WebView2 zoom, version history and spoken formulas) |
+| Browser E2E | `playwright test` | **85 passed** (incl. 7 screenshot baselines — regenerated for the Broadsheet interface — and 6 axe-core accessibility audits) |
+| Desktop E2E | `pnpm test:desktop` | **14 passed** (custom-protocol binary, WebView2 149, no dev server running; incl. native fullscreen, WebView2 zoom, version history and spoken formulas) |
 | Rust unit | `cargo test --lib` | **16 passed** (3 export + 3 export-boundary + 6 wire-format contract + 3 asset-resolution + 1 backup pruning) |
-| Unit + DOM tests | `vitest run` | **521 passed** (incl. 300 corpus-conformance assertions and 6 external-change races) |
+| Unit + DOM tests | `vitest run` | **553 passed** (incl. 300 corpus-conformance assertions and 6 external-change races) |
 | Parse budgets | `pnpm perf:check` | all 5 stress fixtures within `scripts/perf-budget.json`; shown failing with a budget tightened below the measurement |
 | Windows installers | `pnpm desktop:build` | NSIS 9,521,072 B, MSI 10,383,360 B; portable zip 10,061,771 B via `desktop:build:portable` |
 | Desktop binary | direct launch | debug build boots and stays alive; release build verified |
@@ -328,6 +328,19 @@ Each of these was found by a test, not by inspection. All have regression covera
     `openmark-e2e-`, so the label was `openmark-e2e-auto-pair.md`. Every other desktop test
     matches by substring for that reason; this one now does too.
 
+28. **The bounded window was described as equivalent to the whole document.** It is not: the
+    backward reach is 4,000 characters, so a single paragraph longer than that loses the
+    "a delimiter is already open" veto when the stray delimiter sits further back. The comment
+    now states the limit and its consequence (a redundant closing half, which the user deletes —
+    every other rule is local to the caret). The test that was supposed to cover it used a
+    500-character filler and never reached the boundary; it now asserts both sides of it: a
+    stray `*` at 3,900 characters vetoes, the same `*` at 4,500 does not.
+29. **The scoping walked and copied more than it needed.** `paragraphBefore` sliced the text
+    from the caret back to a blank line and `countIn` then iterated that substring — two
+    allocations per keystroke. On the bounded window the cost was 0.014 ms, already below
+    perceptibility, but the two helpers are now one backward scan that stops at the paragraph
+    boundary: no substring, and it exits at the break instead of walking to the start.
+
 ### The auto-pair rules, and why they are shaped that way
 
 Pairing is measured on the **run** of characters at the caret, not per keystroke, which is what
@@ -340,6 +353,13 @@ means the next one closes rather than opens (`*text` + `*` must not become `*tex
 inside a fence or inline code is literal; and IME composition delivers provisional pinyin that
 a delimiter must never be inserted into. The last one is proved through CDP, since
 `keyboard.type` never enters the composing state.
+
+**Performance note, measured rather than assumed.** The adapter calls the rules only for a
+character that can pair, and hands them a 4,000-character window instead of the document: the
+whole-document scan cost 2.28 ms per keystroke on the 3 MB stress fixture, the bounded one
+0.0017 ms. End-to-end typing latency in the browser is unchanged and dominated by CodeMirror's
+own work — the flat Playwright timings cannot attribute anything to this change — so the gain
+is stated at the level it was measured, not claimed as a perceived speedup.
 
 Brackets and quotes are deliberately **not** paired. `[` also opens a reference definition, a
 footnote and a task list, and a stray `]` in prose costs a keystroke to delete — the opposite
