@@ -129,6 +129,17 @@ injects the project-local Rust toolchain and the space-free driver path.
   - Adding a field means adding it to the `keys()` assertion in that file's `#[cfg(test)]` module.
 - **A new `#[tauri::command]` must be added to `tauri::generate_handler![…]` in
   `src-tauri/src/lib.rs`** or the invoke fails at runtime.
+- **Text-editing behaviour belongs in `core/markdown/*` as a pure function.** `auto-pair.ts` is
+  the model: `autoPairEdit({ text, from, to, insert })` returns an `EditResult` or `null`, and
+  each editor has a thin adapter (`autoPairExtension()` for CodeMirror, `applyAutoPairToTextarea()`
+  for the instant-mode textarea). The adapters differ because the editors do; the rules do not.
+  Two constraints carried over from that work:
+  - **Bail out before touching the document.** The CodeMirror handler checks the typed character
+    and returns false before reading any text — the whole-document scan cost 2.6 ms per keystroke
+    on the 3 MB stress fixture. It passes `windowAround(view, from, to)` rather than the full doc.
+  - **Never pair during IME composition.** Both adapters refuse while composing; a delimiter
+    inserted then lands between pinyin letters. Test it through CDP
+    (`Input.imeSetComposition`), since `keyboard.type` never enters the composing state.
 - **Selectors and hooks:** test ids are `data-om-testid` (configured via `testIdAttribute` in
   `playwright.config.ts`), class names are prefixed `om-`, and behaviour flags are `data-om-*`.
 - **Test ids in selectors** — `getByTestId('x')` resolves `[data-om-testid="x"]`, not
@@ -257,6 +268,17 @@ These cost real debugging time. The symptom never points at the cause.
   `../dist` and `../dist/index.html`; do not remove either line.
 - **`scripts/run-desktop-e2e.mjs` refuses to run against a binary older than `dist/`.** That refusal
   is the point of it, not an obstacle.
+- **React's `onBeforeInput` is not the `beforeinput` event.** React synthesises it from the legacy
+  `textInput` event, which carries `data` but no `inputType` and no `isComposing`. A handler gated
+  on either reads `undefined` and silently never runs — indistinguishable from a disabled setting.
+  Use a native `addEventListener('beforeinput', …)` when input semantics matter.
+- **`document.execCommand('insertText')` moves the caret asynchronously.** A `setSelectionRange`
+  immediately afterwards is overwritten, leaving the caret after text that looks correct. Use
+  `setRangeText` and dispatch `input` yourself.
+- **A debug build runs under the console subsystem.** `main.rs` sets `windows_subsystem = "windows"`
+  only when `not(debug_assertions)`, so `Start-Process` on a debug binary returns a launcher that
+  has already exited — the app is alive in a *different* process. Check `Get-Process openmark`,
+  not the returned handle, before concluding it crashed.
 - **`src/core/editor/` is gone; there is no kernel adapter.** CodeMirror is created once per
   `${doc.path ?? ''}` and driven by transactions — a React `value` prop would destroy
   caret/selection/undo.
